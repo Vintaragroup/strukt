@@ -1,0 +1,36 @@
+{
+  "template_id": "frontend_react_002",
+  "name": "React Frontend Application PRD",
+  "version": "1.0.0",
+  "tags": ["frontend", "react", "web", "vite", "typescript", "ui"],
+  "category": "Frontend",
+  "description": "Modern React web application with responsive design, state management, and API integration",
+  "created_at": "2025-10-23",
+  "updated_at": "2025-10-23",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "A modern web application built with React (Vite) providing responsive, interactive user interface with state management."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Component library, routing, forms, data tables, charts, search, pagination, modal dialogs"
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "FCP < 1.5s, WCAG 2.1 AA compliance, mobile responsive, bundle < 300KB gzip"
+    },
+    {
+      "title": "Technical Stack",
+      "key": "tech_stack",
+      "content": "React 18+, Vite 5+, React Router 6+, Zustand, Axios, TypeScript, Tailwind CSS"
+    }
+  ],
+  "suggested_technologies": ["react", "vite", "typescript", "tailwindcss", "axios", "zustand"],
+  "complexity": "medium",
+  "estimated_effort_hours": 35,
+  "team_size": 2
+}

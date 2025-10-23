@@ -1,0 +1,22 @@
+{
+  "template_id": "mobile_app_005",
+  "name": "Mobile Application PRD",
+  "tags": ["mobile", "ios", "android", "react-native", "flutter"],
+  "category": "Mobile",
+  "description": "Native or cross-platform mobile app with offline support and push notifications",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "Native or cross-platform mobile app providing core functionality on smartphones and tablets."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Offline access, real-time sync, mobile UX, push notifications, cross-device sync"
+    }
+  ],
+  "suggested_technologies": ["react-native", "flutter", "firebase", "realm"],
+  "complexity": "high",
+  "estimated_effort_hours": 100
+}

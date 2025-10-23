@@ -1,0 +1,11 @@
+{
+  "template_id": "internal_tool_009",
+  "name": "Internal Tool / Admin Platform PRD",
+  "tags": ["admin", "internal-tool", "operations", "security"],
+  "category": "Internal Tools",
+  "description": "Administrative platform for internal team operations and configuration",
+  "sections": [{"title": "Overview", "key": "overview", "content": "Internal-only tool for admin operations and monitoring"}],
+  "suggested_technologies": ["react", "nodejs", "postgresql", "sentry"],
+  "complexity": "medium",
+  "estimated_effort_hours": 50
+}

@@ -1,0 +1,11 @@
+{
+  "template_id": "marketplace_008",
+  "name": "Marketplace Platform PRD",
+  "tags": ["marketplace", "ecommerce", "stripe", "payments", "two-sided"],
+  "category": "Marketplace",
+  "description": "Two-sided marketplace with sellers, buyers, payments, and ratings",
+  "sections": [{"title": "Overview", "key": "overview", "content": "Marketplace platform connecting buyers and sellers"}],
+  "suggested_technologies": ["react", "nodejs", "stripe", "postgresql", "elasticsearch"],
+  "complexity": "high",
+  "estimated_effort_hours": 150
+}

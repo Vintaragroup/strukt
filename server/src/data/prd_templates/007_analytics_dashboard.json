@@ -1,0 +1,11 @@
+{
+  "template_id": "analytics_007",
+  "name": "Analytics Dashboard PRD",
+  "tags": ["analytics", "dashboard", "bi", "visualization", "react"],
+  "category": "Analytics",
+  "description": "Real-time analytics dashboard with KPIs and data visualization",
+  "sections": [{"title": "Overview", "key": "overview", "content": "Business intelligence dashboard for real-time metrics"}],
+  "suggested_technologies": ["react", "d3js", "bigquery", "looker"],
+  "complexity": "medium",
+  "estimated_effort_hours": 60
+}

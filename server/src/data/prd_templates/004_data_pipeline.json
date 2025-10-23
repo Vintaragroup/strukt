@@ -1,0 +1,29 @@
+{
+  "template_id": "data_pipeline_004",
+  "name": "Data Pipeline & ETL PRD",
+  "version": "1.0.0",
+  "tags": ["data", "etl", "pipeline", "bigquery", "airflow", "analytics"],
+  "category": "Data Infrastructure",
+  "description": "ETL pipeline for data ingestion, transformation, and warehouse loading",
+  "created_at": "2025-10-23",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "Extract, Transform, Load (ETL) pipeline for ingesting and processing data from multiple sources."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Data connectors, transformations, incremental loading, data quality checks, monitoring"
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "99.9% uptime, < 1 hour latency, scales to 10x data volume"
+    }
+  ],
+  "suggested_technologies": ["airflow", "spark", "bigquery", "python", "dbt"],
+  "complexity": "high",
+  "estimated_effort_hours": 80
+}

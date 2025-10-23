@@ -1,0 +1,11 @@
+{
+  "template_id": "general_software_010",
+  "name": "General Software PRD Template",
+  "tags": ["general", "software", "template", "comprehensive"],
+  "category": "General",
+  "description": "Comprehensive template for general software projects",
+  "sections": [{"title": "Overview", "key": "overview", "content": "General PRD template for any software project"}],
+  "suggested_technologies": [],
+  "complexity": "medium",
+  "estimated_effort_hours": 40
+}

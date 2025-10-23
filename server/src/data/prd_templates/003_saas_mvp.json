@@ -1,0 +1,36 @@
+{
+  "template_id": "saas_mvp_003",
+  "name": "SaaS MVP PRD",
+  "version": "1.0.0",
+  "tags": ["saas", "mvp", "business", "subscriptions", "payments"],
+  "category": "Product",
+  "description": "Complete SaaS product with authentication, subscriptions, billing, and core feature",
+  "created_at": "2025-10-23",
+  "updated_at": "2025-10-23",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "A Software-as-a-Service product providing subscription-based access to solve a specific problem for target users."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Authentication, subscription tiers, Stripe billing, core feature workflow, user management, team collaboration"
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "99.5% uptime, PCI DSS compliance, < 200ms API response, GDPR/CCPA ready"
+    },
+    {
+      "title": "Business Metrics",
+      "key": "metrics",
+      "content": "Track DAU, MRR, churn rate, CAC, NPS. Target: 100+ paying customers in 6 months"
+    }
+  ],
+  "suggested_technologies": ["react", "nodejs", "stripe", "postgresql", "sendgrid"],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 3
+}

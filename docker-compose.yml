@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: whiteboard-mongo
+    restart: always
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - whiteboard-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: whiteboard-mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongo:27017/
+    depends_on:
+      - mongo
+    networks:
+      - whiteboard-network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: whiteboard-server
+    restart: always
+    ports:
+      - "5050:5050"
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://admin:password@mongo:27017/whiteboard?authSource=admin
+      JWT_SECRET: your-secret-key-change-in-production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./server/src:/app/src
+      - ./server/package.json:/app/package.json
+    depends_on:
+      - mongo
+    networks:
+      - whiteboard-network
+    develop:
+      watch:
+        - path: ./server/src
+          action: sync
+          target: /app/src
+        - path: ./server/package.json
+          action: sync
+          target: /app/package.json
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: whiteboard-client
+    restart: always
+    ports:
+      - "5174:5173"
+    environment:
+      VITE_API_URL: http://localhost:5050
+      NODE_ENV: development
+    volumes:
+      - ./client/src:/app/src:cached
+      - ./client/public:/app/public:cached
+      - ./client/package.json:/app/package.json:ro
+      - ./client/vite.config.ts:/app/vite.config.ts:ro
+      - ./client/tsconfig.json:/app/tsconfig.json:ro
+      - ./client/index.html:/app/index.html:ro
+    depends_on:
+      - server
+    networks:
+      - whiteboard-network
+    develop:
+      watch:
+        - path: ./client/src
+          action: sync
+          target: /app/src
+        - path: ./client/public
+          action: sync
+          target: /app/public
+        - path: ./client/vite.config.ts
+          action: sync
+          target: /app/vite.config.ts
+        - path: ./client/index.html
+          action: sync
+          target: /app/index.html
+
+volumes:
+  mongo-data:
+
+networks:
+  whiteboard-network:
+    driver: bridge

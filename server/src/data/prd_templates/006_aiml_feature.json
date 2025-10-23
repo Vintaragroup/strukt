@@ -1,0 +1,11 @@
+{
+  "template_id": "aiml_006",
+  "name": "AI/ML Feature PRD",
+  "tags": ["ai", "ml", "python", "tensorflow", "recommendations"],
+  "category": "AI/ML",
+  "description": "Machine learning model for predictions, recommendations, or automation",
+  "sections": [{"title": "Overview", "key": "overview", "content": "ML model integration for predictive analytics"}],
+  "suggested_technologies": ["tensorflow", "pytorch", "fastapi", "python"],
+  "complexity": "high",
+  "estimated_effort_hours": 90
+}
