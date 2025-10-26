@@ -2,6 +2,10 @@ import { Node, Edge } from 'reactflow'
 
 export type NodeType = 'root' | 'frontend' | 'backend' | 'requirement' | 'doc'
 
+// Domain & Department Types (FlowForge)
+export type DomainType = 'Business' | 'Product' | 'Tech' | 'DataAI' | 'Ops'
+export type RelationshipType = 'satisfies' | 'depends_on' | 'informs' | 'duplicates' | 'blocks'
+
 // Content Types
 export type ContentType = 'text' | 'todo' | 'help' | 'prd'
 
@@ -14,16 +18,31 @@ export interface Content {
   updatedAt: string
 }
 
+// Enhanced with optional FlowForge fields
 export interface WorkspaceNodeData {
   title: string
   summary?: string
   tags?: string[]
   stackHint?: string
   contents?: Content[]
+  // Optional FlowForge fields (backward compatible)
+  domain?: DomainType
+  category?: string
+  rationale?: string
+  enrichment?: {
+    history: Array<{ content: string; timestamp: string }>
+    current?: { content: string; timestamp: string }
+  }
 }
 
 export type WorkspaceNode = Node<WorkspaceNodeData, NodeType>
-export type WorkspaceEdge = Edge
+
+// Enhanced Edge with optional relationship type
+export type WorkspaceEdge = Edge & {
+  data?: {
+    relation?: RelationshipType
+  }
+}
 
 export interface Workspace {
   _id?: string
@@ -120,4 +139,33 @@ export interface GenerationMode {
   label: string
   description: string
   icon: string
+}
+
+// Template types (UI-only for now)
+export interface Template {
+  id: string
+  name: string
+  description: string
+  nodes: WorkspaceNode[]
+  edges: WorkspaceEdge[]
+  createdAt: string
+}
+
+// Snapshot types (UI-only for now)
+export interface Snapshot {
+  id: string
+  workspaceId: string
+  name: string
+  nodes: WorkspaceNode[]
+  edges: WorkspaceEdge[]
+  createdAt: string
+}
+
+// Analytics types (UI-only for now)
+export interface WorkspaceAnalytics {
+  nodeCount: number
+  edgeCount: number
+  domainDistribution: Record<DomainType, number>
+  typeDistribution: Record<NodeType, number>
+  avgNodesPerDomain: number
 }

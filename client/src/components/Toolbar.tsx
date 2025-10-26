@@ -1,473 +1,564 @@
-import React, { useState, useEffect } from 'react'
-import { useWorkspaceStore } from '../store/useWorkspaceStore'
-import { workspacesAPI, aiAPI, getErrorMessage } from '../api/client'
-import { WorkspaceNode, NodeType } from '../types'
-import PromptInputModal from './PromptInputModal'
-import GenerationResultsPanel, { GenerationResult } from './GenerationResultsPanel'
-import QueueStatusPanel from './QueueStatus'
-import { validateWorkspace, sanitizeWorkspace, formatValidationMessages } from '../utils/workspaceValidator'
-import './Toolbar.css'
-import { UI_VERSION } from '../uiVersion'
+import { Button } from "./ui/button";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import {
+  Plus,
+  Link2,
+  Sparkles,
+  Save,
+  FolderOpen,
+  Undo,
+  Redo,
+  Settings,
+  LogOut,
+  LayoutGrid,
+  AlignLeft,
+  AlignRight,
+  AlignCenterHorizontal,
+  AlignStartVertical,
+  AlignEndVertical,
+  AlignCenterVertical,
+  AlignHorizontalDistributeCenter,
+  AlignVerticalDistributeCenter,
+  Keyboard,
+  Upload,
+  Download,
+  Search,
+  BarChart3,
+  Network,
+  CircleDot,
+  ArrowRight,
+} from "lucide-react";
+import { AlignmentType } from "../utils/alignment";
+import { ExportMenu } from "./ExportMenu";
 
-const Toolbar: React.FC = () => {
-  const store = useWorkspaceStore()
-  const [showSaveDialog, setShowSaveDialog] = useState(false)
-  const [showLoadDialog, setShowLoadDialog] = useState(false)
-  const [showPromptModal, setShowPromptModal] = useState(false)
-  const [showResultsPanel, setShowResultsPanel] = useState(false)
-  const [showQueueStatus, setShowQueueStatus] = useState(false)
-  const [workspaceName, setWorkspaceName] = useState('')
-  const [workspaceList, setWorkspaceList] = useState<string[]>([])
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isAISuggesting, setIsAISuggesting] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [pendingGeneration, setPendingGeneration] = useState<any>(null)
-  const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const [queueCount, setQueueCount] = useState(0)
-
-  // Show toast
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
-  }
-
-  // Load workspace list
-  const loadWorkspaceList = async () => {
-    try {
-      const workspaces = await workspacesAPI.list()
-      setWorkspaceList(workspaces.map((w) => w.name))
-    } catch (error) {
-      console.error('Failed to load workspace list:', error)
-    }
-  }
-
-  // Add node action
-  const handleAddNode = (type: NodeType) => {
-    if (type === 'root' && store.nodes.some((n: WorkspaceNode) => n.type === 'root')) {
-      showToast('Only one root node allowed', 'error')
-      return
-    }
-
-    const newNode: WorkspaceNode = {
-      id: `${type}-${Date.now()}`,
-      type,
-      position: {
-        x: Math.random() * 300 - 150,
-        y: Math.random() * 300 - 150,
-      },
-      data: {
-        title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-        summary: 'Click to edit',
-      },
-    }
-    store.addNode(newNode)
-    showToast(`Added ${type} node`)
-  }
-
-  // Save workspace
-  const handleSaveWorkspace = async () => {
-    if (!workspaceName.trim()) {
-      showToast('Please enter a workspace name', 'error')
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      await workspacesAPI.update(workspaceName, {
-        name: workspaceName,
-        nodes: store.nodes,
-        edges: store.edges,
-      })
-      store.setActiveWorkspace(undefined, workspaceName)
-      store.markClean()
-      setShowSaveDialog(false)
-      setWorkspaceName('')
-      showToast(`Workspace "${workspaceName}" saved`)
-    } catch (error) {
-      showToast(getErrorMessage(error), 'error')
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  // Load workspace
-  const handleLoadWorkspace = async (name: string) => {
-    setIsLoading(true)
-    try {
-      const workspace = await workspacesAPI.get(name)
-      store.loadWorkspace(workspace)
-      setShowLoadDialog(false)
-      showToast(`Workspace "${name}" loaded`)
-    } catch (error) {
-      showToast(getErrorMessage(error), 'error')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // AI suggest
-  const handleAISuggest = async () => {
-    setIsAISuggesting(true)
-    try {
-      const response = await aiAPI.suggest({
-        nodes: store.nodes,
-        edges: store.edges,
-      })
-
-      if (response.suggestions && response.suggestions.length > 0) {
-        response.suggestions.forEach((suggestion) => {
-          const newNode: WorkspaceNode = {
-            id: `${suggestion.type}-${Date.now()}-${Math.random()}`,
-            type: suggestion.type,
-            position: {
-              x: Math.random() * 400 - 200,
-              y: Math.random() * 400 - 200,
-            },
-            data: suggestion.data,
-          }
-          store.addNode(newNode)
-        })
-        showToast(`Added ${response.suggestions.length} suggestions`)
-      }
-    } catch (error) {
-      showToast(getErrorMessage(error), 'error')
-    } finally {
-      setIsAISuggesting(false)
-    }
-  }
-
-  // Handle prompt submission for generation
-  const handlePromptSubmit = async (prompt: string, mode: 'retry' | 'queue') => {
-    setIsGenerating(true)
-    try {
-      if (mode === 'retry') {
-        // Sync generation with retry
-        const result = await aiAPI.generateWithRetry(prompt, store.activeWorkspaceId || '')
-        
-        if (!result.success) {
-          showToast('Generation failed', 'error')
-          return
-        }
-
-        const generatedWorkspace = {
-          nodes: result.parsed.nodes || [],
-          edges: result.parsed.edges || [],
-        }
-
-        const validation = validateWorkspace(generatedWorkspace)
-        
-        if (!validation.isValid || validation.messages.length > 0) {
-          const validationMessages = formatValidationMessages(validation.messages)
-          validationMessages.forEach(msg => {
-            console.warn(msg)
-          })
-        }
-
-        const criticalErrors = validation.messages.filter(m => m.severity === 'error')
-        if (criticalErrors.length > 0) {
-          showToast(`Generation has ${criticalErrors.length} validation error(s)`, 'error')
-          return
-        }
-
-        const { nodes: generatedNodes, edges: generatedEdges } = sanitizeWorkspace(generatedWorkspace)
-
-        const nodeTypeCount: { [key: string]: number } = {}
-        generatedNodes.forEach((node) => {
-          nodeTypeCount[node.type] = (nodeTypeCount[node.type] || 0) + 1
-        })
-
-        const nodeTypes = Object.entries(nodeTypeCount).map(([type, count]) => `${count} ${type}`).join(', ')
-        const summary = `Generated a workspace structure with ${nodeTypes}`
-
-        setPendingGeneration({
-          nodes: generatedNodes,
-          edges: generatedEdges,
-        })
-
-        const generationResult: GenerationResult = {
-          nodeCount: generatedNodes.length,
-          edgeCount: generatedEdges.length,
-          nodeTypes: nodeTypeCount,
-          suggestedName: prompt.split(' ').slice(0, 5).join(' '),
-          summary: summary,
-        }
-
-        setGenerationResult(generationResult)
-        setShowResultsPanel(true)
-        setShowPromptModal(false)
-        showToast(`✨ Generation complete (${result.generationTime})`, 'success')
-      } else {
-        // Queue mode - just queue the job
-        const result = await aiAPI.generateQueued(prompt, store.activeWorkspaceId || '')
-        
-        if (!result.success) {
-          showToast('Failed to queue generation', 'error')
-          return
-        }
-
-        showToast(`✨ Generation queued (Job: ${result.jobId.substring(0, 8)}...)`, 'success')
-        setShowPromptModal(false)
-        setQueueCount(prev => prev + 1)
-        
-        // Auto-open queue status panel
-        setShowQueueStatus(true)
-      }
-    } catch (error) {
-      showToast(getErrorMessage(error), 'error')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  // Handle accepting the generation results
-  const handleAcceptGeneration = () => {
-    if (!pendingGeneration) return
-
-    const { nodes: generatedNodes, edges: generatedEdges } = pendingGeneration
-
-    // Add nodes to store
-    generatedNodes.forEach((node: WorkspaceNode) => {
-      store.addNode({
-        id: node.id,
-        type: node.type,
-        position: node.position,
-        data: {
-          title: node.data.title,
-          summary: node.data.summary || '',
-          stackHint: node.data.stackHint,
-        },
-      })
-    })
-
-    // Add edges to store
-    generatedEdges.forEach((edge: any) => {
-      store.addEdge({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-      })
-    })
-
-    showToast(`✨ Added ${generatedNodes.length} nodes to workspace`, 'success')
-    setShowResultsPanel(false)
-    setPendingGeneration(null)
-    setGenerationResult(null)
-  }
-
-  // Handle discarding the generation results
-  const handleDiscardGeneration = () => {
-    showToast('Generation discarded', 'success')
-    setShowResultsPanel(false)
-    setPendingGeneration(null)
-    setGenerationResult(null)
-  }
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault()
-        setShowSaveDialog(true)
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault()
-        setShowLoadDialog(true)
-        loadWorkspaceList()
-      }
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        // TODO: Delete selected nodes
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [store])
-
-  return (
-    <div className="toolbar">
-      <div className="toolbar-header-row">
-        <div className="version-badge" title="UI Version">UI {UI_VERSION}</div>
-      </div>
-      <div className="toolbar-section">
-        <h2>Workspace</h2>
-        <button onClick={() => handleAddNode('root')} className="btn btn-primary">
-          Add Root
-        </button>      </div>
-
-      <div className="toolbar-section">
-        <h2>Nodes</h2>
-        <button onClick={() => handleAddNode('frontend')} className="btn btn-frontend">
-          Frontend
-        </button>
-        <button onClick={() => handleAddNode('backend')} className="btn btn-backend">
-          Backend
-        </button>
-        <button onClick={() => handleAddNode('requirement')} className="btn btn-requirement">
-          Requirement
-        </button>
-        <button onClick={() => handleAddNode('doc')} className="btn btn-doc">
-          Doc
-        </button>
-      </div>
-
-      <div className="toolbar-section">
-        <h2>Persist</h2>
-        <button onClick={() => setShowSaveDialog(true)} className="btn btn-success">
-          Save (⌘S)
-        </button>
-        <button
-          onClick={() => {
-            loadWorkspaceList()
-            setShowLoadDialog(true)
-          }}
-          className="btn btn-info"
-        >
-          Load (⌘L)
-        </button>
-      </div>
-
-      <div className="toolbar-section">
-        <h2>AI • Phase 3</h2>
-        <button
-          onClick={() => setShowPromptModal(true)}
-          className="btn btn-ai"
-        >
-          Generate
-        </button>
-        <button
-          onClick={handleAISuggest}
-          disabled={isAISuggesting}
-          className="btn btn-ai"
-        >
-          {isAISuggesting ? 'Suggesting...' : 'Suggest'}
-        </button>
-        <button
-          onClick={() => setShowQueueStatus(true)}
-          className="btn btn-ai"
-          title="View queue status and active generation jobs"
-        >
-          📊 Queue {queueCount > 0 && `(${queueCount})`}
-        </button>
-      </div>
-
-      <div className="toolbar-section">
-        <h2>Edit</h2>
-        <button onClick={() => store.undo()} className="btn btn-secondary">
-          Undo
-        </button>
-        <button onClick={() => store.redo()} className="btn btn-secondary">
-          Redo
-        </button>
-      </div>
-
-      {/* Save Dialog */}
-      {showSaveDialog && (
-        <div className="modal-overlay" onClick={() => setShowSaveDialog(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Save Workspace</h3>
-            <input
-              type="text"
-              value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
-              placeholder="Workspace name"
-              autoFocus
-              onKeyPress={(e) => e.key === 'Enter' && handleSaveWorkspace()}
-            />
-            <div className="modal-actions">
-              <button onClick={() => setShowSaveDialog(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSaveWorkspace} disabled={isSaving} className="btn btn-success">
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Load Dialog */}
-      {showLoadDialog && (
-        <div className="modal-overlay" onClick={() => setShowLoadDialog(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Load Workspace</h3>
-            <div className="workspace-list">
-              {workspaceList.length === 0 ? (
-                <p>No workspaces found</p>
-              ) : (
-                workspaceList.map((name) => (
-                  <button
-                    key={name}
-                    onClick={() => handleLoadWorkspace(name)}
-                    disabled={isLoading}
-                    className="btn btn-workspace"
-                  >
-                    {name}
-                  </button>
-                ))
-              )}
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowLoadDialog(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
-
-      {/* Generation Results Panel */}
-      {generationResult && (
-        <GenerationResultsPanel
-          result={generationResult}
-          isOpen={showResultsPanel}
-          onAccept={handleAcceptGeneration}
-          onDiscard={handleDiscardGeneration}
-        />
-      )}
-
-      {/* Prompt Input Modal */}
-      <PromptInputModal
-        isOpen={showPromptModal}
-        onClose={() => setShowPromptModal(false)}
-        onSubmit={handlePromptSubmit}
-        isLoading={isGenerating}
-      />
-
-      {/* Queue Status Panel */}
-      <QueueStatusPanel
-        isOpen={showQueueStatus}
-        onClose={() => setShowQueueStatus(false)}
-        onJobComplete={(jobId, result) => {
-          setPendingGeneration({
-            nodes: result.parsed.nodes,
-            edges: result.parsed.edges,
-          })
-
-          const nodeTypeCount: { [key: string]: number } = {}
-          result.parsed.nodes.forEach((node: any) => {
-            nodeTypeCount[node.type] = (nodeTypeCount[node.type] || 0) + 1
-          })
-
-          const generationResult: GenerationResult = {
-            nodeCount: result.parsed.nodes.length,
-            edgeCount: result.parsed.edges.length,
-            nodeTypes: nodeTypeCount,
-            suggestedName: `Generated (${jobId.substring(0, 8)}...)`,
-            summary: result.parsed.summary,
-          }
-
-          setGenerationResult(generationResult)
-          setShowResultsPanel(true)
-          showToast('✨ Generation complete! Review and add to workspace', 'success')
-        }}
-      />
-    </div>
-  )
+interface ToolbarProps {
+  onAddNode: () => void;
+  onConnect: () => void;
+  onAISuggest: () => void;
+  onSave: () => void;
+  onLoad: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onSettings: () => void;
+  onAutoLayout: () => void;
+  selectedNodeCount?: number;
+  onAlign?: (alignmentType: AlignmentType) => void;
+  onKeyboardShortcuts?: () => void;
+  onExportPNG?: () => void;
+  onExportSVG?: () => void;
+  onExportMarkdown?: () => void;
+  onExportCSV?: () => void;
+  onExportConnectionsCSV?: () => void;
+  onImport?: () => void;
+  onExportBatch?: () => void;
+  onSearch?: () => void;
+  onAnalytics?: () => void;
+  onRelationships?: () => void;
+  viewMode?: "radial" | "process";
+  onViewModeChange?: (mode: "radial" | "process") => void;
 }
 
-export default Toolbar
+export function Toolbar({
+  onAddNode,
+  onConnect,
+  onAISuggest,
+  onSave,
+  onLoad,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  onSettings,
+  onAutoLayout,
+  selectedNodeCount = 0,
+  onAlign,
+  onKeyboardShortcuts,
+  onExportPNG,
+  onExportSVG,
+  onExportMarkdown,
+  onExportCSV,
+  onExportConnectionsCSV,
+  onImport,
+  onExportBatch,
+  onSearch,
+  onAnalytics,
+  onRelationships,
+  viewMode = "radial",
+  onViewModeChange,
+}: ToolbarProps) {
+  const showAlignmentTools = selectedNodeCount >= 2;
+  
+  return (
+    <TooltipProvider delayDuration={300}>
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="backdrop-blur-md bg-white/90 border border-gray-200/80 rounded-2xl shadow-lg px-2 py-2 flex items-center gap-0.5 transition-all duration-300 hover:shadow-xl">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAddNode}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add Node</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <div className="w-px h-5 bg-gray-200 mx-1" />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onConnect}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+              >
+                <Link2 className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Connect</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAISuggest}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+              >
+                <Sparkles className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>AI Suggest</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAutoLayout}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Auto Layout</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          {onViewModeChange && (
+            <>
+              <div className="w-px h-5 bg-gray-200 mx-1" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={viewMode === "radial" ? "default" : "ghost"}
+                    size="icon"
+                    onClick={() => onViewModeChange("radial")}
+                    className="h-8 w-8"
+                  >
+                    <CircleDot className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Radial View</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={viewMode === "process" ? "default" : "ghost"}
+                    size="icon"
+                    onClick={() => onViewModeChange("process")}
+                    className="h-8 w-8"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Process View</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
+          
+          {onSearch && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onSearch}
+                  className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Search (Cmd/Ctrl+F)</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {onAnalytics && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onAnalytics}
+                  className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Project Analytics</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {onRelationships && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onRelationships}
+                  className="h-8 w-8 hover:bg-gray-100 text-purple-700"
+                >
+                  <Network className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Relationships (Cmd/Ctrl+Shift+R)</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {showAlignmentTools && (
+            <>
+              <div className="w-px h-5 bg-gray-200 mx-1" />
+              
+              {/* Horizontal Alignment */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("left")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                  >
+                    <AlignLeft className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Align Left</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("centerHorizontal")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                  >
+                    <AlignCenterHorizontal className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Align Center (Horizontal)</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("right")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                  >
+                    <AlignRight className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Align Right</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <div className="w-px h-4 bg-indigo-200 mx-0.5" />
+              
+              {/* Vertical Alignment */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("top")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                  >
+                    <AlignStartVertical className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Align Top</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("centerVertical")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                  >
+                    <AlignCenterVertical className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Align Center (Vertical)</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("bottom")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                  >
+                    <AlignEndVertical className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Align Bottom</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <div className="w-px h-4 bg-indigo-200 mx-0.5" />
+              
+              {/* Distribution */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("distributeHorizontal")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                    disabled={selectedNodeCount < 3}
+                  >
+                    <AlignHorizontalDistributeCenter className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Distribute Horizontally {selectedNodeCount < 3 && "(3+ nodes)"}</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAlign?.("distributeVertical")}
+                    className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                    disabled={selectedNodeCount < 3}
+                  >
+                    <AlignVerticalDistributeCenter className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Distribute Vertically {selectedNodeCount < 3 && "(3+ nodes)"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
+          
+          <div className="w-px h-5 bg-gray-200 mx-1" />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onSave}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Save</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onLoad}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+              >
+                <FolderOpen className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Load</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <div className="w-px h-5 bg-gray-200 mx-1" />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onUndo}
+                disabled={!canUndo}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Undo className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Undo {canUndo ? "(⌘Z)" : "(No history)"}</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onRedo}
+                disabled={!canRedo}
+                className="h-8 w-8 hover:bg-gray-100 text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Redo className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Redo {canRedo ? "(⌘⇧Z)" : "(No history)"}</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          {onImport && (
+            <>
+              <div className="w-px h-5 bg-gray-200 mx-1" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onImport}
+                    className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+                  >
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import Node</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
+
+          {onExportPNG && onExportSVG && onExportMarkdown && (
+            <>
+              {!onImport && <div className="w-px h-5 bg-gray-200 mx-1" />}
+              <ExportMenu
+                onExportPNG={onExportPNG}
+                onExportSVG={onExportSVG}
+                onExportMarkdown={onExportMarkdown}
+                onExportCSV={onExportCSV}
+                onExportConnectionsCSV={onExportConnectionsCSV}
+              />
+            </>
+          )}
+
+          {onExportBatch && selectedNodeCount > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onExportBatch}
+                  className="h-8 w-8 hover:bg-indigo-50 text-indigo-600"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Export {selectedNodeCount} Selected {selectedNodeCount === 1 ? 'Node' : 'Nodes'}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          <div className="w-px h-5 bg-gray-200 mx-1" />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <Avatar className="w-7 h-7">
+                  <AvatarFallback className="bg-indigo-500 text-white text-xs">
+                    JD
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onSettings}>
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              {onKeyboardShortcuts && (
+                <DropdownMenuItem onClick={onKeyboardShortcuts}>
+                  <Keyboard className="w-4 h-4 mr-2" />
+                  Keyboard Shortcuts
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
