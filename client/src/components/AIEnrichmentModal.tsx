@@ -175,7 +175,7 @@ export function AIEnrichmentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] p-0 gap-0 bg-white flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[95vh] p-0 gap-0 bg-white flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -368,7 +368,7 @@ export function AIEnrichmentModal({
           </AnimatePresence>
         </ScrollArea>
 
-        <div className="px-6 py-4 border-t bg-white flex items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-3 border-t bg-white flex items-center justify-between gap-3 shrink-0">
           {!generatedContent ? (
             <>
               <Button variant="ghost" onClick={handleCancel}>
