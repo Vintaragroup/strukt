@@ -132,8 +132,8 @@ export function ImportNodeModal({ open, onClose, onImport }: ImportNodeModalProp
   const typeInfo = getImportTypeInfo();
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+        <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px] bg-white">
         <DialogHeader>
           <DialogTitle>Import Node</DialogTitle>
           <DialogDescription>

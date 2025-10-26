@@ -114,7 +114,7 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] backdrop-blur-md bg-gradient-to-br from-white via-indigo-50/20 to-purple-50/20">
+      <DialogContent className="sm:max-w-[480px] bg-white">
         <DialogHeader>
           <DialogTitle>Add New Node</DialogTitle>
           <DialogDescription>

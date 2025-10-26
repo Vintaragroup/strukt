@@ -174,7 +174,7 @@ export function AIEnrichmentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] p-0 gap-0">
+      <DialogContent className="max-w-3xl max-h-[85vh] p-0 gap-0 bg-white">
         <DialogHeader className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">

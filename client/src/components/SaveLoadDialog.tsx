@@ -60,7 +60,7 @@ export function SaveLoadDialog({ isOpen, onClose, onSave, onLoad }: SaveLoadDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] backdrop-blur-xl bg-white/95">
+      <DialogContent className="sm:max-w-[500px] bg-white">
         <DialogHeader>
           <DialogTitle>Save & Load</DialogTitle>
           <DialogDescription>

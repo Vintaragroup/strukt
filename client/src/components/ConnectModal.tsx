@@ -22,7 +22,7 @@ interface ConnectModalProps {
 export function ConnectModal({ isOpen, onClose }: ConnectModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] backdrop-blur-md bg-white/95">
+      <DialogContent className="sm:max-w-[480px] bg-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="w-5 h-5 text-indigo-600" />
