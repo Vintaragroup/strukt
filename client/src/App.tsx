@@ -697,36 +697,26 @@ function FlowCanvas() {
     hasResetZoom.current = true;
     
     // Delay to ensure ReactFlow is fully mounted and ready
-    // Using longer delay to ensure all rendering is complete
     const timeoutId = setTimeout(() => {
       try {
-        // Find center node and center it on screen at 100% zoom
+        // Find center node
         const centerNode = nodes.find(n => n.id === "center");
         if (centerNode) {
-          // Calculate center node's center position
-          const nodeCenterX = centerNode.position.x + (centerNode.width || 320) / 2;
-          const nodeCenterY = centerNode.position.y + (centerNode.height || 200) / 2;
+          // Use setCenter to properly center the node on screen
+          // This handles the viewport calculation correctly
+          reactFlowInstance.setCenter(
+            centerNode.position.x + (centerNode.width || 320) / 2,
+            centerNode.position.y + (centerNode.height || 200) / 2,
+            { 
+              zoom: 1,
+              duration: 0 
+            }
+          );
           
-          // Get viewport dimensions
-          const viewport = reactFlowInstance.getViewport();
-          const viewportWidth = window.innerWidth;
-          const viewportHeight = window.innerHeight;
-          
-          // Calculate pan position to center the node on screen at zoom 1
-          const panX = viewportWidth / 2 - nodeCenterX;
-          const panY = viewportHeight / 2 - nodeCenterY;
-          
-          // Set viewport with calculated pan and zoom 1
-          reactFlowInstance.setViewport({
-            x: panX,
-            y: panY,
-            zoom: 1
-          }, { duration: 0 });
-          
-          console.log('✅ Zoom reset to 100% and centered on screen');
+          console.log('✅ Canvas centered at 100% zoom');
         }
       } catch (err) {
-        console.error('Zoom reset error:', err);
+        console.error('Centering error:', err);
       }
     }, 150);
     
