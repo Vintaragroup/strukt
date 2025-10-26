@@ -689,30 +689,29 @@ function FlowCanvas() {
     };
   }, [reactFlowInstance]);
 
-  // Reset zoom to 100% on initial page load (one-time only)
+  // Reset zoom to 100% on component mount (every reload)
+  const hasResetZoom = useRef(false);
   useEffect(() => {
-    if (!reactFlowInstance) return;
+    if (!reactFlowInstance || hasResetZoom.current) return;
     
-    // Use a ref to ensure this runs only once
-    if (!window.__flowforgeZoomReset) {
-      window.__flowforgeZoomReset = true;
-      
-      // Delay to ensure ReactFlow is fully mounted
-      const timeoutId = setTimeout(() => {
-        // Set center and zoom to 100%
-        const centerNode = nodes.find(n => n.id === "center");
-        if (centerNode) {
-          reactFlowInstance.setCenter(
-            centerNode.position.x + (centerNode.width || 320) / 2,
-            centerNode.position.y + (centerNode.height || 200) / 2,
-            { duration: 0, zoom: 1 }
-          );
-        }
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [reactFlowInstance, nodes]);
+    hasResetZoom.current = true;
+    
+    // Delay to ensure ReactFlow is fully mounted and ready
+    const timeoutId = setTimeout(() => {
+      // Find center node
+      const centerNode = initialNodes.find(n => n.id === "center");
+      if (centerNode) {
+        // Use fitView with specific bounds to force 100% zoom
+        reactFlowInstance.setViewport({
+          x: 0,
+          y: 0,
+          zoom: 1
+        }, { duration: 0 });
+      }
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, [reactFlowInstance]);
 
 
 
