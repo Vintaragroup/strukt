@@ -73,7 +73,8 @@ export function AIEnrichmentModal({
       // Cmd/Ctrl + Enter: Generate or Add to Node
       if (metaKey && e.key === 'Enter') {
         e.preventDefault();
-        if (!generatedContent && canGenerate) {
+        const allAnswered = questions.every((q) => answers[q.id]?.trim().length > 0);
+        if (!generatedContent && allAnswered) {
           handleGenerate();
         } else if (generatedContent) {
           handleAddToNode();
@@ -113,7 +114,7 @@ export function AIEnrichmentModal({
       nodeType,
       nodeLabel,
       currentSummary,
-      answers as EnrichmentAnswers
+      answers as unknown as EnrichmentAnswers
     );
 
     setGeneratedContent(content);
@@ -174,8 +175,8 @@ export function AIEnrichmentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] p-0 gap-0 bg-white">
-        <DialogHeader className="px-6 pt-6 pb-4">
+      <DialogContent className="max-w-3xl max-h-[90vh] p-0 gap-0 bg-white flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
@@ -189,7 +190,7 @@ export function AIEnrichmentModal({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6">
+        <ScrollArea className="flex-1 px-6 min-h-0">
           <AnimatePresence mode="wait">
             {!generatedContent ? (
               <motion.div
@@ -367,7 +368,7 @@ export function AIEnrichmentModal({
           </AnimatePresence>
         </ScrollArea>
 
-        <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between gap-3">
+        <div className="px-6 py-4 border-t bg-white flex items-center justify-between gap-3 shrink-0">
           {!generatedContent ? (
             <>
               <Button variant="ghost" onClick={handleCancel}>
