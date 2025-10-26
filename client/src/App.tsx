@@ -697,18 +697,21 @@ function FlowCanvas() {
     hasResetZoom.current = true;
     
     // Delay to ensure ReactFlow is fully mounted and ready
+    // Using longer delay to ensure all rendering is complete
     const timeoutId = setTimeout(() => {
-      // Find center node
-      const centerNode = initialNodes.find(n => n.id === "center");
-      if (centerNode) {
-        // Use fitView with specific bounds to force 100% zoom
+      try {
+        // Force viewport to exact 100% zoom at origin
         reactFlowInstance.setViewport({
           x: 0,
           y: 0,
           zoom: 1
         }, { duration: 0 });
+        
+        console.log('✅ Zoom reset to 100%');
+      } catch (err) {
+        console.error('Zoom reset error:', err);
       }
-    }, 50);
+    }, 150);
     
     return () => clearTimeout(timeoutId);
   }, [reactFlowInstance]);
@@ -2342,7 +2345,6 @@ function FlowCanvas() {
           onNodeDragStop={handleNodeDragStop}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
-          fitView
           minZoom={0.1}
           maxZoom={5}
           multiSelectionKeyCode="Shift"
