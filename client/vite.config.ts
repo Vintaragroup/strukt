@@ -1,18 +1,17 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 5173,
     host: '0.0.0.0',
     strictPort: false,
     open: false,
-    hmr: {
-      host: 'localhost',
-      port: 5174,
-      protocol: 'ws',
-    },
     proxy: {
       '/api': {
         target: 'http://server:5050',
@@ -24,5 +23,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    target: 'esnext',
+    minify: 'esbuild',
+  },
+  esbuild: {
+    loader: 'tsx',
+    include: /src\/.*\.tsx?$/,
+    exclude: [],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'reactflow'],
   },
 })

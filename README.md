@@ -167,3 +167,11 @@ npm run dev
 ## License
 
 MIT
+
+## Connection rendering notes
+
+If connection lines ever appear offset from the dots or pass into a node while dragging, see:
+
+- docs/CONNECTION_PREVIEW_AND_EDGE_ALIGNMENT.md
+
+That doc explains the preview and finalized edge alignment logic and the small set of values you can tweak to re-align things quickly.

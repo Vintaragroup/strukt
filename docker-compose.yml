@@ -73,8 +73,11 @@ services:
     volumes:
       - ./client/src:/app/src:cached
       - ./client/public:/app/public:cached
+      - /app/node_modules
       - ./client/package.json:/app/package.json:ro
       - ./client/vite.config.ts:/app/vite.config.ts:ro
+      - ./client/tailwind.config.ts:/app/tailwind.config.ts:ro
+      - ./client/postcss.config.js:/app/postcss.config.js:ro
       - ./client/tsconfig.json:/app/tsconfig.json:ro
       - ./client/index.html:/app/index.html:ro
     depends_on:
@@ -92,6 +95,12 @@ services:
         - path: ./client/vite.config.ts
           action: sync
           target: /app/vite.config.ts
+        - path: ./client/tailwind.config.ts
+          action: sync
+          target: /app/tailwind.config.ts
+        - path: ./client/postcss.config.js
+          action: sync
+          target: /app/postcss.config.js
         - path: ./client/index.html
           action: sync
           target: /app/index.html
