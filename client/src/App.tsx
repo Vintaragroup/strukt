@@ -586,15 +586,24 @@ function FlowCanvas() {
 
   const handleFitView = useCallback(() => {
     if (!reactFlowInstance) return;
+    
+    // Calculate dynamic max zoom based on node count
+    // More nodes = allow more zoom out
+    const nodeCount = nodes.length;
+    let maxZoom = 1.5;
+    if (nodeCount > 20) maxZoom = 2.0;
+    if (nodeCount > 50) maxZoom = 2.5;
+    if (nodeCount > 100) maxZoom = 3.0;
+    
     reactFlowInstance.fitView({ 
       padding: 0.2, 
       duration: 400,
-      maxZoom: 1.5 
+      maxZoom
     });
     toast.success("Fit all nodes", {
       description: "Canvas adjusted to show all nodes",
     });
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, nodes.length]);
 
   const handleFitSelection = useCallback(() => {
     const selectedNodes = nodes.filter(n => n.selected);
@@ -606,10 +615,16 @@ function FlowCanvas() {
     if (!reactFlowInstance) return;
     // Get the bounding box of selected nodes
     const nodeIds = selectedNodes.map(n => n.id);
+    
+    // Calculate dynamic max zoom based on selection count
+    let maxZoom = 2.0;
+    if (selectedNodes.length > 10) maxZoom = 2.5;
+    if (selectedNodes.length > 20) maxZoom = 3.0;
+    
     reactFlowInstance.fitView({
       padding: 0.3,
       duration: 400,
-      maxZoom: 1.5,
+      maxZoom,
       nodes: selectedNodes,
     });
     
@@ -673,6 +688,31 @@ function FlowCanvas() {
       if (unsubscribe) unsubscribe();
     };
   }, [reactFlowInstance]);
+
+  // Reset zoom to 100% on initial page load (one-time only)
+  useEffect(() => {
+    if (!reactFlowInstance) return;
+    
+    // Use a ref to ensure this runs only once
+    if (!window.__flowforgeZoomReset) {
+      window.__flowforgeZoomReset = true;
+      
+      // Delay to ensure ReactFlow is fully mounted
+      const timeoutId = setTimeout(() => {
+        // Set center and zoom to 100%
+        const centerNode = nodes.find(n => n.id === "center");
+        if (centerNode) {
+          reactFlowInstance.setCenter(
+            centerNode.position.x + (centerNode.width || 320) / 2,
+            centerNode.position.y + (centerNode.height || 200) / 2,
+            { duration: 0, zoom: 1 }
+          );
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [reactFlowInstance, nodes]);
 
 
 
@@ -2304,6 +2344,8 @@ function FlowCanvas() {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
+          minZoom={0.1}
+          maxZoom={5}
           multiSelectionKeyCode="Shift"
           selectionOnDrag={false}
           panOnDrag={[1, 2]}
