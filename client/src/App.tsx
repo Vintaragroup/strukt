@@ -702,16 +702,58 @@ function FlowCanvas() {
         // Find center node
         const centerNode = nodes.find(n => n.id === "center");
         if (centerNode) {
+          // Log the center node details for debugging
+          console.log('Center node:', {
+            position: centerNode.position,
+            width: centerNode.width,
+            height: centerNode.height,
+            style: centerNode.style,
+            styleWidthType: typeof centerNode.style?.width,
+            styleHeightType: typeof centerNode.style?.height
+          });
+          
+          // Get actual dimensions - ensure we convert strings to numbers
+          let nodeWidth: number;
+          if (centerNode.width) {
+            nodeWidth = centerNode.width;
+          } else if (centerNode.style?.width) {
+            // Handle both string ("320") and number (320) cases
+            const widthValue = centerNode.style.width;
+            nodeWidth = typeof widthValue === 'string' ? parseInt(widthValue, 10) : widthValue;
+          } else {
+            nodeWidth = 320;
+          }
+          
+          let nodeHeight: number;
+          if (centerNode.height) {
+            nodeHeight = centerNode.height;
+          } else if (centerNode.style?.height) {
+            // Handle both string and number cases
+            const heightValue = centerNode.style.height;
+            nodeHeight = typeof heightValue === 'string' ? parseInt(heightValue, 10) : heightValue;
+          } else {
+            nodeHeight = 200;
+          }
+          
+          console.log('Parsed dimensions:', { nodeWidth, nodeHeight, nodeWidthType: typeof nodeWidth, nodeHeightType: typeof nodeHeight });
+          
+          // Calculate center of the node in flow coordinates
+          const nodeCenterX = centerNode.position.x + nodeWidth / 2;
+          const nodeCenterY = centerNode.position.y + nodeHeight / 2;
+          
+          console.log('Calculated center:', { 
+            nodeCenterX, 
+            nodeCenterY,
+            nodePositionX: centerNode.position.x,
+            nodePositionY: centerNode.position.y,
+            calculation: `x: ${centerNode.position.x} + ${nodeWidth}/2 = ${nodeCenterX}, y: ${centerNode.position.y} + ${nodeHeight}/2 = ${nodeCenterY}`
+          });
+          
           // Use setCenter to properly center the node on screen
-          // This handles the viewport calculation correctly
-          reactFlowInstance.setCenter(
-            centerNode.position.x + (centerNode.width || 320) / 2,
-            centerNode.position.y + (centerNode.height || 200) / 2,
-            { 
-              zoom: 1,
-              duration: 0 
-            }
-          );
+          reactFlowInstance.setCenter(nodeCenterX, nodeCenterY, { 
+            zoom: 1,
+            duration: 0 
+          });
           
           console.log('✅ Canvas centered at 100% zoom');
         }
