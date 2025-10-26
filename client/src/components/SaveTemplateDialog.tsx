@@ -159,7 +159,7 @@ export function SaveTemplateDialog({
               placeholder="e.g., Product Launch Plan"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-white/5 border-white/10"
+              className="bg-white border-gray-200"
             />
           </div>
 
@@ -171,7 +171,7 @@ export function SaveTemplateDialog({
               placeholder="Describe what this template is for and when to use it..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="bg-white/5 border-white/10 min-h-[80px] resize-none"
+              className="bg-white border-gray-200 min-h-[80px] resize-none"
             />
           </div>
 
@@ -225,7 +225,7 @@ export function SaveTemplateDialog({
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="bg-white/5 border-white/10"
+                  className="bg-white border-gray-200"
                 />
                 <Button
                   type="button"

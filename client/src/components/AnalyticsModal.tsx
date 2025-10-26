@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
+import { ScrollArea } from "./ui/scroll-area";
 import {
   BarChart,
   Bar,
@@ -58,15 +59,16 @@ export function AnalyticsModal({
 }: AnalyticsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto bg-white">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl max-h-[85vh] p-0 gap-0 bg-white flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-indigo-600" />
             Project Analytics
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="w-full">
+        <ScrollArea className="flex-1 px-6 min-h-0">
+          <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="completion">Completion</TabsTrigger>
@@ -450,6 +452,7 @@ export function AnalyticsModal({
             </Card>
           </TabsContent>
         </Tabs>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
