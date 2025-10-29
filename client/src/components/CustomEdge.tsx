@@ -44,6 +44,124 @@ export const CustomEdge = memo(({
   if (targetPosition === Position.Top) tY -= outset;
   if (targetPosition === Position.Bottom) tY += outset;
 
+  const toNumber = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = parseFloat(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return null;
+  };
+
+  const measureFromDom = (nodeId: string) => {
+    try {
+      const element = document.querySelector(
+        `[data-id="${nodeId}"]`
+      ) as HTMLElement | null;
+      if (!element) return null;
+      const viewport = getViewport?.() ?? { zoom: 1 };
+      const zoom = viewport?.zoom || 1;
+      return {
+        width: element.offsetWidth / zoom,
+        height: element.offsetHeight / zoom,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const resolveNodeSize = (node: any) => {
+    const DEFAULT_W = 280;
+    const DEFAULT_H = 200;
+    if (!node) {
+      return { width: DEFAULT_W, height: DEFAULT_H };
+    }
+    const width =
+      toNumber(node.width) ??
+      toNumber(node.measured?.width) ??
+      toNumber(node.style?.width) ??
+      DEFAULT_W;
+
+    const height =
+      toNumber(node.height) ??
+      toNumber(node.measured?.height) ??
+      toNumber(node.style?.height) ??
+      DEFAULT_H;
+
+    return {
+      width: Math.max(1, Math.round(width)),
+      height: Math.max(1, Math.round(height)),
+    };
+  };
+
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max);
+
+  const adjustEndpointToCardEdge = (
+    nodeId: string | undefined,
+    position: Position | undefined,
+    x: number,
+    y: number
+  ) => {
+    if (!nodeId) {
+      return { x, y };
+    }
+    const node = getNode?.(nodeId);
+    if (!node?.position) {
+      return { x, y };
+    }
+    if (!position) {
+      return { x, y };
+    }
+
+    let { width, height } = resolveNodeSize(node);
+    const domSize = measureFromDom(nodeId);
+    if (domSize) {
+      width = Math.max(width, Math.round(domSize.width));
+      height = Math.max(height, Math.round(domSize.height));
+    }
+    const left = node.position.x;
+    const right = left + width;
+    const top = node.position.y;
+    const bottom = top + height;
+
+    if (position === Position.Left) {
+      return { x: left, y: clamp(y, top, bottom) };
+    }
+    if (position === Position.Right) {
+      return { x: right, y: clamp(y, top, bottom) };
+    }
+    if (position === Position.Top) {
+      return { x: clamp(x, left, right), y: top };
+    }
+    if (position === Position.Bottom) {
+      return { x: clamp(x, left, right), y: bottom };
+    }
+    return { x, y };
+  };
+
+  const adjustedSource = adjustEndpointToCardEdge(
+    data?.sourceNodeId,
+    sourcePosition,
+    sX,
+    sY
+  );
+  if (!Number.isFinite(sX) || !Number.isFinite(sY)) {
+    sX = adjustedSource.x;
+    sY = adjustedSource.y;
+  }
+
+  const adjustedTarget = adjustEndpointToCardEdge(
+    data?.targetNodeId,
+    targetPosition,
+    tX,
+    tY
+  );
+  if (!Number.isFinite(tX) || !Number.isFinite(tY)) {
+    tX = adjustedTarget.x;
+    tY = adjustedTarget.y;
+  }
+
   // Determine if either endpoint node is selected; if none are selected,
   // we switch to 'butt' linecaps to keep the line flush with the node edge (no round overhang).
   const sourceNodeSelected = data?.sourceNodeId ? !!getNode?.(data.sourceNodeId)?.selected : false;
@@ -158,7 +276,7 @@ export const CustomEdge = memo(({
         d={edgePath}
         markerEnd={markerEnd}
         strokeWidth={isSelected ? 8 : 6}
-        strokeLinecap="round"
+        strokeLinecap={anyEndpointSelected ? "round" : "butt"}
         fill="none"
         // visible path is non-interactive; hit testing handled by the wider interaction path below
         initial={{ pathLength: 0, opacity: 0 }}

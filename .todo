@@ -1,0 +1,6 @@
+TODO:
+- Verify auto-layout first-load behaviour keeps "create first node" overlay centered on refresh.
+- Gather feedback on new modal styling polish in `AddNodeModal` and adjust spacing if needed.
+- Run targeted regression around bulk editors to ensure new data guards handle mixed node payloads.
+
+

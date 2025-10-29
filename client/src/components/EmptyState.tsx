@@ -1,21 +1,28 @@
-import { Sparkles, Plus, Layout, MousePointer2 } from "lucide-react";
+import { Plus, Layout, MousePointer2, GitBranch } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "motion/react";
 
 interface EmptyStateProps {
   onAddNode: () => void;
-  onOpenAI: () => void;
+  onConnectSources: () => void;
   onStartTutorial: () => void;
+  onDismiss: () => void;
 }
 
-export function EmptyState({ onAddNode, onOpenAI, onStartTutorial }: EmptyStateProps) {
+export function EmptyState({ onAddNode, onConnectSources, onStartTutorial, onDismiss }: EmptyStateProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100]"
+      className="fixed inset-0 flex items-center justify-center pointer-events-none z-[200]"
     >
-      <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-indigo-100 p-8 max-w-2xl pointer-events-auto">
+      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-indigo-100 p-8 max-w-2xl pointer-events-auto">
+        <button
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 border border-indigo-100 flex items-center justify-center text-indigo-500 hover:bg-white transition"
+          onClick={onDismiss}
+        >
+          ×
+        </button>
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -34,7 +41,10 @@ export function EmptyState({ onAddNode, onOpenAI, onStartTutorial }: EmptyStateP
           <motion.div
             whileHover={{ scale: 1.02, y: -2 }}
             className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 cursor-pointer group"
-            onClick={onStartTutorial}
+            onClick={() => {
+              onStartTutorial();
+              onDismiss();
+            }}
           >
             <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <MousePointer2 className="w-5 h-5 text-white" />
@@ -48,21 +58,27 @@ export function EmptyState({ onAddNode, onOpenAI, onStartTutorial }: EmptyStateP
           <motion.div
             whileHover={{ scale: 1.02, y: -2 }}
             className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 cursor-pointer group"
-            onClick={onOpenAI}
+            onClick={() => {
+              onConnectSources();
+              onDismiss();
+            }}
           >
             <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+              <GitBranch className="w-5 h-5 text-white" />
             </div>
-            <h4 className="mb-1 text-purple-900">Use Templates</h4>
+            <h4 className="mb-1 text-purple-900">Connect Git or Wiki</h4>
             <p className="text-sm text-purple-700">
-              Start with AI-powered templates
+              Import code insights and documentation context
             </p>
           </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.02, y: -2 }}
             className="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-100 cursor-pointer group"
-            onClick={onAddNode}
+            onClick={() => {
+              onAddNode();
+              onDismiss();
+            }}
           >
             <div className="w-10 h-10 rounded-lg bg-indigo-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Plus className="w-5 h-5 text-white" />

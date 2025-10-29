@@ -1,7 +1,8 @@
 // @ts-nocheck
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { ReactFlow, 
   Background,
+  BackgroundVariant,
   Controls,
   addEdge,
   useNodesState,
@@ -21,6 +22,9 @@ import { AnimatePresence } from "motion/react";
 import { updateEdgesWithOptimalHandles } from "./utils/edgeRouting";
 import { applyRadialLayout } from "./utils/autoLayout";
 import { applyDomainRadialLayout } from "./utils/domainLayout";
+import { devOutlineCollisions, resolveCollisions } from "./utils/collision";
+import { captureNodeDimensions as measureNodes } from "@/utils/measure";
+import seed from "./fixtures/collision_seed.json";
 import { alignNodes, distributeNodes, AlignmentType } from "./utils/alignment";
 import { HistoryManager } from "./utils/history";
 import { exportToPNG, exportToSVG, exportToMarkdown, downloadMarkdown, exportNodeAsJSON, exportNodeAsMarkdown, copyNodeToClipboard, exportBatchAsJSON, exportBatchAsMarkdown, exportSubgraphAsJSON, exportSubgraphAsMarkdown } from "./utils/export";
@@ -50,6 +54,7 @@ import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog";
 import { FloatingFormatToolbar } from "./components/FloatingFormatToolbar";
 import { CommandPalette } from "./components/CommandPalette";
 import { CanvasContextMenu } from "./components/CanvasContextMenu";
+import { NodeContextMenu } from "./components/NodeContextMenu";
 import { ImportNodeModal } from "./components/ImportNodeModal";
 import { AIEnrichmentModal } from "./components/AIEnrichmentModal";
 import { SearchPanel } from "./components/SearchPanel";
@@ -57,6 +62,7 @@ import { BulkActionsToolbar } from "./components/BulkActionsToolbar";
 import { BulkTagEditor } from "./components/BulkTagEditor";
 import { BulkTypeEditor } from "./components/BulkTypeEditor";
 import { SelectByCriteria } from "./components/SelectByCriteria";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TemplateGallery } from "./components/TemplateGallery";
 import { SaveTemplateDialog } from "./components/SaveTemplateDialog";
 import { MinimapPanel } from "./components/MinimapPanel";
@@ -67,6 +73,7 @@ import { CustomConnectionLine } from "./components/CustomConnectionLine";
 import { setConnectStart } from "./utils/connectionState";
 import { DomainRings } from "./components/DomainRings";
 import { EdgeContextMenu } from "./components/EdgeContextMenu";
+import { ConnectSourcesModal } from "./components/ConnectSourcesModal";
 import {
   bulkAddTags,
   bulkRemoveTags,
@@ -93,195 +100,203 @@ const edgeTypes: EdgeTypes = {
   custom: CustomEdge,
 };
 
+const LAYOUT_VERSION_KEY = "flowforge-layout-version";
+const CURRENT_LAYOUT_VERSION = "radial-v2";
+
+const haveDimensionsChanged = (prev = {}, next = {}) => {
+  const prevKeys = Object.keys(prev);
+  const nextKeys = Object.keys(next);
+  if (prevKeys.length !== nextKeys.length) {
+    return true;
+  }
+  for (const key of nextKeys) {
+    const prevValue = prev[key];
+    const nextValue = next[key];
+    if (!prevValue) {
+      return true;
+    }
+    // 1px tolerance to avoid re-layout due to measurement jitter
+    const dw = Math.abs((prevValue.width ?? 0) - (nextValue.width ?? 0));
+    const dh = Math.abs((prevValue.height ?? 0) - (nextValue.height ?? 0));
+    if (dw > 1 || dh > 1) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const buildPositionMap = (nodes: Node[]) => {
+  const map: Record<string, { x: number; y: number }> = {};
+  nodes.forEach((node) => {
+    if (!node?.id) return;
+    const { x = 0, y = 0 } = node?.position || {};
+    map[node.id] = { x: Math.round(x), y: Math.round(y) };
+  });
+  return map;
+};
+
+const didCanonicalPositionsChange = (
+  previous: Record<string, { x: number; y: number }> | null | undefined,
+  next: Record<string, { x: number; y: number }>
+) => {
+  if (!previous) return true;
+  const prevKeys = Object.keys(previous);
+  const nextKeys = Object.keys(next);
+  if (prevKeys.length !== nextKeys.length) {
+    return true;
+  }
+  for (const key of nextKeys) {
+    const prevPos = previous[key];
+    const nextPos = next[key];
+    if (!prevPos || prevPos.x !== nextPos.x || prevPos.y !== nextPos.y) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const DEFAULT_CARD_WIDTH = 280;
+const DEFAULT_CARD_HEIGHT = 200;
+const MAX_CARD_HEIGHT_CAP = 720;
+const DEFAULT_CARD_HEIGHT_CAP = 640;
+const CARD_HEIGHT_MARGIN = 48;
+
+const parseDimensionValue = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
+const getNodeSizeEstimate = (
+  node: Node,
+  dimensions?: Record<string, { width: number; height: number }>
+) => {
+  const fromMap = dimensions?.[node.id];
+  if (fromMap) {
+    const width = parseDimensionValue(fromMap.width) ?? DEFAULT_CARD_WIDTH;
+    const height = parseDimensionValue(fromMap.height) ?? DEFAULT_CARD_HEIGHT;
+    return {
+      width: Math.max(1, Math.round(width)),
+      height: Math.max(1, Math.round(height)),
+    };
+  }
+
+  const width =
+    parseDimensionValue((node as any).width) ??
+    parseDimensionValue(node.style?.width) ??
+    DEFAULT_CARD_WIDTH;
+  const height =
+    parseDimensionValue((node as any).height) ??
+    parseDimensionValue(node.style?.height) ??
+    DEFAULT_CARD_HEIGHT;
+
+  return {
+    width: Math.max(1, Math.round(width)),
+    height: Math.max(1, Math.round(height)),
+  };
+};
+
+const rangesOverlap = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
+  Math.max(aStart, bStart) <= Math.min(aEnd, bEnd);
+
+const computeNodeHeightCaps = (
+  nodes: Node[],
+  dimensions?: Record<string, { width: number; height: number }>
+): Record<string, number> => {
+  const boxes = nodes.map((node) => {
+    const { width, height } = getNodeSizeEstimate(node, dimensions);
+    const left = node.position?.x ?? 0;
+    const top = node.position?.y ?? 0;
+    return {
+      id: node.id,
+      type: node.type,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  });
+
+  const caps: Record<string, number> = {};
+
+  boxes.forEach((box) => {
+    if (box.type !== "custom") {
+      return;
+    }
+
+    const overlappingBelow = boxes.filter((other) => {
+      if (other.id === box.id) return false;
+      if (!rangesOverlap(box.left, box.right, other.left, other.right)) return false;
+      return other.top >= box.top;
+    });
+
+    let limit = MAX_CARD_HEIGHT_CAP;
+    overlappingBelow.forEach((other) => {
+      limit = Math.min(limit, other.top - box.top - CARD_HEIGHT_MARGIN);
+    });
+
+    if (!Number.isFinite(limit)) {
+      limit = DEFAULT_CARD_HEIGHT_CAP;
+    }
+
+    limit = Math.max(220, Math.min(MAX_CARD_HEIGHT_CAP, limit));
+    caps[box.id] = limit;
+  });
+
+  return caps;
+};
+
+const annotateNodesWithHeightCaps = (
+  nodes: Node[],
+  dimensions?: Record<string, { width: number; height: number }>
+) => {
+  if (!nodes || nodes.length === 0) return nodes;
+  const capMap = computeNodeHeightCaps(nodes, dimensions);
+  return nodes.map((node) => {
+    if (node.type !== "custom") return node;
+    const cap = capMap[node.id];
+    if (!cap || !Number.isFinite(cap)) return node;
+    return {
+      ...node,
+      data: {
+        ...(node.data || {}),
+        maxNodeHeight: cap,
+      },
+    };
+  });
+};
+
 const initialNodes = [
-  // Center focal node - auto height
   {
     id: "center",
     type: "center",
-    position: { x: 500, y: 300 },
-    style: { width: 320 },
+    position: { x: 0, y: 0 },
+    style: { width: 360, height: 240 },
+    draggable: false,
+    selectable: false,
     data: {
-      label: "ASAP Bail",
-      description: "An innovative product: ASAP Bail is a unified operational platform for bail bond teams. It ingests jail intakes in real-time.",
-      icon: "⚖️",
-      link: "https://github.com/acme/asap-bail",
-      buttonText: "Clone the Coda/Spring boilerplate",
+      label: "Welcome to Strukt",
+      description: "This blank canvas is yours. Click the button below to add your first node and start mapping your architecture.",
+      icon: "🧭",
+      link: "",
+      buttonText: "Connect your Git or Wiki",
+      secondaryButtonText: "Create your first node",
       // buttonAction will be added dynamically in nodesWithCallbacks
     } as CenterNodeData,
-  },
-  // Features - Right side
-  {
-    id: "features",
-    type: "custom",
-    position: { x: 1000, y: 200 },
-    style: { width: 280, height: 450 },
-    data: {
-      label: "Features",
-      type: "frontend" as const,
-      domain: "product" as const,
-      ring: 1,
-      summary: "Core features and functionality",
-      cards: [
-        { 
-          id: "c1", 
-          title: "Real-Time Intake Sync", 
-          type: "text" as const,
-          content: "Automated ingestion of jail intake data across counties. This feature continuously monitors and normalizes data from multiple sources."
-        },
-        { 
-          id: "c2", 
-          title: "Case Triage Pipeline", 
-          type: "todo" as const,
-          todos: [
-            { id: "t1", text: "Design case scoring model", completed: true },
-            { id: "t2", text: "Build pipeline database schema", completed: false },
-            { id: "t3", text: "Develop drag-and-drop Kanban UI", completed: false },
-          ]
-        },
-        { 
-          id: "c3", 
-          title: "Messaging & Reminders", 
-          type: "text" as const,
-          content: "Built-in communication with defendants and co-signers via SMS and email."
-        },
-        { 
-          id: "c4", 
-          title: "CRM & Compliance", 
-          type: "todo" as const,
-          todos: [
-            { id: "t4", text: "Set up Supabase storage for documents", completed: false },
-            { id: "t5", text: "Build compliance checklist schema", completed: false },
-            { id: "t6", text: "Implement audit logging with timestamps", completed: false },
-          ]
-        },
-      ],
-    } as CustomNodeData,
-  },
-  // Competitors - Left side
-  {
-    id: "competitors",
-    type: "custom",
-    position: { x: -50, y: 200 },
-    style: { width: 280, height: 500 },
-    data: {
-      label: "Competitors",
-      type: "requirement" as const,
-      domain: "business" as const,
-      ring: 1,
-      summary: "Market competition and alternatives",
-      cards: [
-        { id: "c5", title: "Captira", type: "text" as const, content: "Bail bond management software offering case tracking, payment processing..." },
-        { id: "c6", title: "TrackGrouping", type: "text" as const, content: "Platform focused on managing bail bond cases, court dates, collections..." },
-        { id: "c7", title: "JMTracker", type: "text" as const, content: "Jail management system providing intake, classification offering data..." },
-        { id: "c8", title: "Casefile", type: "text" as const, content: "Web-based management and billing platform with fast and document management..." },
-        { id: "c9", title: "BondPro", type: "text" as const, content: "Cloud-based software offering defendant tracking, payment..." },
-      ],
-    } as CustomNodeData,
-  },
-  // Target Audience - Bottom
-  {
-    id: "target",
-    type: "custom",
-    position: { x: 450, y: 750 },
-    style: { width: 280, height: 400 },
-    data: {
-      label: "Target Audience",
-      type: "doc" as const,
-      domain: "business" as const,
-      ring: 2,
-      summary: "Who will use this product",
-      cards: [
-        { id: "c10", title: "Bail Bond Agency Owners", type: "text" as const, content: "Need a centralized system to manage bail teams, monitor cases..." },
-        { id: "c11", title: "Bail Bond Agents", type: "text" as const, content: "Require real-time mobile data daily, need single tools to capture..." },
-        { id: "c12", title: "Agency Administrative Staff", type: "text" as const, content: "Handle payments, documentation, and compliance tasks..." },
-        { id: "c13", title: "Defendant Support Staff", type: "text" as const, content: "Coordinate transportation and on-location monitoring..." },
-      ],
-    } as CustomNodeData,
-  },
-  // Top nodes
-  {
-    id: "pepper",
-    type: "custom",
-    position: { x: 350, y: -150 },
-    style: { width: 280, height: 200 },
-    data: {
-      label: "Pepper Motion",
-      type: "backend" as const,
-      domain: "tech" as const,
-      ring: 2,
-      summary: "Animation Library",
-      cards: [],
-    } as CustomNodeData,
-  },
-  {
-    id: "wings",
-    type: "custom",
-    position: { x: 670, y: -150 },
-    style: { width: 280, height: 200 },
-    data: {
-      label: "Wings",
-      type: "backend" as const,
-      domain: "tech" as const,
-      ring: 2,
-      summary: "Payments & Subscriptions",
-      cards: [],
-    } as CustomNodeData,
-  },
-  {
-    id: "vapor",
-    type: "custom",
-    position: { x: 200, y: -50 },
-    style: { width: 280, height: 200 },
-    data: {
-      label: "Vapor",
-      type: "frontend" as const,
-      domain: "product" as const,
-      ring: 2,
-      summary: "Onboarding Platform",
-      cards: [],
-    } as CustomNodeData,
-  },
-  {
-    id: "mapbox",
-    type: "custom",
-    position: { x: 900, y: 400 },
-    style: { width: 280, height: 200 },
-    data: {
-      label: "Mapbox",
-      type: "backend" as const,
-      domain: "tech" as const,
-      ring: 1,
-      summary: "GPS Details to auto-update Service",
-      cards: [],
-    } as CustomNodeData,
-  },
-  {
-    id: "roads",
-    type: "custom",
-    position: { x: 900, y: 520 },
-    style: { width: 280, height: 200 },
-    data: {
-      label: "Roads",
-      type: "frontend" as const,
-      domain: "data-ai" as const,
-      ring: 1,
-      summary: "Real-time Data Caching and node synchronization",
-      cards: [],
-    } as CustomNodeData,
+    positionAbsolute: { x: 0, y: 0 },
   },
 ];
 
-const initialEdges = [
-  // From center to main categories (handles will be calculated dynamically)
-  { id: "e-center-features", source: "center", target: "features", type: "custom" },
-  { id: "e-center-competitors", source: "center", target: "competitors", type: "custom" },
-  { id: "e-center-target", source: "center", target: "target", type: "custom" },
-  { id: "e-center-pepper", source: "center", target: "pepper", type: "custom" },
-  { id: "e-center-wings", source: "center", target: "wings", type: "custom" },
-  { id: "e-center-vapor", source: "center", target: "vapor", type: "custom" },
-  { id: "e-center-mapbox", source: "center", target: "mapbox", type: "custom" },
-  { id: "e-center-roads", source: "center", target: "roads", type: "custom" },
-];
+const initialEdges: Edge[] = [];
 
 // Migration function: convert old handle IDs to new format
 const migrateEdgeHandles = (edges: Edge[]): Edge[] => {
@@ -361,6 +376,7 @@ function FlowCanvas() {
   const [isAutoLayouting, setIsAutoLayouting] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isPlacingNode, setIsPlacingNode] = useState(false);
+  const [isUserDragging, setIsUserDragging] = useState(false);
   const [placingNodeInfo, setPlacingNodeInfo] = useState<{
     nodeId: string;
     startPos: { x: number; y: number };
@@ -372,12 +388,17 @@ function FlowCanvas() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
   const [isEditingText, setIsEditingText] = useState(false);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [canvasContextMenu, setCanvasContextMenu] = useState<{
-    isOpen: boolean;
-    position: { x: number; y: number };
-  }>({ isOpen: false, position: { x: 0, y: 0 } });
-  const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
+const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+const [canvasContextMenu, setCanvasContextMenu] = useState<{
+  isOpen: boolean;
+  position: { x: number; y: number };
+}>({ isOpen: false, position: { x: 0, y: 0 } });
+const [nodeContextMenu, setNodeContextMenu] = useState<{
+  isOpen: boolean;
+  position: { x: number; y: number };
+  nodeId: string | null;
+}>({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
+const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const [enrichmentNodeId, setEnrichmentNodeId] = useState<string | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [edgeToReplace, setEdgeToReplace] = useState<{ id: string; targetNodeId?: string } | null>(null);
@@ -390,6 +411,7 @@ function FlowCanvas() {
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
   const [isSnapshotsPanelOpen, setIsSnapshotsPanelOpen] = useState(false);
   const [isRelationshipsPanelOpen, setIsRelationshipsPanelOpen] = useState(false);
+  const [isConnectSourcesOpen, setIsConnectSourcesOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"radial" | "process">("radial");
   const [showDomainRings, setShowDomainRings] = useState(true);
   const [edgeContextMenu, setEdgeContextMenu] = useState<{
@@ -406,6 +428,216 @@ function FlowCanvas() {
   const connectStartInfoRef = useRef<{ nodeId: string | null; handleId?: string | null } | null>(null);
   const didConnectRef = useRef(false);
   const lastAutoSnapshotTime = useRef<number>(0);
+  const autoLayoutOnLoadRef = useRef<boolean>(false);
+  const nodeDimensionsRef = useRef<Record<string, { width: number; height: number }>>({});
+  const [dimensionVersion, setDimensionVersion] = useState(0);
+  const initialCenterFitRef = useRef(false);
+  const layoutDebug = useMemo(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('layoutDebug') === '1';
+      const env = (import.meta as any)?.env?.VITE_LAYOUT_DEBUG === 'on';
+      return q || env;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Optional d3-force relaxer behind VITE_FEATURE_D3_RELAX (default off)
+  const maybeD3Relax = useCallback(async (nodesIn: Node[]): Promise<Node[]> => {
+    try {
+      const flag = (import.meta as any)?.env?.VITE_FEATURE_D3_RELAX;
+      if (!flag || String(flag).toLowerCase() === 'off') return nodesIn;
+      const mod = await import('./utils/d3Relax');
+      return await mod.relaxLayoutWithD3(nodesIn as any, [] as any, { maxTicks: 100 });
+    } catch {
+      return nodesIn;
+    }
+  }, []);
+
+  // --- Layout + Relaxation Orchestrator ---
+  const [relaxPadding, setRelaxPadding] = useState(12);
+  // Pinned nodes that should not be moved by radial base layout or relaxor
+  const pinnedRef = useRef<Set<string>>(new Set());
+  const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
+  const lastRadialBaseRef = useRef<Record<string, { x: number; y: number }> | null>(null);
+  const clearPins = useCallback(() => {
+    pinnedRef.current.clear();
+  }, []);
+  const recordRadialBaseline = useCallback((layoutNodes: Node[]) => {
+    lastRadialBaseRef.current = buildPositionMap(layoutNodes);
+  }, []);
+  const hasRadialBaselineChanged = useCallback((layoutNodes: Node[]) => {
+    const nextMap = buildPositionMap(layoutNodes);
+    return didCanonicalPositionsChange(lastRadialBaseRef.current, nextMap);
+  }, []);
+  const relaxRetryRef = useRef(0);
+  const relaxCooldownRef = useRef<number>(0);
+  const layoutCooldownRef = useRef<number>(0);
+
+  const waitTwoFrames = useCallback(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }), []);
+
+  const applyLayoutAndRelax = useCallback(async (
+    baseNodes: Node[],
+    {
+      padding = 12,
+      maxPasses = 10,
+      fit = true,
+      fixedIds = [],
+    }: { padding?: number; maxPasses?: number; fit?: boolean; fixedIds?: string[] }
+  ) => {
+    layoutCooldownRef.current = Date.now();
+    if (!reactFlowInstance) return;
+
+    // 1) Set base positions
+    setNodes(baseNodes);
+    // Ensure internals refreshed for measurement
+    try {
+      reactFlowInstance.updateNodeInternals(baseNodes.map(n => n.id));
+    } catch {}
+
+    // 2) Wait for React Flow to measure nodes
+    await waitTwoFrames();
+
+  // 3) Fetch fresh nodes with width/height populated
+    let fresh = typeof reactFlowInstance.getNodes === 'function' ? (reactFlowInstance.getNodes() as Node[]) : baseNodes;
+
+    // If any node still lacks size, retry once after ~16ms
+    const missingSize = fresh.some(n => n.id !== 'center' && (!n.width || !n.height));
+    if (missingSize) {
+      // eslint-disable-next-line no-console
+      console.debug('[layout] sizes not ready; retrying measurement in 16ms');
+      await new Promise(r => setTimeout(r, 16));
+      fresh = typeof reactFlowInstance.getNodes === 'function' ? (reactFlowInstance.getNodes() as Node[]) : baseNodes;
+    }
+
+    const dimensionSnapshot: Record<string, { width: number; height: number }> = {};
+    fresh.forEach((node) => {
+      const width =
+        parseDimensionValue(node.width) ??
+        parseDimensionValue(node.style?.width) ??
+        DEFAULT_CARD_WIDTH;
+      const height =
+        parseDimensionValue(node.height) ??
+        parseDimensionValue(node.style?.height) ??
+        DEFAULT_CARD_HEIGHT;
+      dimensionSnapshot[node.id] = {
+        width: Math.max(1, Math.round(width)),
+        height: Math.max(1, Math.round(height)),
+      };
+    });
+
+    // 4) Run deterministic collision resolver using graph units (no DOM)
+    // Always keep center + any pinned nodes fixed during relaxation
+    const pinnedFromNodes = baseNodes.filter(n => (n as any)?.data?.pinned).map(n => n.id);
+    const fixedSet = Array.from(new Set<string>(['center', ...fixedIds, ...pinnedFromNodes]));
+
+    // Dev visibility
+    if (process.env.NODE_ENV !== 'production') {
+      const c0 = baseNodes.find(n => n.id === 'center')?.position;
+      console.debug('[layout] fixedIds:', fixedSet, 'center@', c0);
+    }
+
+    const info = resolveCollisions(fresh as any, {
+      padding,
+      maxPasses,
+      measure: nodeDimensionsRef.current,
+      fixedIds: fixedSet,
+    });
+    if (info.pendingMeasurement && relaxRetryRef.current < 3) {
+      relaxRetryRef.current += 1;
+      // Try again on next tick
+      await waitTwoFrames();
+      return applyLayoutAndRelax(baseNodes, { padding, maxPasses, fit, fixedIds });
+    }
+    relaxRetryRef.current = 0;
+
+    // 5) Log movement stats
+    // eslint-disable-next-line no-console
+    console.log(`[layout] relax moved ${info.movedCount}/${fresh.length}`);
+
+    // 6) Apply relaxed positions and refresh
+    let nextNodes = info.nodes as any;
+    // Restore center position from base to guarantee it never budges
+    const centerFromBase = baseNodes.find(n => n.id === 'center');
+    if (centerFromBase) {
+      nextNodes = nextNodes.map((n: any) => (n.id === 'center' ? { ...n, position: centerFromBase.position } : n));
+    }
+    nextNodes = annotateNodesWithHeightCaps(nextNodes, dimensionSnapshot) as any;
+    setNodes(nextNodes);
+    try {
+      reactFlowInstance.updateNodeInternals(nextNodes.map((n: any) => n.id));
+    } catch {}
+
+    // 7) Fit and draw debug overlay if enabled
+    if (fit) {
+      try { reactFlowInstance.fitView({ padding: 0.2, duration: 300 }); } catch {}
+      if (layoutDebug) requestAnimationFrame(() => devOutlineCollisions(padding));
+    }
+
+    // 8) Update edges after positions change
+  setEdges((prevEdges) => updateEdgesWithOptimalHandles(nextNodes as any, prevEdges, "center"));
+
+    // 9) Re-measure for subsequent operations
+    window.requestAnimationFrame(() => refreshDimensions());
+  }, [reactFlowInstance, setNodes, setEdges, layoutDebug, waitTwoFrames, relaxPadding]);
+
+  // Relax-only pass that respects pinnedRef (and center) without recomputing base layout
+  const relaxRespectingPins = useCallback(async (
+    nodesIn: Node[],
+    { padding = relaxPadding, maxPasses = 6 }: { padding?: number; maxPasses?: number }
+  ) => {
+    if (!reactFlowInstance) return;
+    const now = Date.now();
+    if (now - relaxCooldownRef.current < 350) {
+      return;
+    }
+    relaxCooldownRef.current = now;
+
+    // Apply current positions as base
+    setNodes(nodesIn);
+    try { reactFlowInstance.updateNodeInternals(nodesIn.map((n) => n.id)); } catch {}
+
+    // Wait for measurement to stabilize
+    await waitTwoFrames();
+    let fresh = typeof reactFlowInstance.getNodes === 'function' ? (reactFlowInstance.getNodes() as Node[]) : nodesIn;
+
+    const dimensionSnapshot: Record<string, { width: number; height: number }> = {};
+    fresh.forEach((node) => {
+      const width =
+        parseDimensionValue(node.width) ??
+        parseDimensionValue(node.style?.width) ??
+        DEFAULT_CARD_WIDTH;
+      const height =
+        parseDimensionValue(node.height) ??
+        parseDimensionValue(node.style?.height) ??
+        DEFAULT_CARD_HEIGHT;
+      dimensionSnapshot[node.id] = {
+        width: Math.max(1, Math.round(width)),
+        height: Math.max(1, Math.round(height)),
+      };
+    });
+
+    // Mark pinned from ref
+    const withPins = fresh.map((n) =>
+      pinnedRef.current.has(n.id) ? ({ ...n, data: { ...(n.data || {}), pinned: true } } as Node) : n
+    );
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[layout] calling relax', { fit: false, padding, pinned: Array.from(pinnedRef.current) });
+    }
+    const info = resolveCollisions(withPins as any, { padding, maxPasses, measure: nodeDimensionsRef.current, fixedIds: ['center', ...Array.from(pinnedRef.current)] });
+
+    // Ensure integer positions to avoid sub-pixel measurement jitter
+    const snapped = (info.nodes as any).map((n: any) => ({ ...n, position: { x: Math.round(n.position?.x ?? 0), y: Math.round(n.position?.y ?? 0) } }))
+    const annotated = annotateNodesWithHeightCaps(snapped as any, dimensionSnapshot) as any;
+    setNodes(annotated);
+    try { reactFlowInstance.updateNodeInternals(annotated.map((n: any) => n.id)); } catch {}
+    setEdges((prevEdges) => updateEdgesWithOptimalHandles(annotated as any, prevEdges, 'center'));
+    window.requestAnimationFrame(() => refreshDimensions());
+  }, [reactFlowInstance, setNodes, setEdges, waitTwoFrames, relaxPadding]);
 
   // Safe wrapper for onNodesChange with validation
   const onNodesChange = useCallback((changes: any[]) => {
@@ -417,6 +649,24 @@ function FlowCanvas() {
     }
   }, [onNodesChangeInternal]);
 
+  // Ensure center node is always non-draggable and non-selectable, even when nodes are loaded/restored
+  useEffect(() => {
+    setNodes((nds) => {
+      let changed = false;
+      const next = nds.map((n) => {
+        if (n.id !== 'center') return n;
+        const d = n as any;
+        const shouldUpdate = d.draggable !== false || d.selectable !== false;
+        if (shouldUpdate) {
+          changed = true;
+          return { ...n, draggable: false, selectable: false } as any;
+        }
+        return n;
+      });
+      return changed ? next : nds;
+    });
+  }, [setNodes, nodes.length]);
+
   // Safe wrapper for onEdgesChange with validation
   const onEdgesChange = useCallback((changes: any[]) => {
     try {
@@ -426,6 +676,52 @@ function FlowCanvas() {
       // Silently fail to prevent crashes
     }
   }, [onEdgesChangeInternal]);
+
+  function refreshDimensions() {
+    if (!reactFlowInstance) return;
+    const measuredNodes = typeof reactFlowInstance.getNodes === 'function'
+      ? (reactFlowInstance.getNodes() as Node[])
+      : [];
+
+    if (!Array.isArray(measuredNodes) || measuredNodes.length === 0) {
+      return;
+    }
+
+    const next = measureNodes(measuredNodes);
+
+    if (Object.keys(next).length === 0) {
+      return;
+    }
+
+    if (haveDimensionsChanged(nodeDimensionsRef.current, next)) {
+      nodeDimensionsRef.current = next;
+      setDimensionVersion((version) => version + 1);
+    }
+  }
+
+  const allNodesMeasured = useMemo(() => {
+    if (!nodes || nodes.length === 0) {
+      return false;
+    }
+    return nodes.every((node) => {
+      if (node.id === "center") return true;
+      const entry = nodeDimensionsRef.current[node.id];
+      return entry && entry.width && entry.height;
+    });
+  }, [nodes, dimensionVersion]);
+
+  useEffect(() => {
+    if (!nodeContextMenu.isOpen || !nodeContextMenu.nodeId) return;
+    const exists = nodes.some((n) => n.id === nodeContextMenu.nodeId);
+    if (!exists) {
+      setNodeContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
+    }
+  }, [nodeContextMenu, nodes]);
+
+  const activeContextNode = useMemo(() => {
+    if (!nodeContextMenu.isOpen || !nodeContextMenu.nodeId) return null;
+    return nodes.find((n) => n.id === nodeContextMenu.nodeId) || null;
+  }, [nodeContextMenu, nodes]);
 
   // Undo handler
   const handleUndo = useCallback(() => {
@@ -600,10 +896,13 @@ function FlowCanvas() {
       duration: 400,
       maxZoom
     });
+    if (layoutDebug) {
+      requestAnimationFrame(() => devOutlineCollisions(12));
+    }
     toast.success("Fit all nodes", {
       description: "Canvas adjusted to show all nodes",
     });
-  }, [reactFlowInstance, nodes.length]);
+  }, [reactFlowInstance, nodes.length, layoutDebug]);
 
   const handleFitSelection = useCallback(() => {
     const selectedNodes = nodes.filter(n => n.selected);
@@ -627,20 +926,34 @@ function FlowCanvas() {
       maxZoom,
       nodes: selectedNodes,
     });
+    if (layoutDebug) {
+      requestAnimationFrame(() => devOutlineCollisions(12));
+    }
     
     toast.success("Zoomed to selection", {
       description: `Focused on ${selectedNodes.length} node${selectedNodes.length > 1 ? 's' : ''}`,
     });
-  }, [reactFlowInstance, nodes]);
+  }, [reactFlowInstance, nodes, layoutDebug]);
 
   const handleCenterCanvas = useCallback(() => {
     if (!reactFlowInstance) return;
     // Find center node and focus on it
     const centerNode = nodes.find(n => n.id === "center");
     if (centerNode) {
+      const measured = nodeDimensionsRef.current?.[centerNode.id];
+      const width =
+        parseDimensionValue(measured?.width) ??
+        parseDimensionValue(centerNode.width) ??
+        parseDimensionValue(centerNode.style?.width) ??
+        360;
+      const height =
+        parseDimensionValue(measured?.height) ??
+        parseDimensionValue(centerNode.height) ??
+        parseDimensionValue(centerNode.style?.height) ??
+        240;
       reactFlowInstance.setCenter(
-        centerNode.position.x + (centerNode.width || 320) / 2,
-        centerNode.position.y + (centerNode.height || 200) / 2,
+        (centerNode.position?.x ?? 0) + width / 2,
+        (centerNode.position?.y ?? 0) + height / 2,
         { duration: 400, zoom: 1 }
       );
       toast.success("Centered", {
@@ -653,12 +966,23 @@ function FlowCanvas() {
     if (!reactFlowInstance) return;
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
+      const measured = nodeDimensionsRef.current?.[node.id];
+      const width =
+        parseDimensionValue(measured?.width) ??
+        parseDimensionValue(node.width) ??
+        parseDimensionValue(node.style?.width) ??
+        DEFAULT_CARD_WIDTH;
+      const height =
+        parseDimensionValue(measured?.height) ??
+        parseDimensionValue(node.height) ??
+        parseDimensionValue(node.style?.height) ??
+        DEFAULT_CARD_HEIGHT;
       reactFlowInstance.setCenter(
-        node.position.x + (node.width || 280) / 2,
-        node.position.y + (node.height || 150) / 2,
+        (node.position?.x ?? 0) + width / 2,
+        (node.position?.y ?? 0) + height / 2,
         { duration: 400, zoom: 1.2 }
       );
-      
+
       // Select the node
       setNodes((nds) =>
         nds.map((n) => ({
@@ -765,6 +1089,18 @@ function FlowCanvas() {
     return () => clearTimeout(timeoutId);
   }, [reactFlowInstance, nodes]);
 
+  useEffect(() => {
+    refreshDimensions();
+    const timeoutId = window.setTimeout(refreshDimensions, 120);
+    return () => window.clearTimeout(timeoutId);
+  }, [nodes]);
+
+  useEffect(() => {
+    const handleResize = () => refreshDimensions();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
 
 
   // Initialize history with initial state
@@ -774,6 +1110,110 @@ function FlowCanvas() {
     setCanRedo(historyManager.current.canRedo());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-apply layout once on first load unless the user explicitly disables it
+  useEffect(() => {
+    if (autoLayoutOnLoadRef.current) return;
+    if (!allNodesMeasured) return;
+    if (isUserDragging) return;
+
+    const storageAvailable = typeof window !== 'undefined';
+    const pref = storageAvailable ? localStorage.getItem('flowforge-auto-layout-on-load') : null;
+    const hasAppliedInitialLayout = storageAvailable
+      ? localStorage.getItem('flowforge-initial-layout-applied') === 'true'
+      : false;
+    const storedLayoutVersion = storageAvailable
+      ? localStorage.getItem(LAYOUT_VERSION_KEY)
+      : null;
+    const layoutVersionMismatch = storedLayoutVersion !== CURRENT_LAYOUT_VERSION;
+
+    // Respect explicit opt-out via localStorage.setItem('flowforge-auto-layout-on-load', 'false')
+    if (pref === 'false') return;
+
+  const shouldAutoLayout = pref === 'true' || !hasAppliedInitialLayout || layoutVersionMismatch;
+    if (!shouldAutoLayout) return;
+
+    const t = setTimeout(() => {
+      try {
+        if (nodes && nodes.length > 1) {
+          autoLayoutOnLoadRef.current = true;
+          let layoutedNodes = applyDomainRadialLayout(nodes, {
+            centerNodeId: "center",
+            viewMode,
+            viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+            dimensions: nodeDimensionsRef.current,
+          });
+          // Apply layout and then perform relaxation with measurement-awareness
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug('[layout] calling relax', { fit: true, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
+          }
+          setIsAutoLayouting(true);
+          if (viewMode === 'radial') {
+            recordRadialBaseline(layoutedNodes);
+          } else {
+            lastRadialBaseRef.current = null;
+          }
+          applyLayoutAndRelax(layoutedNodes, { padding: relaxPadding, maxPasses: 10, fit: true, fixedIds: ['center', ...Array.from(pinnedRef.current)] }).then(() => {
+            if (storageAvailable) {
+              localStorage.setItem('flowforge-initial-layout-applied', 'true');
+              localStorage.setItem(LAYOUT_VERSION_KEY, CURRENT_LAYOUT_VERSION);
+            }
+          }).finally(() => {
+            setTimeout(() => setIsAutoLayouting(false), 600);
+          });
+        }
+      } catch (e) {
+        console.warn('Auto-layout on load failed:', e);
+      }
+    }, 250);
+
+    return () => clearTimeout(t);
+  }, [allNodesMeasured, nodes, viewMode, applyLayoutAndRelax, relaxPadding, isUserDragging, recordRadialBaseline]);
+
+  // Keep radial layout spacing in sync with live node dimensions
+  // Debounced dimension watcher for radial view: throttle via requestAnimationFrame
+  useEffect(() => {
+    if (viewMode !== "radial") return;
+    if (!allNodesMeasured) return;
+    if (!nodeDimensionsRef.current || Object.keys(nodeDimensionsRef.current).length === 0) return;
+    if (isUserDragging) return;
+    if (isAutoLayouting) return;
+    if (Date.now() - layoutCooldownRef.current < 450) return;
+
+    let rafId = 0;
+    rafId = requestAnimationFrame(() => {
+      // If there are pinned nodes, skip full recompute and only relax respecting pins
+      if (pinnedRef.current.size > 0) {
+        const current = typeof reactFlowInstance?.getNodes === 'function'
+          ? (reactFlowInstance!.getNodes() as Node[])
+          : nodes;
+        relaxRespectingPins(current, { padding: relaxPadding, maxPasses: 4 });
+        return;
+      }
+
+      const layoutedNodes = applyDomainRadialLayout(nodes, {
+        centerNodeId: "center",
+        viewMode: "radial",
+        viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+        dimensions: nodeDimensionsRef.current,
+        pinnedIds: pinnedRef.current,
+      });
+
+      if (!hasRadialBaselineChanged(layoutedNodes)) {
+        return;
+      }
+
+      recordRadialBaseline(layoutedNodes);
+      setIsAutoLayouting(true);
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[layout] calling relax', { fit: false, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
+      }
+      applyLayoutAndRelax(layoutedNodes, { padding: relaxPadding, maxPasses: 10, fit: false, fixedIds: ['center', ...Array.from(pinnedRef.current)] }).finally(() => {
+        setTimeout(() => setIsAutoLayouting(false), 480);
+      });
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [dimensionVersion, viewMode, allNodesMeasured, nodes, applyLayoutAndRelax, relaxPadding, isUserDragging, isAutoLayouting, reactFlowInstance, relaxRespectingPins, hasRadialBaselineChanged, recordRadialBaseline]);
 
   // Track changes to nodes/edges for history (with debounce to avoid tracking every drag)
   useEffect(() => {
@@ -813,7 +1253,63 @@ function FlowCanvas() {
     const hasSeenOnboarding = localStorage.getItem("flowforge-onboarding-seen");
     // Only show empty state when there's truly just the center node (or nothing)
     setShowEmptyState(nodes.length <= 1 && hasSeenOnboarding === "true");
+    if (nodes.length > 1) {
+      initialCenterFitRef.current = false;
+    }
   }, [nodes.length]);
+
+  const hasSingleCenterNode = nodes.length === 1 && nodes[0]?.id === 'center';
+
+  const centerViewportOnCenterNode = useCallback(() => {
+    if (!reactFlowInstance) return;
+    const wrapper = reactFlowWrapperRef.current;
+    if (!wrapper) return;
+    const centerNode = nodes.find((n) => n.id === 'center');
+    if (!centerNode) return;
+
+    const { clientWidth, clientHeight } = wrapper;
+    if (!clientWidth || !clientHeight) return;
+
+    const measured = nodeDimensionsRef.current?.[centerNode.id];
+    const width =
+      parseDimensionValue(measured?.width) ??
+      parseDimensionValue(centerNode.style?.width) ??
+      parseDimensionValue((centerNode as any).width) ??
+      360;
+    const height =
+      parseDimensionValue(measured?.height) ??
+      parseDimensionValue(centerNode.style?.height) ??
+      parseDimensionValue((centerNode as any).height) ??
+      240;
+
+    const posX = centerNode.position?.x ?? 0;
+    const posY = centerNode.position?.y ?? 0;
+
+    const targetX = clientWidth / 2 - (posX + width / 2);
+    const targetY = clientHeight / 2 - (posY + height / 2);
+
+    try {
+      reactFlowInstance.setViewport({ x: targetX, y: targetY, zoom: 1 }, { duration: 0 });
+      initialCenterFitRef.current = true;
+    } catch {}
+  }, [reactFlowInstance, nodes]);
+
+  useEffect(() => {
+    if (!reactFlowInstance) return;
+    if (hasSingleCenterNode && !initialCenterFitRef.current) {
+      requestAnimationFrame(() => centerViewportOnCenterNode());
+    }
+  }, [hasSingleCenterNode, reactFlowInstance, centerViewportOnCenterNode, dimensionVersion, showEmptyState]);
+
+  useEffect(() => {
+    if (!hasSingleCenterNode) return;
+    const handleResize = () => {
+      initialCenterFitRef.current = false;
+      requestAnimationFrame(() => centerViewportOnCenterNode());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [hasSingleCenterNode, centerViewportOnCenterNode]);
 
   // Keyboard shortcuts for multi-select and actions
   useEffect(() => {
@@ -1137,6 +1633,29 @@ function FlowCanvas() {
     setIsAIEnrichmentModalOpen(true);
   }, []);
 
+  const handleOpenConnectSources = useCallback(() => {
+    setShowEmptyState(false);
+    setIsConnectSourcesOpen(true);
+  }, []);
+
+  const handleConnectGitRepo = useCallback(() => {
+    setIsConnectSourcesOpen(false);
+    setIsImportModalOpen(true);
+    setIsAddNodeModalOpen(false);
+    toast.info("Connect your Git repository", {
+      description: "Import commit history or documentation to populate your workspace.",
+    });
+  }, [setIsImportModalOpen]);
+
+  const handleConnectWiki = useCallback(() => {
+    setIsConnectSourcesOpen(false);
+    setIsAISuggestPanelOpen(true);
+    setIsAddNodeModalOpen(false);
+    toast.info("Connect a wiki or knowledge base", {
+      description: "Use AI enrichment to pull context from your documentation.",
+    });
+  }, []);
+
   const handleAddEnrichedContent = useCallback((
     nodeId: string,
     textCards: EditableCardData[],
@@ -1238,6 +1757,22 @@ function FlowCanvas() {
     });
   }, [nodes, setNodes]);
 
+  const handleToggleNodeCollapse = useCallback((nodeId: string) => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id !== nodeId) return n;
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            collapsed: !(n.data?.collapsed),
+          },
+        };
+      })
+    );
+    setIsSaved(false);
+  }, [setNodes]);
+
   // Delete node handler
   const handleDeleteNode = useCallback((nodeId: string) => {
     if (nodeId === "center") {
@@ -1292,8 +1827,9 @@ function FlowCanvas() {
     }
   }, [nodes, setNodes, reactFlowInstance, handleFitView, handleFitSelection, handleCenterCanvas]);
 
-  // Update nodes with callbacks - DO NOT FILTER to prevent ReactFlow index mismatch errors
-  const nodesWithCallbacks = nodes.map((node) => {
+  // Update nodes with callbacks - Optimized with useMemo for performance
+  const nodesWithCallbacks = useMemo(() => {
+    return nodes.map((node) => {
       // Ensure node is valid
       if (!node || !node.id) {
         console.error('Invalid node detected:', node);
@@ -1309,8 +1845,13 @@ function FlowCanvas() {
       // If node has a parentNode, verify the parent exists
       const hasValidParent = !node.parentNode || nodes.some(n => n && n.id === node.parentNode);
       
+      const isCenter = node.type === "center";
+      const primaryText = isCenter ? (node.data?.buttonText ?? "Connect your Git or Wiki") : node.data?.buttonText;
+      const secondaryText = isCenter ? (node.data?.secondaryButtonText ?? "Create your first node") : node.data?.secondaryButtonText;
+
       return {
         ...node,
+        ...(node.id === 'center' ? { draggable: false, selectable: false, dragHandle: undefined } : {}),
         // Ensure position is valid
         position: node.position || { x: 0, y: 0 },
         // Clear parentNode if parent doesn't exist to prevent ReactFlow errors
@@ -1346,20 +1887,54 @@ function FlowCanvas() {
           onExportSubgraphMarkdown: () => handleExportSubgraphMarkdown(node.id),
           onEnrichWithAI: () => handleOpenEnrichment(node.id),
           isPlacingFromThisNode: isPlacingNode && placingNodeInfo?.nodeId === node.id,
-          // Add buttonAction and onUpdateCenterNode for center node
-          ...(node.type === "center" ? {
-            buttonAction: node.data?.buttonText ? () => {
-              setIsAddNodeModalOpen(true);
-              setDragSourceNodeId(node.id);
-              toast.info("Add your first node!", {
-                description: "Choose a node type to get started",
-              });
-            } : undefined,
-            onUpdateCenterNode: handleUpdateCenterNode,
-          } : {}),
+          // Add button actions and updater for the center node
+          ...(isCenter
+            ? {
+                buttonText: primaryText,
+                buttonAction: () => {
+                  handleOpenConnectSources();
+                },
+                secondaryButtonText: secondaryText,
+                secondaryButtonAction: () => {
+                  setShowEmptyState(false);
+                  setIsAddNodeModalOpen(true);
+                  setDragSourceNodeId(null);
+                  setEdgePosition(null);
+                },
+                onUpdateCenterNode: handleUpdateCenterNode,
+                isConnectSource: true,
+              }
+            : {}),
         },
       };
     });
+  }, [
+    nodes,
+    isConnecting,
+    connectStartInfoRef,
+    setNodes,
+    handleAddCard,
+    handleUpdateCard,
+    handleDeleteCard,
+    handleExpandCard,
+    handleDragNewNode,
+    handleDragPreviewUpdate,
+    handlePlacingModeChange,
+    setIsEditingText,
+    handleDuplicateNode,
+    handleDeleteNode,
+    handleOpenEnrichment,
+    isPlacingNode,
+    placingNodeInfo,
+    handleUpdateCenterNode,
+    handleOpenConnectSources,
+    setShowEmptyState,
+    setIsAddNodeModalOpen,
+    setDragSourceNodeId,
+    setEdgePosition
+    // Note: Export/copy handlers intentionally omitted from deps to avoid hoisting issues
+    // These functions are stable and don't need to trigger re-computation
+  ]);
 
   const handleAddNode = useCallback(
     (nodeData: { type: string; label: string; summary: string; tags: string[]; domain?: string; ring?: number }) => {
@@ -1498,26 +2073,44 @@ function FlowCanvas() {
     setIsSaved(true);
   }, []);
 
-  const handleAutoLayout = useCallback(() => {
+  const handleAutoLayout = useCallback(async () => {
     let layoutedNodes;
     
     if (viewMode === "radial") {
+      // Optional: clear pins so layout can reposition all nodes again
+      clearPins();
+      setNodes((nds) => nds.map((n) => (n?.data?.pinned ? { ...n, data: { ...(n.data || {}), pinned: false } } : n)));
       // Use domain-based radial layout
-      layoutedNodes = applyDomainRadialLayout(nodes, {
+      const source = nodes.map((n) =>
+        n.id !== 'center' && (n as any)?.data?.pinned
+          ? { ...n, data: { ...(n.data || {}), pinned: false } }
+          : n
+      );
+      layoutedNodes = applyDomainRadialLayout(source, {
         centerNodeId: "center",
         viewMode: "radial",
+        viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+        dimensions: nodeDimensionsRef.current,
       });
+      recordRadialBaseline(layoutedNodes);
     } else {
       // Use process layout
       layoutedNodes = applyDomainRadialLayout(nodes, {
         centerNodeId: "center",
         viewMode: "process",
+        viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+        dimensions: nodeDimensionsRef.current,
+        padding: relaxPadding,
       });
+      lastRadialBaseRef.current = null;
     }
     
     // Enable smooth transitions
     setIsAutoLayouting(true);
-    setNodes(layoutedNodes);
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[layout] calling relax', { fit: true, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
+    }
+    await applyLayoutAndRelax(layoutedNodes, { padding: relaxPadding, maxPasses: 10, fit: true, fixedIds: ['center', ...Array.from(pinnedRef.current)] });
     setIsSaved(false);
     
     // Disable transitions after animation completes
@@ -1530,7 +2123,7 @@ function FlowCanvas() {
         ? "Nodes organized by domain in radial layout" 
         : "Nodes organized in process flow",
     });
-  }, [nodes, setNodes, viewMode]);
+  }, [nodes, viewMode, applyLayoutAndRelax, relaxPadding, recordRadialBaseline]);
 
   const handleAlign = useCallback((alignmentType: AlignmentType) => {
     // Enable smooth transitions
@@ -1566,32 +2159,34 @@ function FlowCanvas() {
     setIsSaved(false);
   }, [nodes, setNodes]);
 
-  // Add callbacks to edges - filter out any undefined edges and validate node references
-  const edgesWithCallbacks = edges
-    .filter(edge => {
-      // Only keep edges where both source and target nodes exist
-      if (!edge || !edge.id || !edge.source || !edge.target) {
-        console.warn('Invalid edge filtered:', edge);
-        return false;
-      }
-      const sourceExists = nodes.some(n => n && n.id === edge.source);
-      const targetExists = nodes.some(n => n && n.id === edge.target);
-      if (!sourceExists || !targetExists) {
-        console.warn('Edge references non-existent node:', edge);
-        return false;
-      }
-      return true;
-    })
-    .map((edge) => ({
-      ...edge,
-      data: {
-        ...edge.data,
-        sourceNodeId: edge.source,
-        targetNodeId: edge.target,
-        onAddNode: handleAddNodeFromEdge,
-  onEdgeContextMenu: onEdgeContextMenuHandler,
-      },
-    }));
+  // Add callbacks to edges - Optimized with useMemo for performance
+  const edgesWithCallbacks = useMemo(() => {
+    return edges
+      .filter(edge => {
+        // Only keep edges where both source and target nodes exist
+        if (!edge || !edge.id || !edge.source || !edge.target) {
+          console.warn('Invalid edge filtered:', edge);
+          return false;
+        }
+        const sourceExists = nodes.some(n => n && n.id === edge.source);
+        const targetExists = nodes.some(n => n && n.id === edge.target);
+        if (!sourceExists || !targetExists) {
+          console.warn('Edge references non-existent node:', edge);
+          return false;
+        }
+        return true;
+      })
+      .map((edge) => ({
+        ...edge,
+        data: {
+          ...edge.data,
+          sourceNodeId: edge.source,
+          targetNodeId: edge.target,
+          onAddNode: handleAddNodeFromEdge,
+          onEdgeContextMenu: onEdgeContextMenuHandler,
+        },
+      }));
+  }, [edges, nodes, handleAddNodeFromEdge, onEdgeContextMenuHandler]);
 
   const handleCompleteOnboarding = useCallback(() => {
     localStorage.setItem("flowforge-onboarding-seen", "true");
@@ -1613,19 +2208,24 @@ function FlowCanvas() {
 
   const handleResetDemo = useCallback(() => {
     // Reset to just the center node
+    initialCenterFitRef.current = false;
     setNodes([{
       id: "center",
       type: "center",
-      position: { x: 500, y: 300 },
-      style: { width: 320 },
+      position: { x: 0, y: 0 },
+      style: { width: 360, height: 240 },
+      draggable: false,
+      selectable: false,
       data: {
-        label: "My Project",
-        description: "Start building your visual requirements board here. Click the handles to add connected nodes.",
-        icon: "🎯",
+        label: "Welcome to Strukt",
+        description: "This blank canvas is yours. Click the button below to add your first node and start mapping your architecture.",
+        icon: "🧭",
         link: "",
-        buttonText: "Get Started",
+        buttonText: "Connect your Git or Wiki",
+        secondaryButtonText: "Create your first node",
         // buttonAction will be added dynamically in nodesWithCallbacks
       } as CenterNodeData,
+      positionAbsolute: { x: 0, y: 0 },
     }]);
     setEdges([]);
     
@@ -1720,14 +2320,45 @@ function FlowCanvas() {
   // Canvas context menu handler
   const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
+    setNodeContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
     setCanvasContextMenu({
       isOpen: true,
       position: { x: event.clientX, y: event.clientY },
     });
   }, []);
 
+  const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!node) return;
+
+    setCanvasContextMenu({ isOpen: false, position: { x: 0, y: 0 } });
+    setEdgeContextMenu({ isOpen: false, position: { x: 0, y: 0 }, edgeId: null });
+    setNodeContextMenu({
+      isOpen: true,
+      position: { x: event.clientX, y: event.clientY },
+      nodeId: node.id,
+    });
+
+    setNodes((nds) => {
+      const target = nds.find((n) => n.id === node.id);
+      if (target?.selected) {
+        return nds;
+      }
+      return nds.map((n) => ({
+        ...n,
+        selected: n.id === node.id,
+      }));
+    });
+  }, [setNodes]);
+
   const handleCloseContextMenu = useCallback(() => {
     setCanvasContextMenu({ isOpen: false, position: { x: 0, y: 0 } });
+    setNodeContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
+  }, []);
+
+  const handleCloseNodeContextMenu = useCallback(() => {
+    setNodeContextMenu({ isOpen: false, position: { x: 0, y: 0 }, nodeId: null });
   }, []);
 
   const handleCloseEdgeContextMenu = useCallback(() => {
@@ -1760,17 +2391,18 @@ function FlowCanvas() {
   // Drag handlers to prevent errors during drag operations
   const handleNodeDragStart = useCallback((_event: React.MouseEvent, node: Node) => {
     try {
-      // Validate node exists
       if (!node || !node.id) {
         console.warn('Invalid node in drag start');
         return;
       }
-      // Prevent any state updates during drag that could cause issues
-      // This is a safe no-op handler that prevents errors
+      if (node.id === 'center') return;
+      setIsUserDragging(true);
+      // Immediately pin the node so subsequent relax/layout passes won’t move it
+      setNodes((nds) => nds.map((n) => (n.id === node.id ? { ...n, data: { ...(n.data || {}), pinned: true } } : n)));
     } catch (error) {
       console.error('Error in handleNodeDragStart:', error);
     }
-  }, []);
+  }, [setNodes]);
 
   const handleNodeDrag = useCallback((_event: React.MouseEvent, node: Node) => {
     try {
@@ -1779,25 +2411,43 @@ function FlowCanvas() {
         console.warn('Invalid node in drag');
         return;
       }
+      if (node.id === 'center') return;
       // Safe no-op handler during drag
     } catch (error) {
       console.error('Error in handleNodeDrag:', error);
     }
   }, []);
 
-  const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: Node) => {
-    try {
-      // Validate node exists
-      if (!node || !node.id) {
-        console.warn('Invalid node in drag stop');
-        return;
+  const handleNodeDragStop = useCallback(
+    async (_event: React.MouseEvent, node: Node) => {
+      try {
+        if (!node || !node.id) return;
+        if (node.id === 'center') return;
+
+        // Mark as unsaved after drag completes
+        setIsSaved(false);
+        setIsUserDragging(false);
+
+        // In radial mode, persist pin in memory and on node data so relax/layout skip moving it
+        if (viewMode === 'radial') {
+          pinnedRef.current.add(node.id);
+          setNodes((nds) =>
+            nds.map((n) => (n.id === node.id ? { ...n, data: { ...(n.data || {}), pinned: true } } : n))
+          );
+        }
+
+        // Relax-only pass respecting pins: do not recompute base layout, just space neighbors
+        const current =
+          typeof reactFlowInstance?.getNodes === 'function'
+            ? (reactFlowInstance!.getNodes() as Node[])
+            : nodes;
+        await relaxRespectingPins(current, { padding: relaxPadding, maxPasses: 6 });
+      } catch (error) {
+        console.error('Error in handleNodeDragStop:', error);
       }
-      // Mark as unsaved after drag completes
-      setIsSaved(false);
-    } catch (error) {
-      console.error('Error in handleNodeDragStop:', error);
-    }
-  }, []);
+    },
+    [reactFlowInstance, setNodes, relaxRespectingPins, relaxPadding, viewMode, nodes]
+  );
 
   // Context menu action handlers
   const handleContextMenuAddNode = useCallback(() => {
@@ -1808,7 +2458,7 @@ function FlowCanvas() {
     setNodes((nds) =>
       nds.map((node) => ({
         ...node,
-        selected: true,
+        selected: node.id === 'center' ? false : true,
       }))
     );
     toast.success("All nodes selected");
@@ -2136,6 +2786,7 @@ function FlowCanvas() {
       // Center view on the new template
       setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.2, duration: 400 });
+        if (layoutDebug) requestAnimationFrame(() => devOutlineCollisions(12));
       }, 100);
       
       toast.success(`Template "${template.name}" loaded`, {
@@ -2145,7 +2796,7 @@ function FlowCanvas() {
       console.error("Error loading template:", error);
       toast.error("Failed to load template");
     }
-  }, [setNodes, setEdges, setWorkspaceName, reactFlowInstance]);
+  }, [setNodes, setEdges, setWorkspaceName, reactFlowInstance, layoutDebug]);
 
   // Auto-snapshot on significant changes
   useEffect(() => {
@@ -2175,12 +2826,13 @@ function FlowCanvas() {
     // Center view on restored content
     setTimeout(() => {
       reactFlowInstance.fitView({ padding: 0.2, duration: 400 });
+      if (layoutDebug) requestAnimationFrame(() => devOutlineCollisions(12));
     }, 100);
     
     toast.success("Snapshot restored", {
       description: `${restoredNodes.length} nodes, ${restoredEdges.length} connections`,
     });
-  }, [setNodes, setEdges, reactFlowInstance]);
+  }, [setNodes, setEdges, reactFlowInstance, layoutDebug]);
 
   // Relationships handlers
   const handleHighlightNodes = useCallback((nodeIds: string[]) => {
@@ -2362,9 +3014,118 @@ function FlowCanvas() {
     handleOpenEnrichment,
   ]);
 
+  const handleViewModeChange = useCallback(async (newViewMode: "radial" | "process") => {
+    if (isUserDragging) return;
+    setViewMode(newViewMode);
+
+    if (newViewMode === 'radial') {
+      // Clear in-memory pins and data flags so base radial layout can reposition everything
+      clearPins();
+      setNodes((nds) => nds.map((n) => (n.id !== 'center' && (n as any)?.data?.pinned
+        ? { ...n, data: { ...(n.data || {}), pinned: false } }
+        : n)));
+
+      const currentRaw = typeof reactFlowInstance?.getNodes === 'function'
+        ? (reactFlowInstance!.getNodes() as Node[])
+        : nodes;
+      const current = currentRaw.map((n) =>
+        n.id !== 'center' && (n as any)?.data?.pinned
+          ? { ...n, data: { ...(n.data || {}), pinned: false } }
+          : n
+      );
+
+      const layouted = applyDomainRadialLayout(current, {
+        centerNodeId: 'center',
+        viewMode: 'radial',
+        viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+        dimensions: nodeDimensionsRef.current,
+      });
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[layout] calling relax', { fit: true, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
+      }
+      setIsAutoLayouting(true);
+      recordRadialBaseline(layouted);
+      await applyLayoutAndRelax(layouted, { padding: relaxPadding, maxPasses: 10, fit: true, fixedIds: ['center', ...Array.from(pinnedRef.current)] });
+      setTimeout(() => setIsAutoLayouting(false), 600);
+      setIsSaved(false);
+      return;
+    }
+
+    // Process layout unchanged
+    const layoutedNodes = applyDomainRadialLayout(nodes, {
+      centerNodeId: 'center',
+      viewMode: 'process',
+      viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+      dimensions: nodeDimensionsRef.current,
+      padding: relaxPadding,
+    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[layout] calling relax', { fit: false, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
+    }
+    lastRadialBaseRef.current = null;
+    await applyLayoutAndRelax(layoutedNodes, { padding: relaxPadding, maxPasses: 10, fit: false, fixedIds: ['center', ...Array.from(pinnedRef.current)] });
+    setIsSaved(false);
+  }, [clearPins, isUserDragging, nodes, reactFlowInstance, relaxPadding, applyLayoutAndRelax, setNodes, recordRadialBaseline]);
+
+  // Debug: adjust relax padding live and re-run relaxation
+  const handleRelaxPaddingChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setRelaxPadding(value);
+    const current = typeof reactFlowInstance.getNodes === 'function' ? (reactFlowInstance.getNodes() as Node[]) : nodes;
+    // Re-run relaxation on current positions without refit to make change visible in place
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[layout] calling relax', { fit: false, padding: value, pinned: Array.from(pinnedRef.current) });
+    }
+    applyLayoutAndRelax(current, { padding: value, maxPasses: 10, fit: false, fixedIds: ['center', ...Array.from(pinnedRef.current)] }).then(() => {
+      if (layoutDebug) requestAnimationFrame(() => devOutlineCollisions(value));
+    });
+  }, [reactFlowInstance, nodes, applyLayoutAndRelax, layoutDebug]);
+
+  // DEV: Load a deterministic collision seed and auto-layout it
+  const handleLoadCollisionSeed = useCallback(async () => {
+    try {
+      if (isUserDragging) return;
+      const raw: any = seed as any;
+      const nodesFromSeed: Node[] = (raw.nodes || []).map((n: any) => ({
+        id: n.id,
+        type: n.type,
+        position: n.position || { x: 0, y: 0 },
+        style: n.style,
+        data: n.data,
+      }));
+      const edgesFromSeed: Edge[] = (raw.edges || []).map((e: any) => ({
+        id: e.id || `${e.source}-${e.target}`,
+        source: e.source,
+        target: e.target,
+        type: 'custom',
+      }));
+
+      const layouted = applyDomainRadialLayout(nodesFromSeed, {
+        centerNodeId: 'center',
+        viewMode: 'radial',
+        viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
+        dimensions: nodeDimensionsRef.current,
+      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[layout] calling relax', { fit: true, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
+      }
+      setIsAutoLayouting(true);
+      recordRadialBaseline(layouted);
+      await applyLayoutAndRelax(layouted, { padding: relaxPadding, maxPasses: 10, fit: true, fixedIds: ['center', ...Array.from(pinnedRef.current)] });
+      setTimeout(() => setIsAutoLayouting(false), 600);
+
+      toast.success('Loaded collision seed');
+    } catch (err) {
+      console.error('Failed to load seed:', err);
+      toast.error('Failed to load seed');
+    }
+  }, [reactFlowInstance, layoutDebug, applyLayoutAndRelax, relaxPadding, isUserDragging, recordRadialBaseline]);
+
   return (
     <div className="w-screen h-screen bg-gradient-to-br from-slate-50 via-indigo-100/60 to-purple-100/60 animate-gradient-slow bg-[length:200%_200%]">
-      <ReactFlow
+      <div ref={reactFlowWrapperRef} className="w-full h-full">
+        <ReactFlow
           nodes={nodesWithCallbacks}
           edges={edgesWithCallbacks}
           onNodesChange={onNodesChange}
@@ -2389,6 +3150,7 @@ function FlowCanvas() {
           onPaneClick={handlePaneClick}
           onPaneContextMenu={handlePaneContextMenu}
           onEdgeContextMenu={onEdgeContextMenuHandler}
+          onNodeContextMenu={handleNodeContextMenu}
           onNodeDragStart={handleNodeDragStart}
           onNodeDrag={handleNodeDrag}
           onNodeDragStop={handleNodeDragStop}
@@ -2414,24 +3176,65 @@ function FlowCanvas() {
           elevateNodesOnSelect={false}
           autoPanOnNodeDrag={false}
         >
-        <Background
-          gap={24}
-          size={1.5}
-          color="#e0e7ff"
-          className="opacity-40"
-          variant="dots"
-        />
-        
-        <Controls className="!hidden" />
-        
-        {/* Domain Rings Overlay */}
-        {viewMode === "radial" && showDomainRings && (() => {
-          const centerNode = nodes.find(n => n.id === "center");
-          const centerX = (centerNode?.position.x || 500) + ((centerNode?.width || centerNode?.style?.width || 320) as number) / 2;
-          const centerY = (centerNode?.position.y || 300) + ((centerNode?.height || 200) / 2);
-          return <DomainRings centerX={centerX} centerY={centerY} />;
-        })()}
-      </ReactFlow>
+          <Background
+            gap={24}
+            size={1.5}
+            color="#e0e7ff"
+            className="opacity-40"
+            variant={BackgroundVariant.Dots}
+          />
+
+          <Controls className="!hidden" />
+
+          {/* Domain Rings Overlay */}
+          {viewMode === "radial" && showDomainRings && (() => {
+            const centerNode = nodes.find(n => n.id === "center");
+            if (!centerNode) return null;
+            const centerMeasured = nodeDimensionsRef.current?.[centerNode.id];
+            const centerWidth =
+              parseDimensionValue(centerMeasured?.width) ??
+              parseDimensionValue(centerNode.width) ??
+              parseDimensionValue(centerNode.style?.width) ??
+              360;
+            const centerHeight =
+              parseDimensionValue(centerMeasured?.height) ??
+              parseDimensionValue(centerNode.height) ??
+              parseDimensionValue(centerNode.style?.height) ??
+              240;
+            const centerX = (centerNode.position?.x ?? 0) + centerWidth / 2;
+            const centerY = (centerNode.position?.y ?? 0) + centerHeight / 2;
+            return <DomainRings centerX={centerX} centerY={centerY} />;
+          })()}
+        </ReactFlow>
+      </div>
+
+      {layoutDebug && (
+        <div className="fixed left-4 bottom-4 z-50 rounded-md bg-white/90 backdrop-blur px-3 py-3 shadow border border-indigo-200 w-[260px]">
+          <div className="text-[11px] font-semibold text-slate-700 mb-2">Layout Debug</div>
+          <label className="block text-[11px] text-slate-600 mb-1">Relax padding: <span className="font-mono">{relaxPadding}px</span></label>
+          <input
+            type="range"
+            min={8}
+            max={40}
+            step={1}
+            value={relaxPadding}
+            onChange={handleRelaxPaddingChange}
+            className="w-full accent-indigo-600 cursor-pointer"
+          />
+          <button
+            onClick={handleAutoLayout}
+            className="mt-3 w-full rounded-md bg-indigo-600 text-white px-3 py-2 shadow hover:bg-indigo-700 text-sm"
+          >
+            Organize
+          </button>
+          <button
+            onClick={handleLoadCollisionSeed}
+            className="mt-3 w-full rounded-md bg-red-600 text-white px-3 py-2 shadow hover:bg-red-700 text-sm"
+          >
+            Load Collision Seed
+          </button>
+        </div>
+      )}
 
       {/* Minimap Panel */}
       <MinimapPanel />
@@ -2479,7 +3282,7 @@ function FlowCanvas() {
         onAnalytics={() => setIsAnalyticsModalOpen(true)}
         onRelationships={() => setIsRelationshipsPanelOpen(true)}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={handleViewModeChange}
       />
 
       <FloatingFormatToolbar isVisible={isEditingText} />
@@ -2536,6 +3339,13 @@ function FlowCanvas() {
         onClose={() => setIsConnectModalOpen(false)}
       />
 
+      <ConnectSourcesModal
+        open={isConnectSourcesOpen}
+        onClose={() => setIsConnectSourcesOpen(false)}
+        onConnectGit={handleConnectGitRepo}
+        onConnectWiki={handleConnectWiki}
+      />
+
       <AISuggestPanel
         isOpen={isAISuggestPanelOpen}
         onClose={() => setIsAISuggestPanelOpen(false)}
@@ -2570,9 +3380,13 @@ function FlowCanvas() {
       {/* Empty State */}
       {showEmptyState && !showOnboarding && (
         <EmptyState
-          onAddNode={() => setIsAddNodeModalOpen(true)}
-          onOpenAI={() => setIsAISuggestPanelOpen(true)}
+          onAddNode={() => {
+            setShowEmptyState(false);
+            setIsAddNodeModalOpen(true);
+          }}
+          onConnectSources={handleOpenConnectSources}
           onStartTutorial={handleStartTutorial}
+          onDismiss={() => setShowEmptyState(false)}
         />
       )}
 
@@ -2616,6 +3430,61 @@ function FlowCanvas() {
         }}
         onFocusNode={handleNodeFocus}
       />
+
+      {/* Node Context Menu */}
+      {nodeContextMenu.isOpen && activeContextNode && (
+        <NodeContextMenu
+          x={nodeContextMenu.position.x}
+          y={nodeContextMenu.position.y}
+          nodeLabel={
+            typeof activeContextNode.data?.label === "string"
+              ? activeContextNode.data.label
+              : activeContextNode.id
+          }
+          isCollapsed={!!activeContextNode.data?.collapsed}
+          allowCollapse={activeContextNode.id !== "center"}
+          allowDuplicate={activeContextNode.id !== "center"}
+          allowDelete={activeContextNode.id !== "center"}
+          onClose={handleCloseNodeContextMenu}
+          onToggleCollapse={
+            activeContextNode.id !== "center"
+              ? () => handleToggleNodeCollapse(activeContextNode.id)
+              : undefined
+          }
+          onDuplicate={
+            activeContextNode.id !== "center"
+              ? () => handleDuplicateNode(activeContextNode.id)
+              : undefined
+          }
+          onDelete={
+            activeContextNode.id !== "center"
+              ? () => handleDeleteNode(activeContextNode.id)
+              : undefined
+          }
+          onEnrich={
+            activeContextNode.id !== "center"
+              ? () => handleOpenEnrichment(activeContextNode.id)
+              : undefined
+          }
+          onCopyData={
+            activeContextNode.id !== "center"
+              ? () => handleCopyNodeData(activeContextNode.id)
+              : undefined
+          }
+          onExportJSON={() => handleExportNodeJSON(activeContextNode.id)}
+          onExportMarkdown={() => handleExportNodeMarkdown(activeContextNode.id)}
+          onExportSubgraphJSON={
+            activeContextNode.id !== "center"
+              ? () => handleExportSubgraphJSON(activeContextNode.id)
+              : undefined
+          }
+          onExportSubgraphMarkdown={
+            activeContextNode.id !== "center"
+              ? () => handleExportSubgraphMarkdown(activeContextNode.id)
+              : undefined
+          }
+        />
+      )}
 
       {/* Canvas Context Menu */}
       <CanvasContextMenu
@@ -2760,8 +3629,12 @@ function FlowCanvas() {
 
 export default function App() {
   return (
-    <ReactFlowProvider>
-      <FlowCanvas />
+    <>
+      <ErrorBoundary>
+        <ReactFlowProvider>
+          <FlowCanvas />
+        </ReactFlowProvider>
+      </ErrorBoundary>
       <Toaster 
         position="top-right"
         richColors
@@ -2769,6 +3642,6 @@ export default function App() {
         expand={false}
         duration={3000}
       />
-    </ReactFlowProvider>
+    </>
   );
 }

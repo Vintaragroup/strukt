@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Node } from "reactflow";
+import { Node } from "@xyflow/react";
 
 export interface LayoutConfig {
   centerNodeId: string;

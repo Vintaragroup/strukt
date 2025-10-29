@@ -24,7 +24,7 @@ interface UserSettingsDialogProps {
 export function UserSettingsDialog({ isOpen, onClose, onShowTutorial, onResetDemo, onOpenSnapshots, onOpenRelationships }: UserSettingsDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white">
+      <DialogContent className="sm:max-w-[500px] bg-white max-h-[calc(100vh-4rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>

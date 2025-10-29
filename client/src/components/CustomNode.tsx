@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { memo, useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Handle, Position, NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
 import { Layers, Layout, Server, FileText, BookOpen, Plus, MoreVertical, Copy, Trash2, Download, FileJson, FileCode2, ClipboardCopy, GitBranch, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -43,6 +43,7 @@ export interface CustomNodeData {
   enrichmentCount?: number;
   isConnectSource?: boolean;
   connectStartHandleId?: string | null;
+  maxNodeHeight?: number;
 }
 
 const nodeConfig = {
@@ -153,6 +154,9 @@ const domainConfig = {
   },
 };
 
+const DEFAULT_MAX_NODE_HEIGHT = 720;
+const ADD_BUTTON_RESERVE = 64;
+
 export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData>) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPlacingMode, setIsPlacingMode] = useState(false);
@@ -171,6 +175,12 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   const Icon = config.icon;
   const isRoot = data.type === "root";
   const isCollapsed = !!data.collapsed;
+  const headerRef = useRef(null);
+  const addButtonRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [footerHeight, setFooterHeight] = useState(ADD_BUTTON_RESERVE);
+  const maxNodeHeight = data.maxNodeHeight ?? DEFAULT_MAX_NODE_HEIGHT;
+  const bodyAvailable = Math.max(0, maxNodeHeight - headerHeight - footerHeight);
   
   // Ref to store cleanup functions - MUST be declared before sync effect
   const eventCleanupRef = useRef<(() => void) | null>(null);
@@ -186,6 +196,38 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight || 0);
+      }
+      if (addButtonRef.current) {
+        setFooterHeight(addButtonRef.current.offsetHeight || ADD_BUTTON_RESERVE);
+      } else {
+        setFooterHeight(ADD_BUTTON_RESERVE);
+      }
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(measure);
+      if (headerRef.current) observer.observe(headerRef.current);
+      if (addButtonRef.current) observer.observe(addButtonRef.current);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [
+    data.label,
+    data.type,
+    data.summary,
+    data.cards?.length,
+    data.tags?.length,
+    isCollapsed,
+  ]);
 
   // Remove pulse animation after it plays
   useEffect(() => {
@@ -470,10 +512,14 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
             : isHovered
             ? "0 25px 30px -5px rgba(0, 0, 0, 0.12), 0 15px 15px -5px rgba(0, 0, 0, 0.06)"
             : undefined,
+          maxHeight: maxNodeHeight,
         }}
       >
         {/* Header */}
-        <div className={`p-4 pb-3 bg-gradient-to-r ${config.bgGradient} rounded-t-2xl relative animate-gradient-shift bg-[length:200%_200%]`}>
+        <div
+          ref={headerRef}
+          className={`p-4 pb-3 bg-gradient-to-r ${config.bgGradient} rounded-t-2xl relative animate-gradient-shift bg-[length:200%_200%]`}
+        >
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-sm">
               <Icon className="w-5 h-5 text-white" />
@@ -610,52 +656,53 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
 
         {/* Collapsible Section: Summary, Cards, Tags, Add Button */}
         <div
-          className={`overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'}`}
+          className={`flex flex-col overflow-hidden transition-[max-height,opacity] duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          style={{ maxHeight: isCollapsed ? 0 : Math.max(0, bodyAvailable) }}
           onTransitionEnd={stopFollowingHandles}
         >
-          {/* Summary */}
-          {data.summary && (
-            <div className="px-4 pt-3 pb-2">
-              <p className="text-gray-600 leading-relaxed text-sm">
-                {data.summary}
-              </p>
-            </div>
-          )}
-          {/* Cards List - Flex grow to fill available space */}
-          {data.cards && data.cards.length > 0 && (
-            <div className="px-3 pb-2 space-y-2 flex-1 overflow-y-auto min-h-0">
-              {data.cards.map((card) => (
-                <EditableCard
-                  key={card.id}
-                  data={card}
-                  onUpdate={(updatedCard) => data.onUpdateCard?.(card.id, updatedCard)}
-                  onDelete={() => data.onDeleteCard?.(card.id)}
-                  onExpand={() => data.onExpandCard?.(card.id)}
-                  color={config.cardColor}
-                  onEditingChange={data.onEditingChange}
-                />
-              ))}
-            </div>
-          )}
+          <div className="flex-1 overflow-y-auto">
+            {data.summary && (
+              <div className="px-4 pt-3 pb-2">
+                <p className="text-gray-600 leading-relaxed text-sm">
+                  {data.summary}
+                </p>
+              </div>
+            )}
+            {data.cards && data.cards.length > 0 && (
+              <div className="px-3 pb-2 space-y-2">
+                {data.cards.map((card) => (
+                  <EditableCard
+                    key={card.id}
+                    data={card}
+                    onUpdate={(updatedCard) => data.onUpdateCard?.(card.id, updatedCard)}
+                    onDelete={() => data.onDeleteCard?.(card.id)}
+                    onExpand={() => data.onExpandCard?.(card.id)}
+                    color={config.cardColor}
+                    onEditingChange={data.onEditingChange}
+                  />
+                ))}
+              </div>
+            )}
+            {data.tags && data.tags.length > 0 && (
+              <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                {data.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-0.5 text-xs rounded-md bg-gray-100 text-gray-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* Tags */}
-          {data.tags && data.tags.length > 0 && (
-            <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-              {data.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-0.5 text-xs rounded-md bg-gray-100 text-gray-600"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Add Card Button - Fixed at bottom */}
           <Popover>
             <PopoverTrigger asChild>
-              <button className="w-full py-2.5 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-t border-gray-100 rounded-b-2xl transition-colors shrink-0">
+              <button
+                ref={addButtonRef}
+                className="w-full py-2.5 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-t border-gray-100 rounded-b-2xl transition-colors shrink-0"
+              >
                 <Plus className="w-4 h-4" />
                 Add Card
               </button>

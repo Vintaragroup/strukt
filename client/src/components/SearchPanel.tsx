@@ -349,10 +349,11 @@ function SearchResultCard({
   onClick: () => void;
 }) {
   const { node, matches } = result;
-  const title = node.data.label || 'Untitled';
-  const type = node.data.type || 'note';
-  const tags = node.data.tags || [];
-  const enrichmentCount = node.data.enrichmentCount || 0;
+  const data: any = node.data || {};
+  const title: string = data.label || 'Untitled';
+  const type: string = data.type || 'note';
+  const tags: string[] = Array.isArray(data.tags) ? data.tags : [];
+  const enrichmentCount: number = Number(data.enrichmentCount || 0);
 
   // Get preview text from matches
   const getPreview = () => {
@@ -362,7 +363,7 @@ function SearchResultCard({
       const preview = text.length > 100 ? text.slice(0, 100) + '...' : text;
       return preview;
     }
-    return node.data.content ? (node.data.content.slice(0, 100) + '...') : '';
+    return data.content ? (String(data.content).slice(0, 100) + '...') : '';
   };
 
   return (

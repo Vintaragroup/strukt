@@ -73,14 +73,36 @@ html, body {
   width: 100%;
 }
 
-/* ReactFlow styles */
+/* Performance optimizations */
+.react-flow__renderer {
+  will-change: transform;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
 .react-flow__node {
   border-radius: 0.5rem;
+  will-change: transform;
+  transform: translateZ(0); /* Force hardware acceleration */
 }
 
 .react-flow__edge-path {
   stroke: hsl(var(--muted));
   stroke-width: 1.5;
+}
+
+/* Layout transition animations */
+.auto-layouting .react-flow__node {
+  transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.auto-layouting .react-flow__edge-path {
+  transition: d 600ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Smooth node animations only during auto-layout */
+.auto-layouting .react-flow__node-custom,
+.auto-layouting .react-flow__node-center {
+  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* Smooth animations */

@@ -1,5 +1,7 @@
 // @ts-nocheck
-import { Node } from "reactflow";
+import type { Node } from "@xyflow/react";
+// Note: domainLayout remains pure. Post-layout relaxation & measurement handling
+// is orchestrated in App.tsx to ensure React Flow dimensions are available.
 
 export type DomainType = "business" | "product" | "tech" | "data-ai" | "operations";
 export type DepartmentType = string; // Dynamic department names
@@ -104,94 +106,293 @@ export const DOMAIN_CONFIG: Record<DomainType, DomainConfig> = {
 export interface RadialLayoutConfig {
   centerNodeId: string;
   viewMode: "radial" | "process";
-  ringRadii?: number[]; // Radii for each ring [ring1, ring2, ring3, ...]
-  sectorSize?: number; // Angular size of each domain sector
+  viewportDimensions?: { width: number; height: number };
+  dimensions?: NodeDimensionMap;
+  padding?: number; // used by process layout spacing
+  // Optional external pinned ids to respect during base radial layout
+  pinnedIds?: Set<string>;
 }
 
-const DEFAULT_RING_RADII = [450, 700, 950]; // Ring 1, Ring 2, Ring 3
+export type NodeDimensionMap = Record<string, { width: number; height: number }>;
 
-/**
- * Apply radial hub-and-rings layout based on domain organization
- */
+const CANONICAL_DOMAIN_ORDER: DomainType[] = [
+  "tech",
+  "data-ai",
+  "business",
+  "operations",
+  "product",
+];
+
+const DOMAIN_FILL_RATIO = 0.82;
+const BASE_RING_RADIUS = 420;
+const RING_SPACING = 280;
+const MIN_RING_RADIUS = 260;
+const MIN_RING_SPACING = 220;
+const RING_SLOT_COUNTS = [6, 10, 14];
+
+const DEFAULT_NODE_WIDTH = 280;
+const DEFAULT_NODE_HEIGHT = 200;
+const DEFAULT_CENTER_DIMENSIONS = { width: 360, height: 240 };
+const NODE_ARC_GAP = 48;
+const RADIAL_JITTER_MAX = 140;
+
+const DEFAULT_DIMENSIONS_BY_TYPE: Record<string, { width: number; height: number }> = {
+  center: DEFAULT_CENTER_DIMENSIONS,
+};
+
+function parseDimension(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
+function resolveFallbackDimensions(node: Node): { width: number; height: number } {
+  if (node?.type && DEFAULT_DIMENSIONS_BY_TYPE[node.type]) {
+    return DEFAULT_DIMENSIONS_BY_TYPE[node.type];
+  }
+  return { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
+}
+
+function getNodeDimensions(
+  node: Node,
+  dimensions?: NodeDimensionMap
+): { width: number; height: number } {
+  const cached = dimensions?.[node.id];
+  const fallback = resolveFallbackDimensions(node);
+
+  const width =
+    parseDimension(cached?.width) ??
+    parseDimension(node.width) ??
+    parseDimension(node.style?.width) ??
+    fallback.width;
+
+  const height =
+    parseDimension(cached?.height) ??
+    parseDimension(node.height) ??
+    parseDimension(node.style?.height) ??
+    fallback.height;
+
+  return {
+    width: Math.max(1, Math.round(width)),
+    height: Math.max(1, Math.round(height)),
+  };
+}
+
+function calculateRingRadii(
+  ringCount: number,
+  viewportDimensions?: { width: number; height: number }
+): number[] {
+  const baseRadii = Array.from({ length: ringCount }, (_, index) =>
+    BASE_RING_RADIUS + index * RING_SPACING
+  );
+
+  if (!viewportDimensions) {
+    return baseRadii;
+  }
+
+  const minAxis = Math.min(
+    viewportDimensions.width || 0,
+    viewportDimensions.height || 0
+  );
+
+  if (!minAxis) {
+    return baseRadii;
+  }
+
+  const viewportLimit = Math.max(
+    MIN_RING_RADIUS + (ringCount - 1) * MIN_RING_SPACING,
+    minAxis / 2 - 160
+  );
+
+  const maxBaseRadius = baseRadii[baseRadii.length - 1];
+  if (maxBaseRadius <= viewportLimit) {
+    return baseRadii;
+  }
+
+  const scale = viewportLimit / maxBaseRadius;
+
+  return baseRadii.map((radius, index) => {
+    const scaled = radius * scale;
+    const minimum = MIN_RING_RADIUS + index * MIN_RING_SPACING;
+    return Math.max(minimum, Math.round(scaled));
+  });
+}
+
+function sortNodesForRing(nodes: Node[]): Node[] {
+  return [...nodes].sort((a, b) => {
+    const aLabel = String(a?.data?.label || a?.data?.title || a.id || "").toLowerCase();
+    const bLabel = String(b?.data?.label || b?.data?.title || b.id || "").toLowerCase();
+    return aLabel.localeCompare(bLabel, undefined, { sensitivity: "base" });
+  });
+}
+
+function getBaselineSlotCount(ringIndex: number): number {
+  if (ringIndex < RING_SLOT_COUNTS.length) {
+    return RING_SLOT_COUNTS[ringIndex];
+  }
+  const last = RING_SLOT_COUNTS[RING_SLOT_COUNTS.length - 1];
+  return last + (ringIndex - (RING_SLOT_COUNTS.length - 1)) * 4;
+}
+
 export function applyDomainRadialLayout(
   nodes: Node[],
   config: RadialLayoutConfig
 ): Node[] {
-  const { centerNodeId, viewMode, ringRadii = DEFAULT_RING_RADII } = config;
+  const { centerNodeId, viewMode, viewportDimensions, dimensions, padding } = config;
 
   if (viewMode === "process") {
-    return applyProcessLayout(nodes, centerNodeId);
+    return applyProcessLayout(nodes, centerNodeId, dimensions, padding);
   }
 
   const centerNode = nodes.find((n) => n.id === centerNodeId);
   if (!centerNode) {
-    console.warn("Center node not found");
+    console.warn("Center node not found for layout");
     return nodes;
   }
 
-  const centerX = centerNode.position.x + (centerNode.width || 320) / 2;
-  const centerY = centerNode.position.y + (centerNode.height || 200) / 2;
+  const { width: centerWidth, height: centerHeight } = getNodeDimensions(centerNode, dimensions);
+  const centerX = centerNode.position.x + centerWidth / 2;
+  const centerY = centerNode.position.y + centerHeight / 2;
 
-  // Group nodes by domain
-  const domainGroups = groupNodesByDomain(nodes, centerNodeId);
+  // Separate pinned vs movable nodes (only movable will be slotted on rings)
+  const dataPinned = new Set(
+    nodes
+      .filter((n) => n.id !== centerNodeId && (n as any)?.data?.pinned === true)
+      .map((n) => n.id)
+  );
+  const externalPinned = (config as any)?.pinnedIds as Set<string> | undefined;
+  const pinnedIds = externalPinned && externalPinned.size > 0
+    ? new Set<string>([...Array.from(dataPinned), ...Array.from(externalPinned)])
+    : dataPinned;
+  const movableNodes = nodes.filter((node) => node.id !== centerNodeId && !pinnedIds.has(node.id));
 
-  const positionedNodes: Node[] = [];
+  if (movableNodes.length === 0) {
+    return nodes;
+  }
 
-  // Position nodes in each domain sector with department support
-  Object.entries(domainGroups).forEach(([domain, domainNodes]) => {
-    const domainConfig = DOMAIN_CONFIG[domain as DomainType];
-    if (!domainConfig) return;
+  // Build domain groups using only movable nodes (plus center for reference)
+  const domainGroups = groupNodesByDomain([centerNode, ...movableNodes], centerNodeId);
+  const activeDomains = CANONICAL_DOMAIN_ORDER.filter(
+    (domain) => domainGroups[domain]?.length
+  );
 
-    const baseAngle = domainConfig.angle;
-    const sectorSpread = Math.PI / 4; // ~45 degrees per sector
+  if (activeDomains.length === 0) {
+    return nodes;
+  }
 
-    // Group nodes by department within domain
-    const departmentGroups = groupNodesByDepartment(domainNodes, domainConfig);
+  const maxRingIndex = movableNodes.reduce((acc, node) => {
+    const ring = Number(node?.data?.ring) || 1;
+    return ring > acc ? ring : acc;
+  }, 1);
 
-    // Position each department's nodes
-    Object.entries(departmentGroups).forEach(([deptKey, deptNodes]) => {
-      // Get department config or use default (center of sector)
-      const deptConfig = domainConfig.departments[deptKey] || { angleOffset: 0 };
-      const departmentAngle = baseAngle + deptConfig.angleOffset;
+  const ringRadii = calculateRingRadii(maxRingIndex, viewportDimensions);
 
-      // Group nodes within department by ring
-      const ringGroups = groupNodesIntoRings(deptNodes);
+  const canonicalArc = (2 * Math.PI) / CANONICAL_DOMAIN_ORDER.length;
+  const domainSweep = canonicalArc * DOMAIN_FILL_RATIO;
 
-      Object.entries(ringGroups).forEach(([ringStr, ringNodes]) => {
-        const ring = parseInt(ringStr);
-        const radius = ringRadii[ring - 1] || ringRadii[ringRadii.length - 1];
+  const positions: Record<string, { x: number; y: number }> = {};
 
-        if (ringNodes.length === 1) {
-          // Single node - place at department center angle
-          const node = ringNodes[0];
-          positionedNodes.push(
-            positionNodeAtAngle(node, centerX, centerY, radius, departmentAngle)
-          );
-        } else {
-          // Multiple nodes - distribute within department sub-sector
-          const subSectorSpread = 0.3; // ~17 degrees for department spread
-          const angleStep = subSectorSpread / (ringNodes.length + 1);
-          const startAngle = departmentAngle - subSectorSpread / 2;
+  activeDomains.forEach((domain) => {
+    const domainNodes = domainGroups[domain];
+    if (!domainNodes || domainNodes.length === 0) {
+      return;
+    }
 
-          ringNodes.forEach((node, idx) => {
-            const angle = startAngle + angleStep * (idx + 1);
-            positionedNodes.push(
-              positionNodeAtAngle(node, centerX, centerY, radius, angle)
-            );
-          });
+    const domainConfig = DOMAIN_CONFIG[domain];
+    const centerAngle = domainConfig?.angle ?? 0;
+    const startAngle = centerAngle - domainSweep / 2;
+
+    const ringMap = groupNodesIntoRings(domainNodes);
+    Object.keys(ringMap)
+      .map((ringKey) => parseInt(ringKey, 10))
+      .filter((ringIndex) => ringIndex >= 1)
+      .sort((a, b) => a - b)
+      .forEach((ringIndex) => {
+        const ringNodes = ringMap[ringIndex] || [];
+        if (ringNodes.length === 0) {
+          return;
+        }
+
+        const sortedNodes = sortNodesForRing(ringNodes);
+        const nodeCount = sortedNodes.length;
+        const baseRadius = ringRadii[Math.min(ringIndex - 1, ringRadii.length - 1)];
+
+        // Arc-packing: choose radius large enough that sum of exact per-node angular spans fits the sector
+  const dims = sortedNodes.map((n) => getNodeDimensions(n, dimensions));
+  const minimumRadiusBase = MIN_RING_RADIUS + (ringIndex - 1) * MIN_RING_SPACING;
+  // Ensure we don't overlap the center node regardless of angle (conservative: sum of half-diagonals + gap)
+  const centerHalfDiag = Math.hypot(centerWidth / 2, centerHeight / 2);
+  const nodeMaxHalfDiag = dims.reduce((acc, d) => Math.max(acc, Math.hypot(d.width / 2, d.height / 2)), 0);
+  const minClearFromCenter = centerHalfDiag + nodeMaxHalfDiag + Math.max(NODE_ARC_GAP, 24);
+  const minimumRadius = Math.max(minimumRadiusBase, Math.ceil(minClearFromCenter));
+        const clampRatio = (v: number) => Math.max(0, Math.min(0.999, v));
+        const thetaFor = (w: number, r: number) => 2 * Math.asin(clampRatio((w + NODE_ARC_GAP) / (2 * Math.max(1, r))));
+        const sumThetaAt = (r: number) => dims.reduce((acc, d) => acc + thetaFor(d.width, r), 0);
+        let effectiveRadius = Math.max(baseRadius, minimumRadius);
+        // If total required theta exceeds available sweep, increase radius iteratively
+        for (let iter = 0; iter < 8; iter++) {
+          const totalTheta = sumThetaAt(effectiveRadius);
+          if (totalTheta <= domainSweep) break;
+          // Multiplicative correction using ratio; add 1px to ensure progress on small radii
+          const ratio = totalTheta / Math.max(0.0001, domainSweep);
+          effectiveRadius = Math.ceil(effectiveRadius * ratio + 1);
+        }
+
+        if (nodeCount === 1) {
+          const { width, height } = dims[0];
+          const angle = startAngle + domainSweep / 2;
+          const x = centerX + effectiveRadius * Math.cos(angle) - width / 2;
+          const y = centerY + effectiveRadius * Math.sin(angle) - height / 2;
+          positions[sortedNodes[0].id] = { x: Math.round(x), y: Math.round(y) };
+          return;
+        }
+
+  // Compute per-node angular spans at chosen radius (exact arc)
+  const thetas = dims.map((d) => thetaFor(d.width, effectiveRadius));
+        const totalTheta = thetas.reduce((a, b) => a + b, 0);
+        const spare = Math.max(0, domainSweep - totalTheta);
+        const gapPer = spare / nodeCount;
+
+        let cursor = startAngle;
+        for (let i = 0; i < nodeCount; i++) {
+          const node = sortedNodes[i];
+          const { width, height } = dims[i];
+          const theta = thetas[i];
+          // Center each node in its allocated arc segment (theta + gapPer)
+          const angle = cursor + gapPer / 2 + theta / 2;
+          const x = centerX + effectiveRadius * Math.cos(angle) - width / 2;
+          const y = centerY + effectiveRadius * Math.sin(angle) - height / 2;
+          positions[node.id] = { x: Math.round(x), y: Math.round(y) };
+          cursor += theta + gapPer;
         }
       });
-    });
   });
 
-  // Return all nodes with updated positions
-  return nodes.map((node) => {
+  const laidOut = nodes.map((node) => {
     if (node.id === centerNodeId) {
-      return node; // Keep center node as is
+      return node;
     }
-    const positioned = positionedNodes.find((n) => n.id === node.id);
-    return positioned || node;
+    // Preserve user-pinned nodes in radial layout
+    if ((node as any)?.data?.pinned) {
+      return node;
+    }
+    const next = positions[node.id];
+    if (!next) {
+      return node;
+    }
+    return {
+      ...node,
+      position: { x: Math.round(next.x), y: Math.round(next.y) },
+    };
   });
+  return laidOut;
 }
 
 /**
@@ -353,42 +554,80 @@ function groupNodesIntoRings(nodes: Node[]): Record<number, Node[]> {
 }
 
 /**
- * Position a node at a specific angle and radius
- */
-function positionNodeAtAngle(
-  node: Node,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angle: number
-): Node {
-  const nodeWidth = node.width || node.style?.width || 280;
-  const nodeHeight = node.height || node.style?.height || 200;
-
-  const x = centerX + radius * Math.cos(angle) - nodeWidth / 2;
-  const y = centerY + radius * Math.sin(angle) - nodeHeight / 2;
-
-  return {
-    ...node,
-    position: { x, y },
-  };
-}
-
-/**
  * Apply linear process layout (left-to-right)
  */
-function applyProcessLayout(nodes: Node[], centerNodeId: string): Node[] {
+function applyProcessLayout(
+  nodes: Node[],
+  centerNodeId: string,
+  dimensions?: NodeDimensionMap,
+  padding: number = 12
+): Node[] {
   const centerNode = nodes.find((n) => n.id === centerNodeId);
   if (!centerNode) return nodes;
 
   const otherNodes = nodes.filter((n) => n.id !== centerNodeId);
 
-  const startX = centerNode.position.x + 500;
-  const startY = centerNode.position.y - 200;
-  const spacing = { x: 400, y: 300 };
-  const columns = 3;
+  const { width: centerWidth, height: centerHeight } = getNodeDimensions(centerNode, dimensions);
+  const measurements = otherNodes.map((node) => ({
+    node,
+    dims: getNodeDimensions(node, dimensions),
+  }));
 
-  return nodes.map((node) => {
+  const maxWidth = measurements.reduce((acc, entry) => Math.max(acc, entry.dims.width), DEFAULT_NODE_WIDTH);
+  const maxHeight = measurements.reduce((acc, entry) => Math.max(acc, entry.dims.height), DEFAULT_NODE_HEIGHT);
+
+  const avgWidth =
+    measurements.reduce((sum, entry) => sum + entry.dims.width, 0) /
+    Math.max(1, measurements.length);
+  const avgHeight =
+    measurements.reduce((sum, entry) => sum + entry.dims.height, 0) /
+    Math.max(1, measurements.length);
+
+  const horizontalGap = Math.max(
+    72,
+    Math.min(220, Math.round(avgWidth * 0.28) + padding)
+  );
+  const verticalGap = Math.max(
+    64,
+    Math.min(220, Math.round(avgHeight * 0.22) + padding)
+  );
+
+  const columns = Math.max(2, Math.ceil(Math.sqrt(Math.max(otherNodes.length, 1))));
+  const totalRows = Math.ceil(otherNodes.length / columns);
+
+  const columnWidths = Array.from({ length: columns }, () => 0);
+  const rowHeights = Array.from({ length: totalRows }, () => 0);
+
+  measurements.forEach((entry, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    columnWidths[col] = Math.max(columnWidths[col], entry.dims.width);
+    rowHeights[row] = Math.max(rowHeights[row], entry.dims.height);
+  });
+
+  const totalWidth =
+    columnWidths.reduce((sum, width) => sum + width, 0) +
+    Math.max(0, columns - 1) * horizontalGap;
+  const totalHeight =
+    rowHeights.reduce((sum, height) => sum + height, 0) +
+    Math.max(0, totalRows - 1) * verticalGap;
+
+  const centerX = centerNode.position.x + centerWidth / 2;
+  const centerY = centerNode.position.y + centerHeight / 2;
+
+  const baseX = Math.round(centerX + centerWidth / 2 + horizontalGap);
+  const baseY = Math.round(centerY - totalHeight / 2);
+
+  const columnOffsets = columnWidths.map((_, index) =>
+    columnWidths.slice(0, index).reduce((sum, width) => sum + width, 0) +
+    horizontalGap * index
+  );
+  const rowOffsets = rowHeights.map((_, index) =>
+    rowHeights.slice(0, index).reduce((sum, height) => sum + height, 0) +
+    verticalGap * index
+  );
+
+  const result = nodes.map((node) => {
     if (node.id === centerNodeId) {
       return node;
     }
@@ -398,15 +637,26 @@ function applyProcessLayout(nodes: Node[], centerNodeId: string): Node[] {
 
     const row = Math.floor(index / columns);
     const col = index % columns;
+    const dims = measurements[index]?.dims ?? getNodeDimensions(node, dimensions);
+
+    const x =
+      baseX +
+      (columnOffsets[col] ?? 0) +
+      Math.max(0, (columnWidths[col] - dims.width) / 2);
+    const y =
+      baseY +
+      (rowOffsets[row] ?? 0) +
+      Math.max(0, (rowHeights[row] - dims.height) / 2);
 
     return {
       ...node,
       position: {
-        x: startX + col * spacing.x,
-        y: startY + row * spacing.y,
+        x: Math.round(x),
+        y: Math.round(y),
       },
     };
   });
+  return result;
 }
 
 /**
@@ -487,6 +737,80 @@ export function getRecommendedDepartment(
   // Default to first department
   const deptKeys = Object.keys(domainConfig.departments);
   return deptKeys.length > 0 ? deptKeys[0] : null;
+}
+
+/**
+ * Calculate optimal position for a new node around the center
+ */
+export function calculateNewNodePosition(
+  existingNodes: Node[],
+  centerNodeId: string,
+  nodeData: { domain?: string; type?: string; ring?: number }
+): { x: number; y: number } {
+  const centerNode = existingNodes.find(n => n.id === centerNodeId);
+  
+  // Default position if no center node
+  if (!centerNode) {
+    return {
+      x: Math.random() * 300 + 400,
+      y: Math.random() * 200 + 250
+    };
+  }
+
+  const { width: centerWidth, height: centerHeight } = getNodeDimensions(centerNode);
+  const centerX = centerNode.position.x + centerWidth / 2;
+  const centerY = centerNode.position.y + centerHeight / 2;
+
+  // Determine domain and ring
+  const domain = nodeData.domain || getDomainForNodeType(nodeData.type || "default");
+  const ring = Math.max(1, nodeData.ring || 1);
+
+  const nodeWidth = DEFAULT_NODE_WIDTH;
+  const nodeHeight = DEFAULT_NODE_HEIGHT;
+  const halfWidth = nodeWidth / 2;
+  const halfHeight = nodeHeight / 2;
+
+  const domainConfig = DOMAIN_CONFIG[domain as DomainType];
+  const domainAngle = domainConfig?.angle ?? 0;
+  const ringRadii = calculateRingRadii(ring, undefined);
+  const radius = ringRadii[Math.min(ring - 1, ringRadii.length - 1)];
+
+  const domainArc = (2 * Math.PI) / CANONICAL_DOMAIN_ORDER.length;
+  const sweep = domainArc * DOMAIN_FILL_RATIO;
+  const slotCount = Math.max(getBaselineSlotCount(ring - 1), 4);
+  const slotArc = sweep / slotCount;
+  const startAngle = domainAngle - sweep / 2;
+
+  const candidateAngles = Array.from({ length: slotCount }, (_, index) =>
+    startAngle + slotArc / 2 + index * slotArc
+  );
+
+  let bestAngle = domainAngle;
+  let bestDistance = -Infinity;
+
+  const otherNodes = existingNodes.filter((node) => node.id !== centerNodeId);
+
+  candidateAngles.forEach((angle) => {
+    const testX = centerX + radius * Math.cos(angle) - halfWidth;
+    const testY = centerY + radius * Math.sin(angle) - halfHeight;
+
+    const minDistance = otherNodes.reduce((acc, node) => {
+      const dx = testX - node.position.x;
+      const dy = testY - node.position.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return Math.min(acc, distance);
+    }, Infinity);
+
+    if (minDistance > bestDistance) {
+      bestDistance = minDistance;
+      bestAngle = angle;
+    }
+  });
+
+  const x = centerX + radius * Math.cos(bestAngle) - halfWidth;
+  const y = centerY + radius * Math.sin(bestAngle) - halfHeight;
+
+  return { x, y };
 }
 
 /**

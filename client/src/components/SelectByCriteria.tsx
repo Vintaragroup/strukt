@@ -83,35 +83,34 @@ export function SelectByCriteria({
       if (node.id === 'center') return;
       
       let matches = true;
+      const data: any = node.data || {};
 
       if (criteria.types && criteria.types.length > 0) {
-        if (!criteria.types.includes(node.data.type)) matches = false;
+        if (!criteria.types.includes(String(data.type))) matches = false;
       }
 
       if (criteria.tags && criteria.tags.length > 0) {
-        const nodeTags = node.data.tags || [];
+        const nodeTags: string[] = Array.isArray(data.tags) ? data.tags : [];
         if (!criteria.tags.some((tag) => nodeTags.includes(tag))) matches = false;
       }
 
       if (criteria.hasContent !== undefined) {
-        const hasContent = !!(node.data.content || node.data.summary);
+        const hasContent = !!(data.content || data.summary);
         if (criteria.hasContent !== hasContent) matches = false;
       }
 
       if (criteria.hasTodos !== undefined) {
-        const hasTodos = !!(node.data.todos && node.data.todos.length > 0);
+        const hasTodos = !!(data.todos && Array.isArray(data.todos) && data.todos.length > 0);
         if (criteria.hasTodos !== hasTodos) matches = false;
       }
 
       if (criteria.hasAIEnrichment !== undefined) {
-        const hasEnrichment = (node.data.enrichmentCount || 0) > 0;
+        const hasEnrichment = (Number(data.enrichmentCount) || 0) > 0;
         if (criteria.hasAIEnrichment !== hasEnrichment) matches = false;
       }
 
       if (criteria.hasEdgeNotes !== undefined) {
-        const hasNotes = !!(
-          node.data.edgeNotes && Object.keys(node.data.edgeNotes).length > 0
-        );
+        const hasNotes = !!(data.edgeNotes && typeof data.edgeNotes === 'object' && Object.keys(data.edgeNotes).length > 0);
         if (criteria.hasEdgeNotes !== hasNotes) matches = false;
       }
 

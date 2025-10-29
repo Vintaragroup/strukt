@@ -98,12 +98,10 @@
 - Performance optimized (<100ms)
 
 **Test Results**:
-```
 ✅ Text search: "API backend database" → 4 results ranked
 ✅ Advanced search: category=Backend → 1 result
 ✅ Recommendations: Available for any template
 ✅ Cache stats: LRU cache operational
-```
 
 **Files Created**:
 - `server/src/services/PRDRetrievalService.ts` (300+ lines)
@@ -292,3 +290,11 @@ Ranked Results
 ---
 
 **Next**: Task 3.4 - Context Injector & Prompt Builder
+
+## 2025-10-26 · Radial Layout Stabilization Notes
+
+- Replaced collision-based radial math with deterministic orbit slots per domain ring.
+- Added node dimension cache to ensure layout calculations use real element measurements.
+- Synced auto-layout, manual layout, and view switches to recalc after measurements settle.
+- Logged follow-up QA and UI polish tasks in `.todo` for next session.
+- Added dimension-aware reflow to keep radial spacing valid after nodes expand or collapse.

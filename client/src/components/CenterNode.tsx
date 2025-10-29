@@ -16,6 +16,8 @@ export interface CenterNodeData {
   link?: string;
   buttonText?: string;
   buttonAction?: () => void;
+  secondaryButtonText?: string;
+  secondaryButtonAction?: () => void;
   isConnecting?: boolean;
   isConnectSource?: boolean;
   connectStartHandleId?: string | null;
@@ -435,6 +437,7 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/20 nopan nodrag"
+                  onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
@@ -625,14 +628,43 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
             </div>
           )}
 
-          {/* Action Button */}
-          {data.buttonText && (
-            <Button
-              onClick={data.buttonAction}
-              className="w-full bg-white hover:bg-indigo-50 text-indigo-600 shadow-lg hover:shadow-xl transition-all h-9 text-sm"
-            >
-              {data.buttonText}
-            </Button>
+          {/* Action Buttons */}
+          {(data.buttonText || data.secondaryButtonText) && (
+            <div className="space-y-2">
+              {data.buttonText && (
+                <Button
+                  type="button"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof data.buttonAction === "function") {
+                      data.buttonAction();
+                    }
+                  }}
+                  className="w-full bg-white hover:bg-indigo-50 text-indigo-600 shadow-lg hover:shadow-xl transition-all h-9 text-sm pointer-events-auto nopan nodrag"
+                >
+                  {data.buttonText}
+                </Button>
+              )}
+              {data.secondaryButtonText && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof data.secondaryButtonAction === "function") {
+                      data.secondaryButtonAction();
+                    }
+                  }}
+                  className="w-full bg-white/15 hover:bg-white/25 text-white border border-white/40 transition-all h-9 text-sm pointer-events-auto nopan nodrag"
+                >
+                  {data.secondaryButtonText}
+                </Button>
+              )}
+            </div>
           )}
           </div>
         </div>

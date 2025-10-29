@@ -21,6 +21,8 @@ export interface SearchFilters {
   types?: string[]; // Filter by node type
   tags?: string[]; // Filter by tags
   completionStatus?: 'all' | 'complete' | 'incomplete';
+  hasAIEnrichment?: boolean; // Only nodes with enrichment
+  hasEdgeNotes?: boolean; // Nodes that have edgeNotes present
 }
 
 /**
@@ -124,6 +126,16 @@ function passesFilters(node: Node, filters: SearchFilters): boolean {
       filters.tags?.includes(tag)
     );
     if (!hasTag) return false;
+  }
+
+  if (filters.hasAIEnrichment) {
+    const hasEnrichment = (nodeData.enrichmentCount || 0) > 0;
+    if (!hasEnrichment) return false;
+  }
+
+  if (filters.hasEdgeNotes) {
+    const hasNotes = !!(nodeData.edgeNotes && Object.keys(nodeData.edgeNotes).length > 0);
+    if (!hasNotes) return false;
   }
 
   return true;

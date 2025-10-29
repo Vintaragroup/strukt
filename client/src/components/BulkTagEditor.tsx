@@ -41,7 +41,8 @@ export function BulkTagEditor({
   const selectedNodes = nodes.filter((n) => n.selected && n.id !== 'center');
   const existingTags = new Set<string>();
   selectedNodes.forEach((node) => {
-    const tags = node.data.tags || [];
+    const data: any = node.data || {};
+    const tags: string[] = Array.isArray(data.tags) ? data.tags : [];
     tags.forEach((tag: string) => existingTags.add(tag));
   });
 

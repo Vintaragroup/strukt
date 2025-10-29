@@ -1,4 +1,4 @@
-import { Node } from "reactflow";
+import { Node } from "@xyflow/react";
 
 export interface AnalyticsData {
   totalNodes: number;
@@ -29,7 +29,7 @@ export function calculateAnalytics(
   // Nodes by type
   const typeCount: Record<string, number> = {};
   regularNodes.forEach((node) => {
-    const type = node.data?.type || "unknown";
+    const type = ((node.data as any)?.type as string) || "unknown";
     typeCount[type] = (typeCount[type] || 0) + 1;
   });
 
@@ -44,9 +44,9 @@ export function calculateAnalytics(
   let completedTodos = 0;
 
   regularNodes.forEach((node) => {
-    if (node.data?.todos && Array.isArray(node.data.todos)) {
-      totalTodos += node.data.todos.length;
-      completedTodos += node.data.todos.filter(
+    if ((node.data as any)?.todos && Array.isArray((node.data as any).todos)) {
+      totalTodos += (node.data as any).todos.length;
+      completedTodos += (node.data as any).todos.filter(
         (todo: any) => todo.completed
       ).length;
     }
@@ -63,8 +63,8 @@ export function calculateAnalytics(
   };
 
   regularNodes.forEach((node) => {
-    if (node.data?.todos && Array.isArray(node.data.todos)) {
-      const todos = node.data.todos;
+    if ((node.data as any)?.todos && Array.isArray((node.data as any).todos)) {
+      const todos = (node.data as any).todos as any[];
       if (todos.length === 0) {
         statusCount["Not Started"]++;
       } else if (todos.every((t: any) => t.completed)) {
@@ -87,8 +87,8 @@ export function calculateAnalytics(
   // Tag distribution
   const tagCount: Record<string, number> = {};
   regularNodes.forEach((node) => {
-    if (node.data?.tags && Array.isArray(node.data.tags)) {
-      node.data.tags.forEach((tag: string) => {
+    if ((node.data as any)?.tags && Array.isArray((node.data as any).tags)) {
+      (node.data as any).tags.forEach((tag: string) => {
         tagCount[tag] = (tagCount[tag] || 0) + 1;
       });
     }
@@ -119,8 +119,8 @@ export function calculateAnalytics(
       : null;
 
   const mostConnectedNode = mostConnectedNodeId
-    ? nodes.find((n) => n.id === mostConnectedNodeId)?.data?.label ||
-      "Unknown"
+    ? (((nodes.find((n) => n.id === mostConnectedNodeId)?.data as any)?.label as string) ||
+      "Unknown")
     : null;
 
   const averageConnectionsPerNode =

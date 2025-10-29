@@ -22,7 +22,7 @@ import {
   Save,
   X,
 } from "lucide-react";
-import { Node, Edge } from "reactflow";
+import { Node, Edge } from "@xyflow/react";
 import { CustomNodeData } from "./CustomNode";
 import { CenterNodeData } from "./CenterNode";
 import { saveTemplate, Template } from "../utils/templates";
@@ -31,7 +31,7 @@ import { toast } from "sonner";
 interface SaveTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  nodes: Node<CustomNodeData | CenterNodeData>[];
+  nodes: Node[];
   edges: Edge[];
 }
 
@@ -109,7 +109,7 @@ export function SaveTemplateDialog({
         name.trim(),
         description.trim(),
         selectedCategory,
-        nodes,
+        nodes as unknown as Node<CustomNodeData | CenterNodeData>[],
         edges,
         tags
       );

@@ -48,7 +48,7 @@ import {
   importSnapshots,
   SnapshotDiff,
 } from "../utils/snapshots";
-import { Node, Edge } from "reactflow";
+import { Node, Edge } from "@xyflow/react";
 
 interface SnapshotsPanelProps {
   open: boolean;

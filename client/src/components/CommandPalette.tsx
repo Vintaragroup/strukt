@@ -19,7 +19,7 @@ import {
   Copy,
   Filter,
 } from "lucide-react";
-import { Node } from "reactflow";
+import { Node } from "@xyflow/react";
 import { CustomNodeData } from "./CustomNode";
 
 interface CommandPaletteProps {
@@ -52,7 +52,7 @@ export function CommandPalette({
   // Filter nodes based on search
   const filteredNodes = nodes.filter((node) => {
     if (node.id === "center") return false; // Don't show center node
-    const data = node.data as CustomNodeData;
+    const data = node.data as unknown as CustomNodeData;
     const searchLower = search.toLowerCase();
     return (
       data.label?.toLowerCase().includes(searchLower) ||
@@ -63,7 +63,7 @@ export function CommandPalette({
 
   // Group nodes by type
   const nodesByType = filteredNodes.reduce((acc, node) => {
-    const type = (node.data as CustomNodeData).type || "other";
+    const type = (node.data as unknown as CustomNodeData).type || "other";
     if (!acc[type]) acc[type] = [];
     acc[type].push(node);
     return acc;
@@ -140,7 +140,7 @@ export function CommandPalette({
         {Object.entries(nodesByType).map(([type, typeNodes]) => (
           <CommandGroup key={type} heading={getTypeLabel(type)}>
             {typeNodes.map((node) => {
-              const data = node.data as CustomNodeData;
+              const data = node.data as unknown as CustomNodeData;
               return (
                 <CommandItem
                   key={node.id}

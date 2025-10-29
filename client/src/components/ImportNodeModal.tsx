@@ -133,7 +133,7 @@ export function ImportNodeModal({ open, onClose, onImport }: ImportNodeModalProp
 
   return (
         <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white">
+      <DialogContent className="sm:max-w-[500px] bg-white max-h-[calc(100vh-4rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import Node</DialogTitle>
           <DialogDescription>

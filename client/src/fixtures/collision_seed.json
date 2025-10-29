@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    { "id": "center", "type": "center", "position": { "x": 600, "y": 400 }, "style": { "width": 360, "height": 240 }, "data": { "label": "Center", "domain": "business" } },
+    { "id": "b1", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 180 }, "data": { "label": "Biz A", "domain": "business", "ring": 1 } },
+    { "id": "b2", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 280, "height": 200 }, "data": { "label": "Biz B", "domain": "business", "ring": 1 } },
+    { "id": "b3", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 240, "height": 180 }, "data": { "label": "Biz C", "domain": "business", "ring": 2 } },
+
+    { "id": "p1", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 220 }, "data": { "label": "Prod A", "domain": "product", "ring": 1 } },
+    { "id": "p2", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 200 }, "data": { "label": "Prod B", "domain": "product", "ring": 2 } },
+    { "id": "p3", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 240, "height": 180 }, "data": { "label": "Prod C", "domain": "product", "ring": 3 } },
+
+    { "id": "t1", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 180 }, "data": { "label": "Tech A", "domain": "tech", "ring": 1 } },
+    { "id": "t2", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 280, "height": 220 }, "data": { "label": "Tech B", "domain": "tech", "ring": 2 } },
+    { "id": "t3", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 240, "height": 180 }, "data": { "label": "Tech C", "domain": "tech", "ring": 2 } },
+
+    { "id": "d1", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 200 }, "data": { "label": "Data A", "domain": "data-ai", "ring": 1 } },
+    { "id": "d2", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 220 }, "data": { "label": "Data B", "domain": "data-ai", "ring": 2 } },
+
+    { "id": "o1", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 260, "height": 180 }, "data": { "label": "Ops A", "domain": "operations", "ring": 1 } },
+    { "id": "o2", "type": "custom", "position": { "x": 0, "y": 0 }, "style": { "width": 300, "height": 220 }, "data": { "label": "Ops B", "domain": "operations", "ring": 2 } }
+  ],
+  "edges": []
+}

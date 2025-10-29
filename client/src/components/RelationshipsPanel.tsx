@@ -26,7 +26,7 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
-import { Node, Edge } from "reactflow";
+import { Node, Edge } from "@xyflow/react";
 import {
   RelationshipType,
   getRelationships,
@@ -95,7 +95,7 @@ export function RelationshipsPanel({
   // Get node label
   const getNodeLabel = (nodeId: string): string => {
     const node = nodes.find((n) => n.id === nodeId);
-    return (node?.data as CustomNodeData)?.label || nodeId;
+    return (node?.data as unknown as CustomNodeData)?.label || nodeId;
   };
 
   // Get selected node data
@@ -300,7 +300,7 @@ export function RelationshipsPanel({
                       .filter((n) => n.id !== "center")
                       .map((node) => (
                         <SelectItem key={node.id} value={node.id}>
-                          {(node.data as CustomNodeData)?.label || node.id}
+                          {(node.data as unknown as CustomNodeData)?.label || node.id}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -330,7 +330,7 @@ export function RelationshipsPanel({
                       {/* Node Info */}
                       <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                         <h3 className="font-medium mb-2">
-                          {(selectedNode.data as CustomNodeData)?.label}
+                          {(selectedNode.data as unknown as CustomNodeData)?.label}
                         </h3>
                         <div className="text-sm text-gray-600 space-y-1">
                           <div>
@@ -373,7 +373,7 @@ export function RelationshipsPanel({
                                   (e.target === selectedNodeId &&
                                     e.source === depId)
                               );
-                              const relType = edge?.data?.relationshipType || "related-to";
+                              const relType = (edge?.data as any)?.relationshipType || "related-to";
                               return (
                                 <div
                                   key={depId}
@@ -383,14 +383,14 @@ export function RelationshipsPanel({
                                     <span
                                       className="w-2 h-2 rounded-full"
                                       style={{
-                                        backgroundColor: getRelationshipColor(relType),
+                                        backgroundColor: getRelationshipColor(relType as RelationshipType),
                                       }}
                                     />
                                     <span>
-                                      {(depNode?.data as CustomNodeData)?.label || depId}
+                                      {(depNode?.data as unknown as CustomNodeData)?.label || depId}
                                     </span>
                                     <Badge variant="secondary" className="text-xs">
-                                      {getRelationshipLabel(relType)}
+                                      {getRelationshipLabel(relType as RelationshipType)}
                                     </Badge>
                                   </div>
                                   <Button
@@ -424,7 +424,7 @@ export function RelationshipsPanel({
                                   (e.target === selectedNodeId &&
                                     e.source === depId)
                               );
-                              const relType = edge?.data?.relationshipType || "related-to";
+                              const relType = (edge?.data as any)?.relationshipType || "related-to";
                               return (
                                 <div
                                   key={depId}
@@ -434,14 +434,14 @@ export function RelationshipsPanel({
                                     <span
                                       className="w-2 h-2 rounded-full"
                                       style={{
-                                        backgroundColor: getRelationshipColor(relType),
+                                        backgroundColor: getRelationshipColor(relType as RelationshipType),
                                       }}
                                     />
                                     <span>
-                                      {(depNode?.data as CustomNodeData)?.label || depId}
+                                      {(depNode?.data as unknown as CustomNodeData)?.label || depId}
                                     </span>
                                     <Badge variant="secondary" className="text-xs">
-                                      {getRelationshipLabel(relType)}
+                                      {getRelationshipLabel(relType as RelationshipType)}
                                     </Badge>
                                   </div>
                                   <Button

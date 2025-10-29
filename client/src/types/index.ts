@@ -1,4 +1,4 @@
-import { Node, Edge } from 'reactflow'
+import { Node, Edge } from '@xyflow/react'
 
 export type NodeType = 'root' | 'frontend' | 'backend' | 'requirement' | 'doc'
 
@@ -35,7 +35,7 @@ export interface WorkspaceNodeData {
   }
 }
 
-export type WorkspaceNode = Node<WorkspaceNodeData, NodeType>
+export type WorkspaceNode = Node<any, NodeType>
 
 // Enhanced Edge with optional relationship type
 export type WorkspaceEdge = Edge & {

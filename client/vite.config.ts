@@ -1,7 +1,11 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import path from 'path'
 
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    include: ['src/tests/**/*.spec.ts'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -32,6 +36,6 @@ export default defineConfig({
     exclude: [],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'reactflow'],
+    include: ['react', 'react-dom', '@xyflow/react'],
   },
 })

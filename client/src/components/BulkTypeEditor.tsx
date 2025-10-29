@@ -42,8 +42,9 @@ export function BulkTypeEditor({
   const selectedNodes = nodes.filter((n) => n.selected && n.id !== 'center');
   const currentTypes = new Set<string>();
   selectedNodes.forEach((node) => {
-    if (node.data.type) {
-      currentTypes.add(node.data.type);
+    const data: any = node.data || {};
+    if (data.type) {
+      currentTypes.add(String(data.type));
     }
   });
 

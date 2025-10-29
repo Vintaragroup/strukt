@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview documenting the visual requirements whiteboard architecture, core components, and high-level data flow between client and server"
+  },
+  {
+    "fileName": "domain-models.mdc",
+    "description": "Detailed documentation of the node types, relationships, workspaces, and templates data models including validation rules and relationships between entities"
+  },
+  {
+    "fileName": "graph-algorithms.mdc",
+    "description": "Documentation of core graph algorithms including domain layout system, relationship management, cycle detection, and auto-layout implementations"
+  },
+  {
+    "fileName": "ai-generation-pipeline.mdc",
+    "description": "Detailed documentation of the AI generation service, context injection, template matching algorithms, and the generation queue system"
+  },
+  {
+    "fileName": "domain-ring-system.mdc",
+    "description": "Technical documentation of the unique domain ring visualization system including sector calculations, node positioning, and hierarchy management"
+  }
+]

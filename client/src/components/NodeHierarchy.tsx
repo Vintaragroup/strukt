@@ -1,4 +1,4 @@
-import { Node } from "reactflow";
+import { Node } from "@xyflow/react";
 import { ChevronRight, Home } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { CustomNodeData } from "./CustomNode";
 
 interface NodeHierarchyProps {
   nodes: Node[];
@@ -47,7 +48,7 @@ export function NodeHierarchy({
               >
                 <Home className="w-3.5 h-3.5" />
                 {centerNode && (
-                  <span className="ml-1.5 text-xs">{centerNode.data.label}</span>
+                  <span className="ml-1.5 text-xs">{(centerNode.data as unknown as CustomNodeData).label}</span>
                 )}
               </Button>
             </TooltipTrigger>
@@ -73,12 +74,12 @@ export function NodeHierarchy({
                       className="h-7 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-700 border border-indigo-200"
                     >
                       <span className="text-xs max-w-[120px] truncate">
-                        {node.data.label}
+                        {(node.data as unknown as CustomNodeData).label}
                       </span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Focus on {node.data.label}</p>
+                    <p>Focus on {(node.data as unknown as CustomNodeData).label}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>

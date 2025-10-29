@@ -114,18 +114,18 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] bg-white">
-        <DialogHeader>
-          <DialogTitle>Add New Node</DialogTitle>
-          <DialogDescription>
-            Create a new node by selecting a type and providing details.
+      <DialogContent className="sm:max-w-[520px] bg-white border-0 shadow-2xl rounded-3xl max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <DialogHeader className="space-y-3 pb-4">
+          <DialogTitle className="text-xl font-semibold text-gray-900">Add New Node</DialogTitle>
+          <DialogDescription className="text-sm text-gray-600 leading-relaxed">
+            Create a new node by selecting a type and providing details. Nodes will be automatically positioned in the appropriate domain sector.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
+        <div className="space-y-6 py-2">
           {/* Node Type Selection */}
-          <div className="space-y-2.5">
-            <Label className="text-sm">Node Type</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Node Type</Label>
             <div className="grid grid-cols-3 gap-2">
               {nodeTypes.map(({ value, label: typeLabel, icon: Icon, color }, index) => (
                 <motion.div
@@ -137,11 +137,13 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
                   <Button
                     variant={selectedType === value ? "default" : "outline"}
                     onClick={() => setSelectedType(value)}
-                    className={`w-full justify-start gap-2 h-9 text-sm ${
-                      selectedType === value ? "" : color
+                    className={`w-full justify-start gap-2 h-10 text-sm transition-all duration-200 ${
+                      selectedType === value 
+                        ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-indigo-600" 
+                        : `${color} hover:shadow-sm hover:scale-[1.02] border-gray-200`
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
+                    <Icon className="w-4 h-4" />
                     {typeLabel}
                   </Button>
                 </motion.div>
@@ -150,28 +152,104 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
           </div>
 
           {/* Domain Selection */}
-          <div className="space-y-2.5">
-            <Label className="text-sm">Domain</Label>
-            <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Domain</Label>
+            <div className="grid grid-cols-2 gap-2">
               {domainTypes.map(({ value, label: domainLabel, icon: Icon, color }, index) => (
                 <motion.div
                   key={value}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 20 }}
+                  transition={{ delay: index * 0.04, type: "spring", stiffness: 300, damping: 20 }}
                 >
                   <Button
                     variant={selectedDomain === value ? "default" : "outline"}
                     onClick={() => setSelectedDomain(value)}
-                    className={`w-full justify-start gap-2 h-9 text-sm ${
-                      selectedDomain === value ? "" : color
+                    className={`w-full justify-start gap-2 h-10 text-sm transition-all duration-200 ${
+                      selectedDomain === value 
+                        ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-indigo-600" 
+                        : `${color} hover:shadow-sm hover:scale-[1.02] border-gray-200`
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
+                    <Icon className="w-4 h-4" />
                     {domainLabel}
                   </Button>
                 </motion.div>
               ))}
+            </div>
+          </div>
+
+          {/* Department Selection */}
+          {selectedDomain && Object.keys(availableDepartments).length > 0 && (
+            <motion.div 
+              className="space-y-3"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Department / Team
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(availableDepartments).map(([key, dept], index) => {
+                  const domainColor = DOMAIN_CONFIG[selectedDomain as DomainType]?.color || "#6b7280";
+                  return (
+                    <motion.div
+                      key={key}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.04, type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <Button
+                        variant={selectedDepartment === key ? "default" : "outline"}
+                        onClick={() => setSelectedDepartment(key)}
+                        className={`w-full justify-center h-9 text-xs transition-all duration-200 ${
+                          selectedDepartment === key 
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-indigo-600" 
+                            : "hover:bg-gradient-to-br hover:from-gray-50 hover:to-slate-100 hover:shadow-sm border-gray-200"
+                        }`}
+                        style={selectedDepartment !== key ? {
+                          borderColor: `${domainColor}40`,
+                          color: domainColor
+                        } : undefined}
+                      >
+                        {dept.name}
+                      </Button>
+                    </motion.div>
+                  );
+                })}
+              </div>
+              {selectedDepartment && availableDepartments[selectedDepartment]?.description && (
+                <p className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-md">
+                  {availableDepartments[selectedDepartment].description}
+                </p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Ring Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Ring Position</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((ring) => (
+                <Button
+                  key={ring}
+                  variant={selectedRing === ring ? "default" : "outline"}
+                  onClick={() => setSelectedRing(ring)}
+                  className={`w-full justify-center h-10 text-sm transition-all duration-200 ${
+                    selectedRing === ring 
+                      ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-indigo-600" 
+                      : "hover:shadow-sm hover:scale-[1.02] border-gray-200"
+                  }`}
+                >
+                  Ring {ring}
+                </Button>
+              ))}
+            </div>
+            <div className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-md">
+              <strong>Ring 1:</strong> Core concepts • <strong>Ring 2:</strong> Categories • <strong>Ring 3:</strong> Details
             </div>
           </div>
 
@@ -245,18 +323,24 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
 
           {/* Label Input */}
           <motion.div 
-            className="space-y-2"
+            className="space-y-3"
             animate={showError ? { x: [-10, 10, -10, 10, 0] } : {}}
             transition={{ duration: 0.4 }}
           >
-            <Label htmlFor="label" className="text-sm">Title <span className="text-red-500">*</span></Label>
+            <Label htmlFor="label" className="text-sm font-medium text-gray-700">
+              Title <span className="text-red-500">*</span>
+            </Label>
             <Input
               ref={labelInputRef}
               id="label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Enter node title..."
-              className={`h-9 ${showError ? 'border-red-500 ring-2 ring-red-200' : ''}`}
+              className={`h-11 transition-all duration-200 ${
+                showError 
+                  ? 'border-red-500 ring-2 ring-red-200 focus:ring-red-300' 
+                  : 'border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200'
+              }`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleSubmit();
@@ -269,30 +353,30 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="text-sm text-red-500"
+                  className="text-sm text-red-500 flex items-center gap-1"
                 >
-                  Title is required
+                  <span>⚠️</span> Title is required
                 </motion.p>
               )}
             </AnimatePresence>
           </motion.div>
 
           {/* Summary Input */}
-          <div className="space-y-2">
-            <Label htmlFor="summary" className="text-sm">Summary</Label>
+          <div className="space-y-3">
+            <Label htmlFor="summary" className="text-sm font-medium text-gray-700">Summary</Label>
             <Textarea
               id="summary"
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="Enter a brief description..."
               rows={3}
-              className="resize-none"
+              className="resize-none transition-all duration-200 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
             />
           </div>
 
           {/* Tags Input */}
-          <div className="space-y-2">
-            <Label htmlFor="tags" className="text-sm">Tags</Label>
+          <div className="space-y-3">
+            <Label htmlFor="tags" className="text-sm font-medium text-gray-700">Tags</Label>
             <div className="flex gap-2">
               <Input
                 id="tags"
@@ -300,9 +384,14 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
                 placeholder="Add tags..."
-                className="h-9"
+                className="h-11 transition-all duration-200 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
               />
-              <Button type="button" onClick={handleAddTag} variant="secondary" className="h-9">
+              <Button 
+                type="button" 
+                onClick={handleAddTag} 
+                variant="secondary" 
+                className="h-11 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
+              >
                 Add
               </Button>
             </div>
@@ -337,11 +426,19 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="h-9">
+        <DialogFooter className="pt-6 border-t border-gray-100">
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="h-11 px-6 border-gray-200 text-gray-600 hover:bg-gray-50"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!label.trim()} className="h-9">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={!label.trim()} 
+            className="h-11 px-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
+          >
             Add Node
           </Button>
         </DialogFooter>

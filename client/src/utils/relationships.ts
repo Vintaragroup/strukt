@@ -1,4 +1,4 @@
-import { Node, Edge } from "reactflow";
+import { Node, Edge } from "@xyflow/react";
 
 // Relationship types with semantic meaning
 export type RelationshipType =
@@ -70,9 +70,9 @@ export function getRelationships(edges: Edge[]): Relationship[] {
     type: getRelationshipType(edge),
     label: edge.label as string | undefined,
     metadata: {
-      weight: edge.data?.weight,
-      status: edge.data?.status,
-      createdAt: edge.data?.createdAt,
+      weight: typeof edge.data?.weight === 'number' ? (edge.data!.weight as number) : undefined,
+      status: typeof edge.data?.status === 'string' ? (edge.data!.status as string) : undefined,
+      createdAt: typeof edge.data?.createdAt === 'number' ? (edge.data!.createdAt as number) : undefined,
     },
   }));
 }
@@ -290,7 +290,7 @@ export function findCriticalPath(
     if (relType === "depends-on" || relType === "blocks") {
       const source = relType === "depends-on" ? edge.target : edge.source;
       const target = relType === "depends-on" ? edge.source : edge.target;
-      const weight = edge.data?.weight || 1;
+  const weight = typeof edge.data?.weight === 'number' ? (edge.data!.weight as number) : 1;
 
       graph.get(source)?.push({ nodeId: target, weight });
       inDegree.set(target, (inDegree.get(target) || 0) + 1);

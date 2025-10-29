@@ -1,4 +1,4 @@
-import { Node, Edge } from "reactflow";
+import { Node, Edge } from "@xyflow/react";
 import { CustomNodeData } from "../components/CustomNode";
 import { CenterNodeData } from "../components/CenterNode";
 
@@ -9,7 +9,7 @@ export interface Template {
   category: "product" | "research" | "design" | "development" | "planning";
   thumbnail?: string;
   isBuiltIn: boolean;
-  nodes: Node<CustomNodeData | CenterNodeData>[];
+  nodes: Node[];
   edges: Edge[];
   metadata: {
     createdAt: Date;
@@ -38,7 +38,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
           icon: "🚀",
           link: "",
           buttonText: "Get Started",
-        } as CenterNodeData,
+  } as any,
       },
     ],
     edges: [],
@@ -66,7 +66,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
           icon: "🚀",
           link: "",
           buttonText: "Start Planning",
-        } as CenterNodeData,
+  } as any,
       },
       {
         id: "features",
@@ -169,7 +169,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
           icon: "🔬",
           link: "",
           buttonText: "Begin Research",
-        } as CenterNodeData,
+  } as any,
       },
       {
         id: "questions",
@@ -285,7 +285,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
           icon: "💻",
           link: "",
           buttonText: "Start Building",
-        } as CenterNodeData,
+  } as any,
       },
       {
         id: "frontend",
@@ -417,7 +417,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
           icon: "🎨",
           link: "",
           buttonText: "Start Designing",
-        } as CenterNodeData,
+  } as any,
       },
       {
         id: "tokens",
@@ -575,7 +575,7 @@ export function saveTemplate(
   name: string,
   description: string,
   category: Template["category"],
-  nodes: Node<CustomNodeData | CenterNodeData>[],
+  nodes: Node[],
   edges: Edge[],
   tags: string[] = []
 ): Template {
