@@ -10,6 +10,7 @@ import {
   ClipboardCopy,
   Maximize2,
   Minimize2,
+  CircleSlash2,
 } from "lucide-react";
 
 interface NodeContextMenuProps {
@@ -30,6 +31,7 @@ interface NodeContextMenuProps {
   onExportMarkdown?: () => void;
   onExportSubgraphJSON?: () => void;
   onExportSubgraphMarkdown?: () => void;
+  onMarkIncorrectSuggestion?: () => void;
 }
 
 export function NodeContextMenu({
@@ -50,6 +52,7 @@ export function NodeContextMenu({
   onExportMarkdown,
   onExportSubgraphJSON,
   onExportSubgraphMarkdown,
+  onMarkIncorrectSuggestion,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -99,21 +102,31 @@ export function NodeContextMenu({
           ) : (
             <Minimize2 className="w-4 h-4" />
           )}
-          <span>{isCollapsed ? "Expand" : "Collapse"}</span>
-        </button>
-      )}
+      <span>{isCollapsed ? "Expand" : "Collapse"}</span>
+    </button>
+  )}
 
-      {onEnrich && (
+  {onEnrich && (
         <button
           onClick={() => handleAction(onEnrich)}
           className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
         >
           <Sparkles className="w-4 h-4" />
-          <span>Enrich with AI</span>
-        </button>
-      )}
+      <span>Enrich with AI</span>
+    </button>
+  )}
 
-      {allowDuplicate && (
+  {onMarkIncorrectSuggestion && (
+    <button
+      onClick={() => handleAction(onMarkIncorrectSuggestion)}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-amber-50 hover:text-amber-900 transition-colors"
+    >
+      <CircleSlash2 className="w-4 h-4" />
+      <span>Mark as Incorrect Suggestion</span>
+    </button>
+  )}
+
+  {allowDuplicate && (
         <button
           onClick={() => handleAction(onDuplicate)}
           className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-gray-100 transition-colors"

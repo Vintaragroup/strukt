@@ -9,7 +9,7 @@ export interface Template {
   category: "product" | "research" | "design" | "development" | "planning";
   thumbnail?: string;
   isBuiltIn: boolean;
-  nodes: Node[];
+  nodes: Node<CustomNodeData | CenterNodeData>[];
   edges: Edge[];
   metadata: {
     createdAt: Date;
@@ -575,7 +575,7 @@ export function saveTemplate(
   name: string,
   description: string,
   category: Template["category"],
-  nodes: Node[],
+  nodes: Node<CustomNodeData | CenterNodeData>[],
   edges: Edge[],
   tags: string[] = []
 ): Template {

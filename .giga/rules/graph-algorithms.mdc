@@ -1,56 +1,50 @@
 ---
-description: Provides guidance for implementing domain-specific graph algorithms, node layout systems, and relationship mapping
+description: Analysis of domain-specific graph layout, relationship management, cycle detection, and auto-layout logic
 ---
 
 
 # graph-algorithms
 
-Core graph algorithm implementations center around three main systems:
+Core graph algorithm implementations for domain-specific visualization and relationship management:
 
-1. Domain Ring Layout System (85/100)
-`/src/utils/domainLayout.ts`
-- Radial layout algorithm organizing nodes into domain-specific rings
-- Business domains mapped to concentric circles (inner to outer):
-  - Business Core
-  - Product Layer
-  - Technical Implementation
-  - Data/AI Services 
-  - Operations Support
-- Angular node distribution based on department grouping
-- Dynamic radius calculation based on node density
+1. Domain Ring Layout System (90/100)
+- Specialized radial layout algorithm organizing nodes into 5 business domains
+- Dynamic sector calculation based on domain hierarchies 
+- Smart node positioning within domain rings using force-directed placement
+- Automatic radius and angle calculations for optimal domain separation
 
-2. Relationship Management (80/100) 
-`/src/utils/relationships.ts`
-- Domain-specific edge routing with relationship types:
-  - depends_on: Technical dependencies
-  - implements: Feature implementation
-  - blocks: Blocking dependencies
-  - informs: Information flow
-- Cycle detection for dependency validation
-- Relationship path analysis for impact assessment
-- Bi-directional constraint validation
+2. Relationship Management Engine (85/100)
+- Custom graph traversal for detecting circular dependencies
+- Domain-aware edge routing with specialized rules per node type
+- Relationship validation based on node domain and type
+- Automatic relationship suggestion based on node proximity and type
 
-3. Auto-Layout Engine (75/100)
-`/src/utils/autoLayout.ts`
-- Force-directed placement within domain rings
-- Node repulsion within same domain level
-- Attraction forces based on relationship types
-- Collision detection and resolution
-- Domain boundary enforcement
+3. Auto-Layout Algorithm (80/100)
+- Force-directed layout optimized for domain boundaries
+- Collision detection system respecting domain constraints
+- Node clustering by relationship density
+- Automatic spacing adjustments for readability
 
-Ring Visualization Component (70/100)
-`/src/components/DomainRings.tsx`
-- Visual representation of domain ring system
-- Interactive domain boundary adjustment
-- Gradient rendering for domain separation
-- Domain transition animations
+4. Edge Routing System (75/100) 
+- Smart path calculation avoiding domain boundary crossings
+- Specialized routing for inter-domain vs intra-domain connections
+- Edge bundling for related connections
+- Automatic bend point calculation based on connection type
 
-Collision Management (65/100)
-`/src/utils/collision.ts`
-- Node overlap prevention within domains
-- Edge crossing minimization
-- Boundary collision handling
-- Space optimization between related nodes
+5. Graph Analysis Engine (70/100)
+- Domain hierarchy validation
+- Path optimization between related nodes
+- Connection pattern detection
+- Relationship cycle identification
+
+Relevant Files:
+```
+client/src/utils/autoLayout.ts
+client/src/utils/domainLayout.ts 
+client/src/utils/edgeRouting.ts
+client/src/utils/relationships.ts
+client/src/utils/collision.ts
+```
 
 $END$
 

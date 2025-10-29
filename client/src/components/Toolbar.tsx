@@ -16,6 +16,7 @@ import {
   Plus,
   Link2,
   Sparkles,
+  Lightbulb,
   Save,
   FolderOpen,
   Undo,
@@ -70,12 +71,14 @@ interface ToolbarProps {
   onRelationships?: () => void;
   viewMode?: "radial" | "process";
   onViewModeChange?: (mode: "radial" | "process") => void;
+  onStartWizard?: () => void;
 }
 
 export function Toolbar({
   onAddNode,
   onConnect,
   onAISuggest,
+  onStartWizard,
   onSave,
   onLoad,
   onUndo,
@@ -155,6 +158,24 @@ export function Toolbar({
               <p>AI Suggest</p>
             </TooltipContent>
           </Tooltip>
+
+          {onStartWizard && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onStartWizard}
+                  className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+                >
+                  <Lightbulb className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>AI Builder</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           
           <Tooltip>
             <TooltipTrigger asChild>

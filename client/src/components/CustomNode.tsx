@@ -31,6 +31,7 @@ export interface CustomNodeData {
   onEditingChange?: (isEditing: boolean) => void;
   onToggleCollapse?: () => void;
   onDuplicate?: () => void;
+  onOpenSuggestionPanel?: () => void;
   onDelete?: () => void;
   onExportJSON?: () => void;
   onExportMarkdown?: () => void;
@@ -644,17 +645,27 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
                 </Popover>
               </div>
             )}
-          </div>
-          {/* Type Badge */}
-          <div className="mt-2">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border backdrop-blur-sm ${config.badgeColor}`}>
-              <Icon className="w-3 h-3" />
-              {data.type.charAt(0).toUpperCase() + data.type.slice(1)}
-            </span>
-          </div>
         </div>
+        {/* Type Badge */}
+        <div className="mt-2">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border backdrop-blur-sm ${config.badgeColor}`}>
+            <Icon className="w-3 h-3" />
+            {data.type.charAt(0).toUpperCase() + data.type.slice(1)}
+          </span>
+        </div>
+        {selected && (
+          <button
+            type="button"
+            onClick={() => data.onOpenSuggestionPanel?.()}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Suggest Next
+          </button>
+        )}
+      </div>
 
-        {/* Collapsible Section: Summary, Cards, Tags, Add Button */}
+      {/* Collapsible Section: Summary, Cards, Tags, Add Button */}
         <div
           className={`flex flex-col overflow-hidden transition-[max-height,opacity] duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
           style={{ maxHeight: isCollapsed ? 0 : Math.max(0, bodyAvailable) }}

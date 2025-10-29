@@ -511,7 +511,7 @@ export function RelationshipsPanel({
                             </div>
                             <div className="flex-1">
                               <div className="font-medium">
-                                {(node?.data as CustomNodeData)?.label || nodeId}
+                                {isCustomNode(node?.data) ? node?.data.label : nodeId}
                               </div>
                               <div className="text-xs text-gray-500">
                                 Weight: {details?.weight || 0} | Depth: {details?.depth || 0}
@@ -687,3 +687,6 @@ export function RelationshipsPanel({
     </Dialog>
   );
 }
+const isCustomNode = (data: unknown): data is CustomNodeData => {
+  return !!data && typeof data === "object" && "label" in data && "type" in data;
+};

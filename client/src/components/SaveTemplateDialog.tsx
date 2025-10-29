@@ -31,7 +31,7 @@ import { toast } from "sonner";
 interface SaveTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  nodes: Node[];
+  nodes: Node<CustomNodeData | CenterNodeData>[];
   edges: Edge[];
 }
 
@@ -109,7 +109,7 @@ export function SaveTemplateDialog({
         name.trim(),
         description.trim(),
         selectedCategory,
-        nodes as unknown as Node<CustomNodeData | CenterNodeData>[],
+        nodes,
         edges,
         tags
       );

@@ -18,6 +18,7 @@ import {
   DomainType, 
   getDepartmentsForDomain, 
   getRecommendedDepartment,
+  getDomainForNodeType,
   DOMAIN_CONFIG 
 } from "../utils/domainLayout";
 
@@ -53,9 +54,13 @@ const domainTypes = [
 ];
 
 export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeModalProps) {
-  const [selectedType, setSelectedType] = useState(initialType || "requirement");
-  const [selectedDomain, setSelectedDomain] = useState<string | undefined>("product");
-  const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
+  const defaultType = initialType || "requirement";
+  const defaultDomain = getDomainForNodeType(defaultType);
+  const defaultDepartment = getRecommendedDepartment(defaultDomain as DomainType, defaultType);
+
+  const [selectedType, setSelectedType] = useState(defaultType);
+  const [selectedDomain, setSelectedDomain] = useState<string | undefined>(defaultDomain);
+  const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(defaultDepartment || undefined);
   const [selectedRing, setSelectedRing] = useState<number>(1);
   const [label, setLabel] = useState("");
   const [summary, setSummary] = useState("");
@@ -63,6 +68,24 @@ export function AddNodeModal({ isOpen, onClose, onAdd, initialType }: AddNodeMod
   const [tags, setTags] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
   const labelInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset defaults whenever the modal opens or initial type changes
+  useEffect(() => {
+    if (!isOpen) return;
+    const nextType = initialType || "requirement";
+    setSelectedType(nextType);
+    const nextDomain = getDomainForNodeType(nextType);
+    setSelectedDomain(nextDomain);
+    const recommendedDept = getRecommendedDepartment(nextDomain as DomainType, nextType);
+    setSelectedDepartment(recommendedDept || undefined);
+    setSelectedRing(1);
+  }, [isOpen, initialType]);
+
+  // Keep domain in sync with the chosen node type (users can override afterwards)
+  useEffect(() => {
+    const recommendedDomain = getDomainForNodeType(selectedType);
+    setSelectedDomain((current) => (current === recommendedDomain ? current : recommendedDomain));
+  }, [selectedType]);
 
   // Get departments for selected domain
   const availableDepartments = selectedDomain 

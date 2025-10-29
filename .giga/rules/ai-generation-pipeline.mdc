@@ -1,51 +1,50 @@
 ---
-description: Manages AI content generation pipeline including context injection, template matching, and generation queue
+description: Handles AI-driven content generation pipeline including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-The AI generation pipeline consists of three core components:
+The AI generation pipeline implements domain-specific content generation with contextual awareness and template management.
 
-1. Context Injection (server/src/services/ContextInjector.ts)
-Importance Score: 95/100
-- Analyzes workspace structure to extract context parameters
-- Maps node relationships and dependencies 
-- Matches workspace patterns against template library
-- Generates contextualized prompts incorporating workspace state
-- Maintains context memory for multi-turn generation
+Key Components:
 
-2. Generation Service (server/src/services/GenerationService.ts)
-Importance Score: 90/100
-- Orchestrates multi-stage content generation workflow
-- Handles template-based prompt construction
-- Implements fallback generation strategies
-- Validates generated content against workspace constraints
-- Manages generation history and retry logic
+1. Generation Service (Importance: 95/100)
+Located in: server/src/services/GenerationService.ts
+- Manages AI content generation workflow with domain-specific prompt assembly
+- Integrates workspace context and template matching for accurate generation
+- Implements custom error recovery and result validation
+- Handles specialized generation modes for different node types
 
-3. Generation Queue (server/src/services/GenerationQueue.ts)
-Importance Score: 85/100
-- Priority-based request queueing system
-- Handles concurrent generation requests
-- Implements rate limiting and quota management
-- Provides progress tracking and status updates
-- Manages generation timeouts and error recovery
+2. Context Injection System (Importance: 90/100)
+Located in: server/src/services/ContextInjector.ts
+- Builds rich context from workspace state and node relationships
+- Implements template-aware context assembly
+- Manages domain-specific context rules for different generation scenarios
+- Handles specialized context pruning and relevance scoring
 
-4. Circuit Breaker (server/src/services/CircuitBreaker.ts) 
-Importance Score: 80/100
-- State machine for generation failure management
-- Configurable thresholds for entering failure states
-- Gradual recovery with success rate tracking
-- Integration with retry and fallback systems
+3. Generation Queue Management (Importance: 85/100)
+Located in: server/src/services/GenerationQueue.ts
+- Implements priority-based generation scheduling
+- Manages concurrent generation requests with workspace awareness
+- Handles generation retries with exponential backoff
+- Tracks generation history and maintains state consistency
 
-The pipeline implements a sophisticated content generation system with context awareness, queuing, and failure recovery specifically designed for software architecture content generation.
+4. PRD Template Matching (Importance: 80/100)
+Located in: server/src/services/PRDRetrievalService.ts
+- Domain-specific template scoring and selection
+- Implements contextual template matching based on node types
+- Manages template versioning and compatibility
+- Handles template enrichment and customization
 
-Key aspects:
-- Context extraction from workspace state
-- Template-based generation with fallbacks
-- Priority queue management
-- Circuit breaker pattern for stability
-- Generation history tracking
+Core Business Rules:
+- Generation must maintain workspace consistency
+- Templates must match node domain and type
+- Context must include relevant ancestor/sibling nodes
+- Generated content must pass domain-specific validation
+- Queue priority based on node relationships and workspace state
+
+The system implements a sophisticated pipeline that combines workspace context, template matching, and AI generation while maintaining strict domain rules and consistency requirements.
 
 $END$
 

@@ -21,7 +21,7 @@ import { Toaster } from "./components/ui/sonner";
 import { AnimatePresence } from "motion/react";
 import { updateEdgesWithOptimalHandles } from "./utils/edgeRouting";
 import { applyRadialLayout } from "./utils/autoLayout";
-import { applyDomainRadialLayout } from "./utils/domainLayout";
+import { applyDomainRadialLayout, calculateNewNodePosition, getDomainForNodeType } from "./utils/domainLayout";
 import { devOutlineCollisions, resolveCollisions } from "./utils/collision";
 import { captureNodeDimensions as measureNodes } from "@/utils/measure";
 import seed from "./fixtures/collision_seed.json";
@@ -39,6 +39,9 @@ import { NodeHierarchy } from "./components/NodeHierarchy";
 import { AIButton } from "./components/AIButton";
 import { CustomNode, CustomNodeData } from "./components/CustomNode";
 import { CenterNode, CenterNodeData } from "./components/CenterNode";
+import { StartWizard } from "./components/StartWizard";
+import { SuggestionPanel } from "./components/SuggestionPanel";
+import type { SuggestedNode } from "./types/ai";
 import { EditableCardData } from "./components/EditableCard";
 import { CustomEdge } from "./components/CustomEdge";
 import { DragPreviewOverlay } from "./components/DragPreviewOverlay";
@@ -74,6 +77,8 @@ import { setConnectStart } from "./utils/connectionState";
 import { DomainRings } from "./components/DomainRings";
 import { EdgeContextMenu } from "./components/EdgeContextMenu";
 import { ConnectSourcesModal } from "./components/ConnectSourcesModal";
+import { applySuggestions } from "./utils/graphOps";
+import { submitFeedback } from "./services/aiSuggestions";
 import {
   bulkAddTags,
   bulkRemoveTags,
@@ -381,6 +386,8 @@ function FlowCanvas() {
     nodeId: string;
     startPos: { x: number; y: number };
   } | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
@@ -420,6 +427,13 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
     edgeId: string | null;
     relationshipType?: RelationshipType;
   }>({ isOpen: false, position: { x: 0, y: 0 }, edgeId: null });
+
+  useEffect(() => {
+    if (!selectedNodeId) return;
+    if (!nodes.some((node) => node.id === selectedNodeId)) {
+      setSelectedNodeId(null);
+    }
+  }, [nodes, selectedNodeId]);
 
   const reactFlowInstance = useReactFlow();
   const historyManager = useRef(new HistoryManager(50));
@@ -990,6 +1004,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           selected: n.id === nodeId,
         }))
       );
+      setSelectedNodeId(nodeId);
     }
   }, [reactFlowInstance, nodes, setNodes]);
 
@@ -1886,6 +1901,16 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           onExportSubgraphJSON: () => handleExportSubgraphJSON(node.id),
           onExportSubgraphMarkdown: () => handleExportSubgraphMarkdown(node.id),
           onEnrichWithAI: () => handleOpenEnrichment(node.id),
+          onOpenSuggestionPanel: () => {
+            setSelectedNodeId(node.id);
+            setIsWizardOpen(false);
+            setNodes((nds) =>
+              nds.map((n) => ({
+                ...n,
+                selected: n.id === node.id,
+              }))
+            );
+          },
           isPlacingFromThisNode: isPlacingNode && placingNodeInfo?.nodeId === node.id,
           // Add button actions and updater for the center node
           ...(isCenter
@@ -1898,7 +1923,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
                 secondaryButtonAction: () => {
                   setShowEmptyState(false);
                   setIsAddNodeModalOpen(true);
-                  setDragSourceNodeId(null);
+                  setDragSourceNodeId("center");
                   setEdgePosition(null);
                 },
                 onUpdateCenterNode: handleUpdateCenterNode,
@@ -1931,28 +1956,35 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
     setShowEmptyState,
     setIsAddNodeModalOpen,
     setDragSourceNodeId,
-    setEdgePosition
+    setEdgePosition,
+    setSelectedNodeId,
+    setIsWizardOpen
     // Note: Export/copy handlers intentionally omitted from deps to avoid hoisting issues
     // These functions are stable and don't need to trigger re-computation
   ]);
 
   const handleAddNode = useCallback(
-    (nodeData: { type: string; label: string; summary: string; tags: string[]; domain?: string; ring?: number }) => {
+    (nodeData: { type: string; label: string; summary: string; tags: string[]; domain?: string; ring?: number; department?: string }) => {
       const newNodeId = `${nodes.length + 1}`;
+      const normalizedDomain = nodeData.domain ?? getDomainForNodeType(nodeData.type);
+      const normalizedRing = Math.max(1, nodeData.ring ?? 1);
+      const calculatedPosition = calculateNewNodePosition(nodes, "center", {
+        domain: normalizedDomain,
+        type: nodeData.type,
+        ring: normalizedRing,
+      });
       const newNode = {
         id: newNodeId,
         type: "custom",
-        position: edgePosition || {
-          x: Math.random() * 500 + 200,
-          y: Math.random() * 300 + 100,
-        },
+        position: edgePosition ?? calculatedPosition,
         data: {
           label: nodeData.label,
           type: nodeData.type as any,
           summary: nodeData.summary,
           tags: nodeData.tags,
-          domain: nodeData.domain,
-          ring: nodeData.ring,
+          domain: normalizedDomain,
+          ring: normalizedRing,
+          department: nodeData.department,
           cards: [],
           isNew: true,
         } as CustomNodeData,
@@ -2265,8 +2297,102 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           sessionStorage.setItem('alignmentHintShown', 'true');
         }
       }
+
+      if (selectedNodes.length === 1) {
+        setSelectedNodeId(selectedNodes[0].id);
+      } else if (selectedNodes.length === 0) {
+        setSelectedNodeId(null);
+      }
     },
     []
+  );
+
+  const handleMarkIncorrectSuggestion = useCallback(
+    async (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return;
+
+      try {
+        await submitFeedback({
+          nodeId,
+          reason: "wrong",
+          context: {
+            label: (node.data as any)?.label,
+            type: (node.data as any)?.type,
+            summary: (node.data as any)?.summary,
+          },
+        });
+        toast.success("Feedback noted", {
+          description: "We’ll tune future suggestions.",
+        });
+      } catch (error) {
+        console.error("Failed to submit feedback", error);
+        toast.error("Could not send feedback", {
+          description: "Please try again shortly.",
+        });
+      }
+    },
+    [nodes]
+  );
+
+  const handleAcceptSuggestions = useCallback(
+    async (suggestions: SuggestedNode[]) => {
+      if (!suggestions || suggestions.length === 0) {
+        return;
+      }
+
+      try {
+        const { nodes: nodeResult, edges: edgeResult, createdNodeIds } = applySuggestions(
+          suggestions,
+          nodes,
+          edges,
+          "center"
+        );
+
+        setEdges(edgeResult);
+
+        const viewportDimensions =
+          typeof window !== "undefined"
+            ? { width: window.innerWidth, height: window.innerHeight }
+            : undefined;
+
+        const layouted = applyDomainRadialLayout(nodeResult, {
+          centerNodeId: "center",
+          viewMode: "radial",
+          viewportDimensions,
+        });
+
+        await applyLayoutAndRelax(layouted, { padding: 12, maxPasses: 10, fit: true });
+
+        if (createdNodeIds.length > 0) {
+          setSelectedNodeId(createdNodeIds[createdNodeIds.length - 1]);
+          setTimeout(() => {
+            setNodes((nds: Node[]) =>
+              nds.map((node) =>
+                createdNodeIds.includes(node.id)
+                  ? { ...node, data: { ...(node.data || {}), isNew: false } }
+                  : node
+              )
+            );
+          }, 2000);
+        }
+
+        setIsSaved(false);
+        setIsWizardOpen(false);
+      } catch (error) {
+        console.error("Failed to apply AI suggestions", error);
+        toast.error("Unable to apply AI suggestions", {
+          description: "Please try again in a moment.",
+        });
+      }
+    },
+    [nodes, edges, applyLayoutAndRelax, setNodes]
+  );
+
+  const selectedNode = useMemo(
+    () =>
+      selectedNodeId ? nodes.find((node) => node.id === selectedNodeId) || null : null,
+    [nodes, selectedNodeId]
   );
 
   // Track zoom changes
@@ -3250,10 +3376,16 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         )}
       </AnimatePresence>
 
+      <SuggestionPanel node={selectedNode} onAdd={handleAcceptSuggestions} />
+
       <Toolbar
         onAddNode={() => setIsAddNodeModalOpen(true)}
         onConnect={() => setIsConnectModalOpen(true)}
         onAISuggest={() => setIsAISuggestPanelOpen(true)}
+        onStartWizard={() => {
+          setShowEmptyState(false);
+          setIsWizardOpen(true);
+        }}
         onSave={() => {
           setSaveLoadMode("save");
           setIsSaveLoadDialogOpen(true);
@@ -3321,6 +3453,12 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
       <AIButton onClick={() => setIsAISuggestPanelOpen(true)} />
 
+      <StartWizard
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        onAccept={handleAcceptSuggestions}
+      />
+
       <AddNodeModal
         isOpen={isAddNodeModalOpen}
         onClose={() => {
@@ -3380,13 +3518,10 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       {/* Empty State */}
       {showEmptyState && !showOnboarding && (
         <EmptyState
-          onAddNode={() => {
-            setShowEmptyState(false);
-            setIsAddNodeModalOpen(true);
-          }}
           onConnectSources={handleOpenConnectSources}
           onStartTutorial={handleStartTutorial}
           onDismiss={() => setShowEmptyState(false)}
+          onAcceptSuggestions={handleAcceptSuggestions}
         />
       )}
 
@@ -3469,6 +3604,11 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           onCopyData={
             activeContextNode.id !== "center"
               ? () => handleCopyNodeData(activeContextNode.id)
+              : undefined
+          }
+          onMarkIncorrectSuggestion={
+            activeContextNode.id !== "center"
+              ? () => handleMarkIncorrectSuggestion(activeContextNode.id)
               : undefined
           }
           onExportJSON={() => handleExportNodeJSON(activeContextNode.id)}

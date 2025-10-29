@@ -1,48 +1,57 @@
 ---
-description: Documents core data models, relationships, and validation rules for software architecture visualization and domain mapping
+description: Documents core data models, relationships and validation rules for architectural mapping and domain modeling
 ---
 
 
 # domain-models
 
-## Core Node Types
-- Root: Required single entry point for each workspace
-- Frontend: UI/UX components and client-side features  
-- Backend: Server components and APIs
-- Requirement: Business/technical requirements
-- Documentation: Supporting documentation and rationales
+Core Domain Model Components:
 
-## Domain Classification
-- Business: Core business capabilities and processes
-- Product: Features and user-facing functionality
-- Tech: Technical implementation and architecture
-- DataAI: Data models and AI/ML components
-- Ops: Deployment and operational concerns
+1. Node Type System (Importance: 95/100)
+- Strict node type hierarchy with parent-child validation
+- Core types: root, requirement, frontend, backend, documentation
+- Type-specific relationship constraints and validation rules
+- Domain context awareness for node positioning and connections
 
-## Relationship Types
-- satisfies: Links implementation to requirements
-- depends_on: Technical dependencies
-- informs: Information flow between components
-- duplicates: Identifies redundant elements
-- blocks: Indicates blocking dependencies
+2. Domain Ring Structure (Importance: 90/100)
+- Five primary domain rings: Business, Product, Tech, Data/AI, Operations
+- Inter-domain relationship validation and constraints
+- Domain-specific metadata and attributes
+- Hierarchical organization within each domain ring
 
-## Workspace Model
-- Single root node requirement
-- Directed Acyclic Graph (DAG) structure enforced
-- Version control with history tracking
-- Owner and role-based access control
-- Real-time collaboration support
+3. Workspace Model (Importance: 85/100)
+- Single root node requirement per workspace
+- Version history tracking with snapshot capabilities
+- Workspace-level validation rules and constraints
+- Template association and inheritance
 
-## Template System
-- Industry-specific architecture patterns
-- Categorized by domain: Web, Mobile, Backend, Fullstack, Data, AI
-- Structured technical requirements
-- Implementation specifications
-- Contextual metadata
+4. Relationship Types (Importance: 80/100)
+- Bidirectional relationship tracking
+- Core types: implements, depends-on, documents, tests
+- Domain-specific validation rules for relationship creation
+- Circular dependency prevention
 
-Relevant Files:
-- client/src/types/index.ts
-- client/src/data/examplePrompts.ts
+5. Template System (Importance: 75/100)
+- Domain-categorized templates with metadata
+- Template inheritance and composition rules
+- Validation rules for template instantiation
+- Context-aware template suggestions
+
+Key Validation Rules:
+- Root node must be a requirement type
+- Relationships must respect domain ring hierarchy
+- Cross-domain connections require explicit validation
+- Template instantiation must preserve domain context
+- Node type changes must validate existing relationships
+
+File Paths:
+/server/src/models/
+- Workspace.ts
+- WorkspaceVersion.ts
+- PRDTemplate.ts
+- GenerationRequest.ts
+
+The domain model implements a specialized graph-based architecture mapping system with strict hierarchical rules and domain-specific constraints, focusing on maintaining architectural integrity across different technical domains.
 
 $END$
 

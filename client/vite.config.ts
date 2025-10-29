@@ -1,7 +1,8 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite'
 import path from 'path'
 
 export default defineConfig({
+  // @ts-expect-error Vitest-specific field is ignored by Vite during dev; present for test runs
   test: {
     environment: 'jsdom',
     include: ['src/tests/**/*.spec.ts'],

@@ -13,59 +13,58 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-The Visual Requirements Mapping System implements specialized domain modeling for software architecture visualization and AI-assisted requirement generation.
+A visual software architecture platform built around domain-driven design principles with AI-assisted content generation. The system implements specialized node relationship management and layout algorithms.
 
 Core Business Components:
 
-1. Domain Ring Management (85/100)
-`client/src/components/DomainRings.tsx`
-- Specialized radial layout system organizing nodes into business domains
-- Dynamic ring generation for domain organization
-- Interactive domain boundary management
-- Sector relationship handling across domains
+1. Domain Ring Architecture (85/100)
+File: client/src/utils/domainLayout.ts
+- Radial layout system organizing nodes into 5 core domains: business, product, tech, data-ai, operations
+- Custom ring-based hierarchy visualization with domain boundaries
+- Specialized sector management for sub-domains
+- Dynamic node positioning based on domain context
 
-2. AI Enrichment Pipeline (90/100)
-`server/src/services/GenerationService.ts`
-`server/src/services/ContextInjector.ts`
-- Domain-specific content generation workflow
-- Intelligent workspace analysis and template matching
-- Custom context building with technology extraction
-- Structured Q&A interaction for node enrichment
+2. AI Enrichment Engine (80/100)
+Files:
+- server/src/services/GenerationService.ts
+- server/src/services/ContextInjector.ts
+- Contextual AI content generation for different node types
+- Domain-specific template matching
+- Intelligent prompt assembly considering workspace state
+- Custom scoring for template relevance
 
-3. Relationship Management System (85/100)
-`client/src/utils/relationships.ts`
-- Domain-specific relationship types (depends-on, blocks, implements)
-- Critical path analysis for dependency chains
-- Circular dependency detection with domain rules
-- Relationship metadata tracking and validation
+3. Relationship Management (75/100)
+File: client/src/utils/relationships.ts
+- Domain-specific relationship types (depends-on, implements, documents)
+- Critical path analysis for dependencies
+- Circular dependency detection with business context
+- Custom validation rules for inter-domain connections
 
-4. Workspace Version Control (80/100)
-`server/src/services/PersistenceService.ts`
-- Domain-specific version control implementation
-- Intelligent diff calculation for nodes and edges
-- Version comparison with structural analysis
-- Evolution metrics tracking
+4. Version Control System (70/100)
+File: server/src/services/PersistenceService.ts
+- Specialized versioning for architecture graphs
+- Custom diff algorithm for comparing versions
+- Architecture-specific metadata tracking
+- Snapshot management with domain context
 
-5. PRD Template System (75/100)
-`server/src/services/PRDRetrievalService.ts`
-- Multi-field weighted template matching
-- Context-aware recommendation system
-- Custom search and ranking algorithm
-- Template categorization by business domain
+5. Template System (65/100)
+File: client/src/components/TemplateGallery.tsx
+- Domain-specific template categorization
+- Template metadata management
+- Built-in vs custom template handling
+- Usage analytics and compatibility tracking
 
 Key Integration Points:
-- Domain rings provide the visual organization framework
-- AI enrichment services generate and validate content
-- Relationship management enforces business rules
-- Version control tracks architectural evolution
-- Template system guides consistent structure generation
+- Node graphs maintain strict domain hierarchy
+- AI enrichment integrated with domain context
+- Version control specialized for architecture graphs
+- Template system aligned with domain categories
 
-The system maintains strict business rules around:
-- Single root node per workspace
-- Directed Acyclic Graph (DAG) structure
-- Domain-specific node typing
-- Relationship validation
-- Version control constraints
+The system enforces business rules through:
+- Single root node requirement
+- Domain-specific connection validation
+- Hierarchical relationship constraints
+- AI-driven content validation
 
 $END$
 
