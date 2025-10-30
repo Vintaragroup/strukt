@@ -13,48 +13,60 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Visual Architecture Mapping System
-Importance Score: 85/100
+Domain-Specific Architecture Management System
 
 Core Business Components:
 
-1. Domain Layout Engine (client/src/utils/domainLayout.ts)
-- Ring-based domain organization with 5 primary sectors
-- Business, Product, Tech, Data/AI, Operations domain mapping
-- Hierarchical node placement with domain constraints
-- Dynamic sector allocation based on node relationships
+1. AI-Driven Architecture Generation (85/100)
+Location: server/src/services/GenerationService.ts
+- Domain-specific workspace architecture generation
+- Custom validation rules for architectural structures 
+- Node relationship management with business constraints
+- Context-aware template matching and suggestion system
 
-2. AI Enrichment System (client/src/utils/enrich/MockAIGenerator.ts)
-- Domain-specific content generation
-- Context-aware node suggestion pipeline
-- Specialized question banks per domain type
-- Template-based architecture recommendations
+2. Domain Ring Layout Engine (85/100)
+Location: client/src/utils/domainLayout.ts
+- Specialized radial layout for business domains
+- Department-specific positioning within domains
+- Ring-based hierarchy visualization
+- Domain-specific angle calculations
 
-3. Relationship Management (client/src/utils/relationships.ts)
-- Business relationship types (depends-on, blocks, implements)  
-- Critical path detection in dependency chains
-- Circular dependency prevention
-- Context-aware relationship suggestions
+3. Business Process Modeling (80/100)
+Location: client/src/utils/relationships.ts
+- Domain-specific relationship types (depends-on, implements, documents)
+- Dependency cycle detection and validation
+- Critical path analysis for project planning
+- Custom validation rules for relationships
 
-4. PRD Template Engine (server/src/services/PRDRetrievalService.ts)
-- Intelligent template matching using domain context
-- Multi-factor relevance scoring system
-- Industry-specific template customization
-- Domain pattern recognition
+4. Workspace Graph Management (75/100)
+Location: client/src/store/useWorkspaceStore.ts
+- Single-root node constraint enforcement
+- Graph cycle detection for workspace relationships
+- Custom history management system
+- Node/edge relationship validation
 
-5. Workspace Graph Controller (client/src/store/useWorkspaceStore.ts)
-- Single-root enforcement with domain validation
-- History management with 50-state limit
-- Node categorization by business domain
-- Relationship integrity monitoring
+5. AI Suggestion System (75/100)
+Location: client/src/services/aiSuggestions.ts
+- Domain-aware suggestion mapping
+- Specialized node categorization (business, tech, data-ai)
+- Context preservation across suggestion cycles
+- Fallback mechanisms with heuristic backup
 
 Key Integration Points:
-- AI suggestion pipeline feeds domain layout engine
-- Template engine provides domain-specific starting points
-- Relationship management enforces domain hierarchy rules
-- Graph controller maintains overall domain integrity
 
-The system implements a unique approach to software architecture visualization by combining AI-assisted suggestions with strict domain modeling and relationship constraints.
+1. PRD Template System
+- Domain-specific template matching
+- Project structure recommendations
+- Context-aware template selection
+- Custom ranking algorithms
+
+2. Version Control
+- Specialized snapshot system for node graphs
+- Differential comparison engine
+- Auto-snapshot with importance scoring
+- Custom version metadata tracking
+
+The system implements a unique combination of AI-assisted architecture design with strict domain modeling and hierarchical constraints. Core value stems from specialized algorithms for workspace organization, relationship management, and context-aware suggestions.
 
 $END$
 

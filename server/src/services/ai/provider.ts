@@ -21,6 +21,11 @@ interface WizardAIParams {
 interface NextSuggestionParams {
   workspaceSummary?: string
   focusSummary?: string
+  focusLabel?: string
+  focusType?: string
+  focusDomain?: string
+  focusRing?: number
+  focusId?: string
   limit?: number
 }
 
@@ -39,7 +44,8 @@ const BASE_SYSTEM_PROMPT = `You are Strukt AI, the lead architect for a software
   `- Do NOT include Markdown, code fences, or commentary outside the JSON.\n`
 
 const NEXT_SYSTEM_PROMPT = BASE_SYSTEM_PROMPT +
-  `Focus on deepening or extending the existing architecture. Recommend 1-3 nodes that progress the plan without repeating existing work.`
+  `Focus on deepening or extending the existing architecture. Recommend 1-3 nodes that progress the plan without repeating existing work.` +
+  ` When a focus node id is supplied, every suggested node must include a metadata object with {"parentId":"<focusId>"} so the client can link it correctly.`
 
 export function isAIProviderAvailable() {
   return Boolean(openAIClient)
@@ -127,10 +133,21 @@ function buildNextMessages(params: NextSuggestionParams): ChatCompletionMessageP
   if (params.workspaceSummary) {
     context.push(`Snapshot of current plan:\n${params.workspaceSummary}`)
   }
+  if (params.focusLabel) {
+    const descriptors = [params.focusLabel]
+    if (params.focusType) descriptors.push(`type: ${params.focusType}`)
+    if (params.focusDomain) descriptors.push(`domain: ${params.focusDomain}`)
+    if (typeof params.focusRing === 'number') descriptors.push(`ring: ${params.focusRing}`)
+    context.push(`Focus node: ${descriptors.join(' | ')}`)
+  }
   if (params.focusSummary) {
     context.push(`Focus area:\n${params.focusSummary}`)
   }
-  context.push('Suggest the next 1-3 concrete additions that progress this plan. Each node should describe a specific deliverable or action.')
+  if (params.focusId) {
+    context.push(`All suggestions must deepen or unblock the focus node (id: ${params.focusId}).`)
+    context.push(`Return each node with metadata.parentId set to "${params.focusId}" so the client can link it correctly.`)
+  }
+  context.push('Suggest the next 1-3 concrete additions that progress this plan. Each node should describe a specific deliverable or action that directly supports the focus node.')
 
   return [
     { role: 'system', content: NEXT_SYSTEM_PROMPT },

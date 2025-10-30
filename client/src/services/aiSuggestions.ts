@@ -53,17 +53,141 @@ export async function continueWizard(params: { sessionId: string; idea: string }
   return toJson(res);
 }
 
-export async function suggestNextNodes(params: { workspaceId: string; cursorNodeId?: string | null }): Promise<SuggestionResult> {
+type RawSuggestion = any;
+
+function mapRawSuggestions(raw: RawSuggestion[], parentId?: string): SuggestedNode[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => {
+      if (!entry) return null;
+      const label =
+        typeof entry.label === "string"
+          ? entry.label
+          : typeof entry.data?.title === "string"
+          ? entry.data.title
+          : undefined;
+      if (!label) return null;
+      const summary =
+        typeof entry.summary === "string"
+          ? entry.summary
+          : typeof entry.data?.summary === "string"
+          ? entry.data.summary
+          : undefined;
+      const domain = entry.domain ?? entry.data?.domain;
+      const ring =
+        typeof entry.ring === "number"
+          ? entry.ring
+          : typeof entry.data?.ring === "number"
+          ? entry.data.ring
+          : undefined;
+      const type =
+        typeof entry.type === "string"
+          ? entry.type
+          : typeof entry.data?.type === "string"
+          ? entry.data.type
+          : "requirement";
+      const metadata: Record<string, unknown> = {
+        ...(typeof entry.metadata === "object" && entry.metadata !== null ? entry.metadata : {}),
+      };
+      if (parentId && !metadata.parentId) {
+        metadata.parentId = parentId;
+      }
+      return {
+        id: typeof entry.id === "string" ? entry.id : undefined,
+        label,
+        summary,
+        type,
+        domain,
+        ring,
+        metadata,
+      } as SuggestedNode;
+    })
+    .filter(Boolean) as SuggestedNode[];
+}
+
+function normalizeSuggestionResult(
+  result: SuggestionResult,
+  parentId?: string
+): SuggestionResult {
+  if (!result) return { suggestions: [] };
+  return {
+    ...result,
+    suggestions: mapRawSuggestions(result.suggestions, parentId),
+  };
+}
+
+export async function suggestNextNodes(params: {
+  workspaceId: string;
+  cursorNodeId?: string | null;
+  context?: {
+    label?: string;
+    summary?: string;
+    type?: string;
+    domain?: string;
+    ring?: number;
+  };
+}): Promise<SuggestionResult> {
   if (USE_MOCK) {
-    return new Promise((resolve) => setTimeout(() => resolve(mockNext), 300));
+    return new Promise((resolve) =>
+      setTimeout(
+        () => resolve(normalizeSuggestionResult(mockNext, params.cursorNodeId ?? undefined)),
+        300
+      )
+    );
   }
 
-  const res = await fetch(`${API_BASE}/suggestions/generate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ workspaceId: params.workspaceId, cursorNodeId: params.cursorNodeId ?? undefined }),
-  });
-  return toJson(res);
+  const payload = {
+    workspaceId: params.workspaceId,
+    cursorNodeId: params.cursorNodeId ?? undefined,
+    focusLabel: params.context?.label,
+    focusSummary: params.context?.summary,
+    focusType: params.context?.type,
+    focusDomain: params.context?.domain,
+    focusRing: params.context?.ring,
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(`${API_BASE}/suggestions/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const json = await toJson(res);
+    return normalizeSuggestionResult(json, params.cursorNodeId ?? undefined);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.warn("AI suggestions timed out, falling back to heuristics", error);
+    // Heuristic fallback that runs fast server-side
+    const res = await fetch(`${API_BASE}/ai/suggest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nodes: params.cursorNodeId
+          ? [
+              {
+                id: params.cursorNodeId,
+                type: params.context?.type ?? "requirement",
+                data: {
+                  title: params.context?.label ?? "Focused Node",
+                  summary: params.context?.summary,
+                },
+              },
+            ]
+          : [],
+        edges: [],
+      }),
+    });
+    const fallback = await toJson(res);
+    return normalizeSuggestionResult(
+      { suggestions: fallback.suggestions ?? [] },
+      params.cursorNodeId ?? undefined
+    );
+  }
 }
 
 export async function applySuggestion(suggestionId: string): Promise<{ suggestionId: string; nodes: SuggestedNode[]; status: string }> {

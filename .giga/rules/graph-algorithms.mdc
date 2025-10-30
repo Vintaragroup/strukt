@@ -1,45 +1,46 @@
 ---
-description: Implements domain-specific graph algorithms for software architecture visualization and analysis
+description: Specification for core graph algorithms including layout systems, relationship management, and cycle detection
 ---
 
 
 # graph-algorithms
 
-Core domain-specific graph algorithms:
+## Domain Layout Engine (85/100)
+Location: client/src/utils/domainLayout.ts
+- Radial layout algorithm optimized for business domain visualization
+- Multi-ring positioning system with domain-specific angle calculations
+- Node clustering by business context (frontend, backend, data/AI, operations)
+- Smart overlap prevention with domain boundary respect
+- Dynamic radius adjustment based on node density
 
-1. Domain Ring Layout System (utils/domainLayout.ts)
-Importance Score: 90
-- Radial layout algorithm organizing nodes into business domain rings
-- Sector allocation by domain: Business, Product, Tech, Data/AI, Operations 
-- Smart angular distribution based on node density and relationships
-- Collision avoidance with domain-aware spacing rules
-- Hierarchical ring assignment based on node dependencies
+## Relationship Management (80/100) 
+Location: client/src/utils/relationships.ts
+- Domain-specific relationship validation (depends-on, implements, documents)
+- Cycle detection with business context preservation
+- Critical path analysis for project dependencies
+- Custom validation rules for cross-domain relationships
+- Relationship suggestion engine with domain awareness
 
-2. Relationship Graph Management (utils/relationships.ts) 
-Importance Score: 85
-- Domain relationship validation enforcing business rules
-- Circular dependency detection with severity classification
-- Critical path analysis for dependency chains
-- Relationship suggestion engine using node context
-- Edge routing with domain boundary awareness
+## Graph Operations Core (75/100)
+Location: client/src/utils/graphOps.ts
+- Business domain partitioning algorithms
+- Node hierarchy enforcement with domain constraints
+- Custom traversal patterns respecting business boundaries
+- Domain-aware node grouping and ungrouping operations
 
-3. Auto-Layout Engine (utils/autoLayout.ts)
-Importance Score: 80
-- Force-directed layout with domain constraints
-- Node clustering by business function
-- Smart edge bundling for related domains
-- Viewport optimization with domain preservation
-- Layout persistence across sessions
+## Auto-Layout System (70/100)
+Location: client/src/utils/autoLayout.ts
+- Force-directed layout with business domain weights
+- Smart node distribution based on relationship types
+- Domain cluster preservation during layout
+- Dynamic spacing rules based on node importance
 
-4. Cycle Detection System (utils/graphOps.ts)
-Importance Score: 75
-- Business impact analysis for dependency cycles
-- Domain-aware cycle breaking suggestions
-- Relationship validation across domain boundaries
-- Node hierarchy enforcement rules
-- Cross-domain relationship optimization
-
-The system implements specialized graph algorithms focused on business domain visualization and relationship management, with emphasis on maintaining logical groupings and hierarchies while ensuring optimal layout and readability.
+## Edge Routing (65/100)
+Location: client/src/utils/edgeRouting.ts
+- Business context-aware path finding
+- Domain boundary-respecting edge placement
+- Relationship type-specific routing rules
+- Smart bundling for related domain connections
 
 $END$
 

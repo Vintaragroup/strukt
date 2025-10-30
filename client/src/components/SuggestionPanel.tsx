@@ -43,7 +43,24 @@ export function SuggestionPanel({
       setLoading(true);
       setError(null);
       try {
-        const result = await suggestNextNodes({ workspaceId, cursorNodeId: node.id });
+        const data = (node.data ?? {}) as Record<string, any>;
+        const focusContext = {
+          label: typeof data.label === "string" ? data.label : node.id,
+          summary:
+            typeof data.summary === "string"
+              ? data.summary
+              : typeof data.description === "string"
+              ? data.description
+              : undefined,
+          type: typeof data.type === "string" ? data.type : node.type,
+          domain: typeof data.domain === "string" ? data.domain : undefined,
+          ring: typeof data.ring === "number" ? data.ring : undefined,
+        };
+        const result = await suggestNextNodes({
+          workspaceId,
+          cursorNodeId: node.id,
+          context: focusContext,
+        });
         if (!cancelled) {
           setSuggestions(result.suggestions);
         }
@@ -74,17 +91,20 @@ export function SuggestionPanel({
       if (suggestionId && !USE_MOCK_SUGGESTIONS) {
         try {
           const result = await applySuggestion(suggestionId);
-          onAdd(result.nodes.length ? result.nodes : items);
+          onAdd(result.nodes.length ? result.nodes : items, {
+            suggestionId,
+            parentNodeId: node?.id,
+          });
           return;
         } catch (error) {
           console.error("Failed to apply suggestion", error);
         }
       }
 
-      onAdd(items, suggestionId ? { suggestionId } : undefined);
+      onAdd(items, suggestionId ? { suggestionId, parentNodeId: node?.id } : { parentNodeId: node?.id });
       onClose();
     },
-    [onAdd, onClose]
+    [onAdd, onClose, node?.id]
   );
 
   const handleWrongPath = useCallback(

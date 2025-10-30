@@ -1,48 +1,48 @@
 ---
-description: Documents domain-ring architecture system for organizing and visualizing nodes in concentric business domain rings
+description: Specifications for domain-based radial node layout system with hierarchical ring positioning and sector management
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements a specialized radial layout for organizing nodes into business domain sectors:
+The domain ring system implements specialized node organization through concentric rings and sectors:
 
-Core Ring Management (client/src/utils/domainLayout.ts):
-- Calculates sector angles for 5 primary business domains:
-  - Business (0-72°)
-  - Product (72-144°)
-  - Tech (144-216°)
-  - Data/AI (216-288°)
-  - Operations (288-360°)
-- Manages 6 concentric rings based on node hierarchy depth
-- Dynamically adjusts ring radii based on viewport and node density
-- Maintains domain-specific node placement with collision avoidance
-Importance Score: 90
+## Ring Structure
+- Outer ring: Business domain nodes
+- Middle ring: Product/feature nodes
+- Inner ring: Technical implementation nodes
+- Core ring: Root node
+Importance Score: 90/100
 
-Domain Ring Visualization (client/src/components/DomainRings.tsx):
-- Renders interactive domain sectors with visual indicators
-- Handles domain-specific hover states and selection
-- Manages visual feedback for node movements between domains
-- Implements domain boundary snapping behavior
-Importance Score: 85
+File: client/src/utils/domainLayout.ts
+- Calculates optimal sector angles based on node density
+- Manages node distribution across rings
+- Handles domain boundary calculations
+- Implements hierarchical node positioning logic
 
-Relationship Management (client/src/utils/relationships.ts):
-- Enforces domain-specific relationship rules:
-  - Business nodes can only connect to Product/Operations
-  - Tech nodes require Product node dependencies
-  - Data/AI nodes must connect through Tech domain
-  - Operations nodes can connect across all domains
-- Validates cross-domain relationships based on business context
-Importance Score: 85
+## Domain Sectors
+Five primary sectors with fixed angular positions:
+1. Business (0-72°)
+2. Product (72-144°) 
+3. Technical (144-216°)
+4. Data/AI (216-288°)
+5. Operations (288-360°)
+Importance Score: 85/100
 
-Edge Routing (client/src/components/CustomEdge.tsx):
-- Routes connections between domains using specialized paths
-- Adjusts edge curvature based on source/target domain positions
-- Provides visual indicators for cross-domain relationships
-- Handles domain boundary crossing animations
-Importance Score: 75
+## Node Positioning Rules
+File: client/src/components/DomainRings.tsx
+- Nodes inherit sector from parent domain
+- Automatic radius calculation based on ring level
+- Force-directed positioning within sectors
+- Collision detection between adjacent nodes
+Importance Score: 80/100
 
-The system creates a structured visual hierarchy representing business domains while enforcing valid relationships between components across different organizational areas.
+## Hierarchy Management
+- Maximum 4 ring levels supported
+- Parent-child relationships enforce ring constraints
+- Nodes can only connect to adjacent rings
+- Cross-sector relationships require special routing
+Importance Score: 75/100
 
 $END$
 

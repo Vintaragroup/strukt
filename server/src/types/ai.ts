@@ -48,6 +48,11 @@ export const SuggestionRequestBody = z.object({
   workspaceId: objectIdSchema,
   cursorNodeId: z.string().min(1).optional(),
   limit: z.number().int().min(1).max(10).optional(),
+  focusLabel: z.string().min(1).optional(),
+  focusSummary: z.string().min(1).optional(),
+  focusType: z.string().min(1).optional(),
+  focusDomain: z.string().min(1).optional(),
+  focusRing: z.number().int().min(1).max(6).optional(),
 })
 
 export const ApplySuggestionBody = z.object({

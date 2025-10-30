@@ -10,22 +10,58 @@ interface GenerateParams {
   workspaceId: string
   limit?: number
   cursorNodeId?: string
+  focusLabel?: string
+  focusSummary?: string
+  focusType?: string
+  focusDomain?: string
+  focusRing?: number
 }
 
-export async function generateSuggestions({ workspaceId, limit = 3, cursorNodeId }: GenerateParams): Promise<SuggestionResult> {
+export async function generateSuggestions({ workspaceId, limit = 3, cursorNodeId, focusDomain, focusLabel, focusSummary, focusType, focusRing }: GenerateParams): Promise<SuggestionResult> {
   const workspaceObjectId = ensureObjectId(workspaceId)
   const workspace = await Workspace.findById(workspaceObjectId).lean()
   const focusNode = workspace?.nodes?.find((node: any) => node.id === cursorNodeId)
 
+  const derivedFocusLabel = focusLabel
+    || focusNode?.data?.title
+    || focusNode?.data?.label
+    || focusNode?.label
+    || focusNode?.id
+    || undefined
+
+  const derivedFocusSummary = focusSummary || summarizeNode(focusNode)
+  const derivedFocusType = focusType || focusNode?.type
+  const derivedFocusDomain = focusDomain || focusNode?.data?.domain
+  const derivedFocusRing = typeof focusRing === 'number'
+    ? focusRing
+    : typeof focusNode?.data?.ring === 'number'
+      ? focusNode?.data?.ring
+      : undefined
+
   const aiResult = await generateNextSuggestions({
     workspaceSummary: summarizeWorkspace(workspace),
-    focusSummary: summarizeNode(focusNode),
+    focusSummary: derivedFocusSummary,
+    focusLabel: derivedFocusLabel,
+    focusType: derivedFocusType,
+    focusDomain: derivedFocusDomain,
+    focusRing: derivedFocusRing,
+    focusId: cursorNodeId,
     limit,
   })
 
   let nodes = aiResult.nodes
   if (!nodes.length) {
     nodes = buildMockNodes(cursorNodeId || new Date().toISOString(), limit)
+  }
+
+  if (cursorNodeId) {
+    nodes = nodes.map((node) => ({
+      ...node,
+      metadata: {
+        ...(node.metadata || {}),
+        parentId: cursorNodeId,
+      },
+    }))
   }
 
   const persisted = await persistSuggestions({

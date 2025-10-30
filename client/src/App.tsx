@@ -2842,7 +2842,12 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const handleAcceptSuggestions = useCallback(
     async (
       suggestions: SuggestedNode[],
-      options?: { suggestionId?: string; renameTo?: string; centerSummary?: string }
+      options?: {
+        suggestionId?: string;
+        renameTo?: string;
+        centerSummary?: string;
+        parentNodeId?: string;
+      }
     ) => {
       if (!suggestions || suggestions.length === 0) {
         return;
@@ -2865,7 +2870,8 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           acceptedNodes,
           nodes,
           edges,
-          centerId
+          centerId,
+          options?.parentNodeId
         );
 
         setEdges(edgeResult);
@@ -2919,7 +2925,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           }, 2000);
         }
 
-        if (renameTo) {
+        if (renameTo && renameTo !== workspaceName) {
           setWorkspaceName(renameTo);
           if (typeof window !== "undefined") {
             localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, renameTo);
@@ -2941,7 +2947,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         });
       }
     },
-    [nodes, edges, applyLayoutAndRelax, setNodes, isCenterNode, persistWorkspace, setWorkspaceName]
+    [nodes, edges, applyLayoutAndRelax, setNodes, isCenterNode, persistWorkspace, setWorkspaceName, workspaceName]
   );
 
   const selectedNode = useMemo(

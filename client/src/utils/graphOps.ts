@@ -32,7 +32,8 @@ export function applySuggestions(
   suggestions: SuggestedNode[],
   nodes: Node[],
   edges: Edge[],
-  centerNodeId: string
+  centerNodeId: string,
+  defaultParentId?: string
 ): ApplySuggestionsResult {
   if (!suggestions || suggestions.length === 0) {
     return { nodes, edges, createdNodeIds: [] };
@@ -61,11 +62,29 @@ export function applySuggestions(
       return;
     }
 
+    const suggestedParent =
+      (suggestion.metadata as Record<string, unknown> | undefined)?.parentId;
+    const parentCandidate = typeof suggestedParent === "string" ? suggestedParent : undefined;
+    const parentId =
+      parentCandidate && nextNodes.some((n) => n.id === parentCandidate)
+        ? parentCandidate
+        : defaultParentId && nextNodes.some((n) => n.id === defaultParentId)
+        ? defaultParentId
+        : centerNodeId;
+
+    const parentData = nextNodes.find((n) => n.id === parentId)?.data as any;
+    const baseDomain = suggestion.domain ?? parentData?.domain;
+    const baseType = suggestion.type ?? parentData?.type;
+    const rawRing =
+      suggestion.ring ??
+      (typeof parentData?.ring === "number" ? parentData.ring + 1 : undefined);
+    const normalizedRing = typeof rawRing === "number" ? Math.min(6, Math.max(1, rawRing)) : undefined;
+
     const newId = createNodeId(nextNodes);
     const position = calculateNewNodePosition(nextNodes, centerNodeId, {
-      domain: suggestion.domain,
-      type: suggestion.type,
-      ring: suggestion.ring,
+      domain: baseDomain,
+      type: baseType,
+      ring: normalizedRing,
     });
 
     const newNode: Node = {
@@ -76,8 +95,8 @@ export function applySuggestions(
         label: suggestion.label,
         summary: suggestion.summary,
         type: (suggestion.type || "requirement") as any,
-        domain: suggestion.domain,
-        ring: suggestion.ring,
+        domain: baseDomain,
+        ring: normalizedRing,
         cards: [],
         tags: [],
         isNew: true,
@@ -87,9 +106,11 @@ export function applySuggestions(
     nextNodes.push(newNode);
     createdNodeIds.push(newId);
 
+    const parentForEdge = parentId || centerNodeId;
+
     const newEdge: Edge = {
-      id: `e-${centerNodeId}-${newId}-${Date.now().toString(36)}`,
-      source: centerNodeId,
+      id: `e-${parentForEdge}-${newId}-${Date.now().toString(36)}`,
+      source: parentForEdge,
       target: newId,
       type: "custom",
     };

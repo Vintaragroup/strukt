@@ -1,60 +1,68 @@
 ---
-description: Specifies the AI content generation pipeline, including context injection, template matching, and generation queue system
+description: Handles AI content generation flows, context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-Core AI Generation Components:
+Core generation pipeline components:
 
-1. Context Injection System (server/src/services/ContextInjector.ts)
-Importance Score: 90
-- Analyzes workspace state to build contextual prompts
-- Extracts domain patterns from existing nodes and relationships
-- Injects relevant PRD template sections based on node types
-- Maintains context history for multi-turn generation
+1. AI Content Generation Service (server/src/services/GenerationService.ts)
+- Manages workspace architecture generation flows
+- Domain-specific parsing of AI responses into node structures
+- Template-based fallback generation for common architectures
+- Custom validation rules for generated content
+Importance Score: 90/100
 
-2. Generation Queue Management (server/src/services/GenerationQueue.ts)
-Importance Score: 85
-- Prioritized generation queue with domain-specific ordering
-- Rate limiting with business context preservation
-- Batching of related generation requests
-- State management for partial completions
+2. Context Injection System (server/src/services/ContextInjector.ts)
+- Builds specialized context objects for generation prompts
+- Injects domain terminology and project-specific terms
+- Maintains context hierarchy based on node relationships
+- Template matching based on workspace characteristics
+Importance Score: 85/100
 
-3. Template Matching System (server/src/services/PRDRetrievalService.ts)
-Importance Score: 85
-- Domain-aware template selection algorithm
-- Scoring based on:
-  - Business domain alignment
-  - Project context similarity
-  - Node type compatibility
-  - Historical success rates
+3. Generation Queue Management (server/src/services/GenerationQueue.ts)
+- Priority-based queue for generation requests
+- Domain-specific rate limiting per request type
+- Queue state persistence with recovery
+- Request deduplication with context awareness
+Importance Score: 80/100
 
-4. Generation Pipeline (server/src/services/GenerationService.ts)
-Importance Score: 90
-- Multi-stage content generation workflow:
-  1. Context building
-  2. Template matching
-  3. Content generation
-  4. Post-processing
-  5. Validation
-- Domain-specific validation rules per node type
+4. Template Matching Algorithm (server/src/services/PRDRetrievalService.ts)
+- Semantic matching of workspace context to PRD templates
+- Custom template ranking based on domain similarity
+- Hybrid retrieval combining exact and fuzzy matching
+- Domain-specific template filtering
+Importance Score: 75/100
 
-5. AI Provider Integration (server/src/services/ai/provider.ts)
-Importance Score: 80
-- Model selection based on content type
-- Specialized prompt construction for:
-  - Architecture suggestions
-  - Relationship recommendations
-  - Node content enrichment
-  - Todo generation
+Key Generation Pipeline Flows:
+1. Content Generation:
+- Request validation
+- Context building
+- Template selection
+- AI generation
+- Response parsing
+- Node structure creation
 
-Key Business Rules:
-- Single root node enforcement
-- Domain-specific relationship constraints
-- Required metadata per node type
-- Context preservation across generations
-- Template versioning requirements
+2. Template Processing:
+- Context analysis
+- Template matching
+- Priority assignment
+- Queue placement
+- Generation scheduling
+
+File Structure:
+```
+server/src/services/
+  ├── GenerationService.ts
+  ├── ContextInjector.ts  
+  ├── GenerationQueue.ts
+  ├── PRDRetrievalService.ts
+  └── ai/
+      ├── provider.ts
+      ├── normalize.ts
+      └── storage.ts
+```
 
 $END$
 
