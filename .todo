@@ -3,8 +3,7 @@ TODO:
 - Gather feedback on new modal styling polish in `AddNodeModal` and adjust spacing if needed.
 - Run targeted regression around bulk editors to ensure new data guards handle mixed node payloads.
 - Map upcoming Strukt Node Flow upgrade steps (suggestion panels, feedback UI) onto the new AI types.
-- Once scaffolding is ready, thread `SuggestedNode` and `SuggestionResult` into the client state flows.
-- Configure `VITE_MOCK_AI_SUGGESTIONS` switching once backend endpoints replace the mock service.
+- Verify the new AI endpoints work with `VITE_MOCK_AI_SUGGESTIONS=false` in local/dev environments and document rollout steps.
 - Extend `applySuggestions` to deduplicate labels and honor backend-provided edges once available.
 - Persist a dismissal flag so the Start Wizard can stay hidden for users who skip AI onboarding on empty canvases.
 - Replace ad-hoc buttons in `StartWizard` with shared UI kit variants during the styling pass.
@@ -13,3 +12,5 @@ TODO:
 - After feedback submissions, surface a lightweight confirmation indicator on the node or suggestion panel for collaborative insight.
 - Review the dual wizard flows (welcome modal vs overlay) and decide if auto-open of the full-screen wizard is still needed.
 - Add persistence or state syncing so the toolbar-triggered wizard remembers the last idea when reopened.
+- Load the real workspace ID from the workspace API on boot instead of relying on the default placeholder.
+- Capture AI rationales in the wizard session history and consider surfacing them to the UI for transparency.

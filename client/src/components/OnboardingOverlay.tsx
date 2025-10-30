@@ -70,7 +70,14 @@ export function OnboardingOverlay({ onComplete, onSkip }: OnboardingOverlayProps
   // Update highlight position
   useEffect(() => {
     if (step.highlight) {
-      const element = document.querySelector(step.highlight.element);
+      let element: Element | null = null;
+      if (step.highlight.element === '[data-id="center"]') {
+        element =
+          document.querySelector(step.highlight.element) ||
+          document.querySelector('.react-flow__node-center');
+      } else {
+        element = document.querySelector(step.highlight.element);
+      }
       if (element) {
         const rect = element.getBoundingClientRect();
         setHighlightRect(rect);

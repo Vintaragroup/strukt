@@ -23,10 +23,12 @@ export function NodeHierarchy({
   onCenterClick 
 }: NodeHierarchyProps) {
   // Find the center node
-  const centerNode = nodes.find(n => n.id === "center");
-  
+  const isCenterNode = (node: Node | null | undefined) =>
+    Boolean(node && (node.type === "center" || node.id === "center" || node.id === "center-node"));
+  const centerNode = nodes.find((n) => isCenterNode(n));
+
   // Get selected nodes
-  const selectedNodes = nodes.filter(n => selectedNodeIds.includes(n.id) && n.id !== "center");
+  const selectedNodes = nodes.filter((n) => selectedNodeIds.includes(n.id) && !isCenterNode(n));
   
   // If no selection, don't show breadcrumb
   if (selectedNodes.length === 0) {

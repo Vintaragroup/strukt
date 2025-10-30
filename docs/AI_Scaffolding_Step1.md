@@ -68,3 +68,14 @@
 ### Follow-up
 - Reset or persist the idea text when reopening the wizard so returning users can resume their last draft if needed.
 - Evaluate whether the auto-open wizard should remain once the welcome modal captures the same flow.
+
+---
+
+## Step 8: Backend AI Integration
+- Replaced client mock calls with real `/api/wizard`, `/api/suggestions`, and `/api/feedback` endpoints; session/workspace IDs now flow end to end.
+- Wired server-side OpenAI prompts (with fallback heuristics) so wizard intake and follow-up suggestions generate domain-aware nodes stored in Mongo.
+- Suggestions are persisted with `ADD_NODE` actions, letting the client apply them with canonical IDs while logging feedback for continuous tuning.
+
+### Follow-up
+- Refine prompts to incorporate feedback flags and prevent repeated ideas once nodes are accepted.
+- Extend suggestion actions to include edge creation once the backend supports LINK-type commits.

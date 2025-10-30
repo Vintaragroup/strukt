@@ -71,6 +71,8 @@ export function RelationshipsPanel({
   const [filterType, setFilterType] = useState<RelationshipType | "all">("all");
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [showCycles, setShowCycles] = useState(false);
+  const isCenterNode = (node: Node | null | undefined) =>
+    Boolean(node && (node.type === "center" || node.id === "center" || node.id === "center-node"));
 
   // Calculate relationships data
   const relationships = useMemo(() => getRelationships(edges), [edges]);
@@ -297,7 +299,7 @@ export function RelationshipsPanel({
                   </SelectTrigger>
                   <SelectContent>
                     {nodes
-                      .filter((n) => n.id !== "center")
+                      .filter((n) => !isCenterNode(n))
                       .map((node) => (
                         <SelectItem key={node.id} value={node.id}>
                           {(node.data as unknown as CustomNodeData)?.label || node.id}

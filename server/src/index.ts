@@ -13,6 +13,9 @@ import retryRouter from './routes/retry.js'
 import aiRouter from './routes/ai.js'
 import prdRouter from './routes/prd.js'
 import generationRouter from './routes/generation.js'
+import wizardRouter from './routes/wizard.js'
+import suggestionsRouter from './routes/suggestions.js'
+import feedbackRouter from './routes/feedback.js'
 
 const app: Express = express()
 
@@ -38,6 +41,9 @@ app.use('/api/generation', retryRouter)
 app.use('/api/ai', aiRouter)
 app.use('/api/prd-templates', prdRouter)
 app.use('/api/generation', generationRouter)
+app.use('/api/wizard', wizardRouter)
+app.use('/api/suggestions', suggestionsRouter)
+app.use('/api/feedback', feedbackRouter)
 
 // 404 handler
 app.use((req: Request, res: Response) => {

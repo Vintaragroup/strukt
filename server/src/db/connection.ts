@@ -13,7 +13,9 @@ export async function connectDB(): Promise<void> {
       waitQueueTimeoutMS: 10000, // Time to wait for connection from pool
       family: 4, // Use IPv4
     })
-    console.log('✅ MongoDB connected:', config.mongodbUri)
+    // Redact credentials if present before logging the URI
+    const redact = (uri: string) => uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:@]+):([^@]+)@/i, (_m, p1, user) => `${p1}${user}:******@`)
+    console.log('✅ MongoDB connected:', redact(config.mongodbUri))
     console.log('📊 Connection pool configured: min=5, max=10, timeout=45s')
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error)

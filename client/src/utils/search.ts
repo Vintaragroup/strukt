@@ -5,6 +5,13 @@
 
 import { Node } from '@xyflow/react';
 
+const CENTER_ID_FALLBACKS = new Set(['center', 'center-node']);
+
+function isCenterNode(node: Node | null | undefined): boolean {
+  if (!node) return false;
+  return node.type === 'center' || CENTER_ID_FALLBACKS.has(node.id);
+}
+
 export interface SearchResult {
   node: Node;
   score: number;
@@ -42,7 +49,7 @@ export function searchNodes(
 
   for (const node of nodes) {
     // Skip center node
-    if (node.id === 'center') continue;
+    if (isCenterNode(node)) continue;
 
     // Apply filters
     if (filters && !passesFilters(node, filters)) {

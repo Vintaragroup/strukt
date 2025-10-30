@@ -37,9 +37,11 @@ export function BulkTypeEditor({
   onChangeType,
 }: BulkTypeEditorProps) {
   const [selectedType, setSelectedType] = useState<string>('');
+  const isCenterNode = (node: Node | null | undefined) =>
+    Boolean(node && (node.type === 'center' || node.id === 'center' || node.id === 'center-node'));
 
   // Get current types from selected nodes
-  const selectedNodes = nodes.filter((n) => n.selected && n.id !== 'center');
+  const selectedNodes = nodes.filter((n) => n.selected && !isCenterNode(n));
   const currentTypes = new Set<string>();
   selectedNodes.forEach((node) => {
     const data: any = node.data || {};

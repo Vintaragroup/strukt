@@ -1,45 +1,42 @@
 ---
-description: Specialized visualization system for organizing and displaying nodes in domain-based concentric rings with sector divisions
+description: Specifications for domain-based radial layout visualization system that organizes nodes in concentric rings based on business domains
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements specialized radial visualization with business-domain based organization:
+The domain ring system implements a specialized visualization approach for organizing nodes in concentric rings based on business domains:
 
-1. Core Ring Structure
-- 5 primary domain sectors: Business, Product, Tech, Data/AI, Operations 
-- Concentric rings representing hierarchy levels within each domain
-- Angular sector calculations based on node density and importance
-- Dynamic radius scaling based on depth and node count
+Core Ring Management (client/src/components/DomainRings.tsx):
+- Divides workspace into 5 primary domain sectors: Business, Product, Tech, Data/AI, Operations 
+- Calculates precise sector angles and ring radiuses based on node density
+- Maintains hierarchical node positioning within domain rings
+- Enforces domain-specific node placement rules and constraints
+Importance Score: 95/100
 
-2. Node Positioning Logic (Score: 85/100)
-Path: client/src/components/DomainRings.tsx
-- Custom sector-based node placement algorithm
-- Maintains minimum angular separation between nodes
-- Handles parent-child relationships across rings
-- Implements domain boundary enforcement
+Layout Engine (client/src/utils/domainLayout.ts):
+- Handles dynamic radius calculations for optimal ring spacing
+- Implements domain boundary detection and overlap prevention
+- Manages smooth transitions during node repositioning
+- Calculates optimal node distribution within sectors
+Importance Score: 90/100
 
-3. Ring Layout Management (Score: 80/100)
-Path: client/src/utils/domainLayout.ts
-- Calculates optimal ring radii for hierarchy levels
-- Manages domain sector boundaries and transitions
-- Handles node overflow and ring expansion
-- Dynamic resizing based on viewport constraints
+Domain-Based Node Organization:
+- Nodes inherit properties and constraints based on their domain ring
+- Inner rings contain higher-level concepts, outer rings contain implementation details
+- Automatic node repositioning maintains domain hierarchy
+- Cross-domain relationships visually indicate system dependencies
+Importance Score: 85/100
 
-4. Domain-Specific Behaviors
-- Automatic node categorization into domain sectors
-- Enforces domain-specific connection rules
-- Maintains visual hierarchies within domains
-- Handles cross-domain relationships
+Ring Hierarchy Rules:
+- Business domain occupies innermost ring (strategic)
+- Product domain occupies second ring (tactical)
+- Tech domain spans middle rings (implementation)
+- Data/AI and Operations domains occupy outer rings (support)
+- Node importance decreases with ring distance from center
+Importance Score: 80/100
 
-5. Visual Elements
-- Animated gradient backgrounds per domain
-- Sector boundary indicators
-- Hierarchical connection lines
-- Domain-specific styling and iconography
-
-The system enforces strict domain separation while allowing controlled cross-domain relationships, creating a structured visualization that reflects organizational boundaries and hierarchies.
+The system enforces strict domain separation while allowing relationship visualization across rings, creating a natural hierarchy from strategic business concepts to technical implementation details.
 
 $END$
 

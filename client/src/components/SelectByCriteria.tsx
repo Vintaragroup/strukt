@@ -32,6 +32,9 @@ export function SelectByCriteria({
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  const isCenterNode = (node: Node | null | undefined) =>
+    Boolean(node && (node.type === 'center' || node.id === 'center' || node.id === 'center-node'));
+
   // Get available options
   const availableTypes = getAllUniqueTypes(nodes);
   const availableTags = getAllUniqueTags(nodes);
@@ -80,7 +83,7 @@ export function SelectByCriteria({
     // Simple estimation - count nodes that would match
     let count = 0;
     nodes.forEach((node) => {
-      if (node.id === 'center') return;
+      if (isCenterNode(node)) return;
       
       let matches = true;
       const data: any = node.data || {};

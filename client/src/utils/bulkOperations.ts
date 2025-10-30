@@ -6,6 +6,23 @@
 
 import { Node, Edge } from '@xyflow/react';
 
+const CENTER_ID_FALLBACKS = new Set(['center', 'center-node']);
+
+function isCenterNode(node: Node | null | undefined): boolean {
+  if (!node) return false;
+  return node.type === 'center' || CENTER_ID_FALLBACKS.has(node.id);
+}
+
+function collectCenterIds(nodes: Node[]): Set<string> {
+  const ids = new Set<string>(CENTER_ID_FALLBACKS);
+  nodes.forEach((node) => {
+    if (node && node.type === 'center') {
+      ids.add(node.id);
+    }
+  });
+  return ids;
+}
+
 export interface BulkSelectionCriteria {
   types?: string[];
   tags?: string[];
@@ -32,13 +49,14 @@ export function selectNodesByCriteria(
   criteria: BulkSelectionCriteria,
   edges?: Edge[]
 ): Node[] {
+  const centerIds = collectCenterIds(nodes);
   return nodes.map((node) => {
     // Never select center node in bulk operations
-    if (node.id === 'center-node' || node.id === 'center') {
+    if (isCenterNode(node)) {
       return node;
     }
 
-    const shouldSelect = matchesCriteria(node, criteria, edges);
+    const shouldSelect = matchesCriteria(node, criteria, edges, centerIds);
 
     return {
       ...node,
@@ -53,7 +71,8 @@ export function selectNodesByCriteria(
 function matchesCriteria(
   node: Node,
   criteria: BulkSelectionCriteria,
-  edges?: Edge[]
+  edges: Edge[] | undefined,
+  centerIds: Set<string>
 ): boolean {
   // Filter by types
   if (criteria.types && criteria.types.length > 0) {
@@ -110,8 +129,8 @@ function matchesCriteria(
   if (criteria.isConnectedToCenter !== undefined && edges) {
     const isConnected = edges.some(
       (edge) =>
-        (edge.source === 'center' && edge.target === node.id) ||
-        (edge.target === 'center' && edge.source === node.id)
+        (centerIds.has(edge.source) && edge.target === node.id) ||
+        (centerIds.has(edge.target) && edge.source === node.id)
     );
     if (criteria.isConnectedToCenter !== isConnected) {
       return false;
@@ -150,7 +169,7 @@ export function bulkAddTags(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 
@@ -190,7 +209,7 @@ export function bulkRemoveTags(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 
@@ -232,7 +251,7 @@ export function bulkReplaceTags(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 
@@ -267,7 +286,7 @@ export function bulkChangeType(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 
@@ -304,7 +323,7 @@ export function bulkDeleteNodes(
   result: BulkOperationResult;
 } {
   const selectedIds = nodes
-    .filter((n) => n.selected && n.id !== 'center' && n.id !== 'center-node')
+    .filter((n) => n.selected && !isCenterNode(n))
     .map((n) => n.id);
 
   const updatedNodes = nodes.filter((n) => !selectedIds.includes(n.id));
@@ -335,7 +354,7 @@ export function bulkDuplicateNodes(
   result: BulkOperationResult;
 } {
   const selectedNodes = nodes.filter(
-    (n) => n.selected && n.id !== 'center' && n.id !== 'center-node'
+    (n) => n.selected && !isCenterNode(n)
   );
 
   if (selectedNodes.length === 0) {
@@ -416,7 +435,7 @@ export function getSelectionStats(nodes: Node[]): {
   withAIEnrichment: number;
 } {
   const selectedNodes = nodes.filter(
-    (n) => n.selected && n.id !== 'center' && n.id !== 'center-node'
+    (n) => n.selected && !isCenterNode(n)
   );
 
   const stats = {
@@ -461,7 +480,7 @@ export function getAllUniqueTags(nodes: Node[]): string[] {
   const tagSet = new Set<string>();
 
   nodes.forEach((node) => {
-    if (node.id === 'center' || node.id === 'center-node') return;
+    if (isCenterNode(node)) return;
     const tags = node.data.tags || [];
     tags.forEach((tag: string) => tagSet.add(tag));
   });
@@ -476,7 +495,7 @@ export function getAllUniqueTypes(nodes: Node[]): string[] {
   const typeSet = new Set<string>();
 
   nodes.forEach((node) => {
-    if (node.id === 'center' || node.id === 'center-node') return;
+    if (isCenterNode(node)) return;
     const type = node.data.type;
     if (type) typeSet.add(type);
   });
@@ -494,7 +513,7 @@ export function bulkMoveNodes(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 
@@ -528,7 +547,7 @@ export function bulkClearCards(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 
@@ -565,7 +584,7 @@ export function bulkUpdateTodos(
   let affectedCount = 0;
 
   const updatedNodes = nodes.map((node) => {
-    if (!node.selected || node.id === 'center' || node.id === 'center-node') {
+    if (!node.selected || isCenterNode(node)) {
       return node;
     }
 

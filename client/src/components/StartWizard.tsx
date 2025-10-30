@@ -1,28 +1,56 @@
-import { useState } from "react";
-import { suggestStartNodes } from "@/services/aiSuggestions";
+import { useState, useEffect } from "react";
+import { continueWizard, suggestStartNodes } from "@/services/aiSuggestions";
 import type { SuggestedNode } from "@/types/ai";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import { Button } from "./ui/button";
 
 interface StartWizardProps {
   isOpen: boolean;
   onClose: () => void;
-  onAccept: (suggested: SuggestedNode[]) => void;
+  onAccept: (suggested: SuggestedNode[], options?: { suggestionId?: string }) => void;
+  workspaceId: string;
+  sessionId: string | null;
+  onSession: (sessionId: string | null) => void;
 }
 
-export function StartWizard({ isOpen, onClose, onAccept }: StartWizardProps) {
+export function StartWizard({
+  isOpen,
+  onClose,
+  onAccept,
+  workspaceId,
+  sessionId,
+  onSession,
+}: StartWizardProps) {
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedNode[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) {
-    return null;
-  }
+  useEffect(() => {
+    if (!isOpen) {
+      setIdea("");
+      setSuggestions([]);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   const handleStart = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await suggestStartNodes(idea);
+      const res = sessionId
+        ? await continueWizard({ sessionId, idea })
+        : await suggestStartNodes({ workspaceId, idea });
+      if (res.sessionId) {
+        onSession(res.sessionId);
+      }
       setSuggestions(res.suggestions);
     } catch (err) {
       console.error("Failed to fetch start suggestions", err);
@@ -32,107 +60,114 @@ export function StartWizard({ isOpen, onClose, onAccept }: StartWizardProps) {
     }
   };
 
-  const handleAccept = (nodes: SuggestedNode[]) => {
-    onAccept(nodes);
+  const handleAccept = (nodes: SuggestedNode[], suggestionId?: string) => {
+    onAccept(nodes, suggestionId ? { suggestionId } : undefined);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-900">
-            What do you want to create?
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-600 hover:bg-slate-50"
-          >
-            Close
-          </button>
-        </div>
-
-        <p className="text-sm text-slate-600 mb-4">
-          Describe your project idea and we will draft a starting set of nodes for you.
-        </p>
-
-        <label htmlFor="start-wizard-idea" className="sr-only">
-          Project idea
-        </label>
-        <textarea
-          id="start-wizard-idea"
-          className="w-full border border-slate-200 rounded-lg px-3 py-2 h-24 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-sm"
-          placeholder="e.g. AI app for coaching sales teams"
-          onChange={(event) => setIdea(event.target.value)}
-          value={idea}
-        />
-
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={loading || idea.trim().length === 0}
-            className="rounded-md bg-indigo-600 text-white px-4 py-2 text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed"
-          >
-            {loading ? "Thinking..." : "Generate"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleAccept(suggestions)}
-            disabled={suggestions.length === 0}
-            className="rounded-md border border-indigo-200 text-indigo-600 px-4 py-2 text-sm font-medium disabled:border-slate-200 disabled:text-slate-300 disabled:cursor-not-allowed"
-          >
-            Add All
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-            {error}
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        data-testid="start-wizard-modal"
+        className="sm:max-w-[720px] max-h-[90vh] flex flex-col overflow-hidden backdrop-blur-xl bg-white/95 px-0"
+      >
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <DialogTitle className="text-xl font-semibold text-slate-900">
+                What do you want to create?
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-600">
+                Describe your project idea and we will draft a starting set of nodes for you.
+              </DialogDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="text-slate-600 hover:text-slate-800"
+            >
+              Close
+            </Button>
           </div>
-        )}
+        </DialogHeader>
 
-        {suggestions.length > 0 && (
-          <div className="mt-6">
-            <h3 className="font-semibold text-slate-900 mb-3">Suggested nodes</h3>
-            <ul className="space-y-3">
-              {suggestions.map((suggestion) => (
-                <li
-                  key={`${suggestion.label}-${suggestion.type}`}
-                  className="border border-slate-200 rounded-xl p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-medium text-slate-900">{suggestion.label}</div>
-                      {suggestion.summary && (
-                        <div className="text-xs text-slate-500 mt-1">
-                          {suggestion.summary}
-                        </div>
-                      )}
-                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-wide text-slate-400">
-                        {suggestion.domain && <span>{suggestion.domain}</span>}
-                        {typeof suggestion.ring === "number" && (
-                          <span>Ring {suggestion.ring}</span>
-                        )}
-                        <span>{suggestion.type}</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-xs rounded-md bg-emerald-600 text-white px-3 py-1 font-medium"
-                      onClick={() => handleAccept([suggestion])}
+        <div className="px-6 pb-6 flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
+          <textarea
+            id="start-wizard-idea"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 h-24 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-sm"
+            placeholder="e.g. AI app for coaching sales teams"
+            onChange={(event) => setIdea(event.target.value)}
+            value={idea}
+          />
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={handleStart}
+              disabled={loading || idea.trim().length === 0}
+            >
+              {loading ? "Thinking..." : "Generate"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleAccept(suggestions)}
+              disabled={suggestions.length === 0}
+            >
+              Add All
+            </Button>
+          </div>
+
+          {error && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            {suggestions.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-slate-900">Suggested nodes</h3>
+                <ul className="space-y-3">
+                  {suggestions.map((suggestion) => (
+                    <li
+                      key={`${suggestion.label}-${suggestion.type}`}
+                      className="border border-slate-200 rounded-xl p-4"
                     >
-                      Add Node
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="font-medium text-slate-900">{suggestion.label}</div>
+                          {suggestion.summary && (
+                            <div className="text-xs text-slate-500 mt-1">
+                              {suggestion.summary}
+                            </div>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-wide text-slate-400">
+                            {suggestion.domain && <span>{suggestion.domain}</span>}
+                            {typeof suggestion.ring === "number" && (
+                              <span>Ring {suggestion.ring}</span>
+                            )}
+                            <span>{suggestion.type}</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => handleAccept([suggestion], suggestion.id)}
+                        >
+                          Add Node
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

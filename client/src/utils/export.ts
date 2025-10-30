@@ -1,5 +1,12 @@
 // @ts-nocheck
 import { Node, Edge, getNodesBounds, getViewportForBounds } from '@xyflow/react';
+
+const CENTER_ID_FALLBACKS = new Set(['center', 'center-node']);
+
+function isCenterNode(node: Node | null | undefined): boolean {
+  if (!node) return false;
+  return node.type === 'center' || CENTER_ID_FALLBACKS.has(node.id);
+}
 import { toPng, toSvg } from 'html-to-image';
 
 export interface ExportOptions {
@@ -190,7 +197,7 @@ export function exportToMarkdown(
         connectedEdges.forEach(edge => {
           const connectedNodeId = edge.source === node.id ? edge.target : edge.source;
           const connectedNode = nodes.find(n => n.id === connectedNodeId);
-          if (connectedNode && connectedNode.id !== 'center') {
+          if (connectedNode && !isCenterNode(connectedNode)) {
             markdown += `- ${connectedNode.data.label}\n`;
           }
         });

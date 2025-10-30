@@ -13,58 +13,50 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-A visual software architecture platform built around domain-driven design principles with AI-assisted content generation. The system implements specialized node relationship management and layout algorithms.
+The system implements an AI-powered software architecture visualization platform with five core business components:
 
-Core Business Components:
+1. Domain Ring System (client/src/components/DomainRings.tsx)
+- Radial layout engine organizing nodes into business domains
+- Smart sector allocation for Business, Product, Tech, Data/AI, Operations
+- Dynamic ring hierarchy with domain-specific positioning rules
+- Custom node distribution algorithms within sectors
+Importance Score: 85/100
 
-1. Domain Ring Architecture (85/100)
-File: client/src/utils/domainLayout.ts
-- Radial layout system organizing nodes into 5 core domains: business, product, tech, data-ai, operations
-- Custom ring-based hierarchy visualization with domain boundaries
-- Specialized sector management for sub-domains
-- Dynamic node positioning based on domain context
+2. AI Enrichment Pipeline (server/src/services/GenerationService.ts)
+- Specialized workspace generation using GPT models
+- Node suggestion system with business context awareness
+- Template-based architecture recommendations
+- Intelligent feedback processing for continuous improvement
+Importance Score: 90/100
 
-2. AI Enrichment Engine (80/100)
-Files:
-- server/src/services/GenerationService.ts
-- server/src/services/ContextInjector.ts
-- Contextual AI content generation for different node types
-- Domain-specific template matching
-- Intelligent prompt assembly considering workspace state
-- Custom scoring for template relevance
+3. Relationship Management (client/src/utils/relationships.ts)
+- Domain-specific relationship types (depends-on, blocks, implements)
+- Critical path analysis with circular dependency prevention
+- Business relationship validation rules
+- Semantic connection inference system
+Importance Score: 80/100
 
-3. Relationship Management (75/100)
-File: client/src/utils/relationships.ts
-- Domain-specific relationship types (depends-on, implements, documents)
-- Critical path analysis for dependencies
-- Circular dependency detection with business context
-- Custom validation rules for inter-domain connections
+4. Template Matching Engine (server/src/services/PRDRetrievalService.ts)
+- Vector-based PRD template retrieval
+- Intelligent workspace-template matching
+- Domain-specific scoring algorithms
+- Context-aware template recommendations
+Importance Score: 75/100
 
-4. Version Control System (70/100)
-File: server/src/services/PersistenceService.ts
-- Specialized versioning for architecture graphs
-- Custom diff algorithm for comparing versions
-- Architecture-specific metadata tracking
-- Snapshot management with domain context
+5. Architecture Wizard (server/src/services/ai/wizard.ts)
+- Guided architecture planning workflow
+- Context-preserving conversation management
+- Smart suggestion generation
+- Business rule validation during node creation
+Importance Score: 70/100
 
-5. Template System (65/100)
-File: client/src/components/TemplateGallery.tsx
-- Domain-specific template categorization
-- Template metadata management
-- Built-in vs custom template handling
-- Usage analytics and compatibility tracking
+The system integrates these components to create an intelligent workspace for software architecture design, with AI assistance providing contextual suggestions while maintaining domain-specific constraints and relationships.
 
-Key Integration Points:
-- Node graphs maintain strict domain hierarchy
-- AI enrichment integrated with domain context
-- Version control specialized for architecture graphs
-- Template system aligned with domain categories
-
-The system enforces business rules through:
-- Single root node requirement
-- Domain-specific connection validation
-- Hierarchical relationship constraints
-- AI-driven content validation
+Key integration points:
+- Domain layout engine drives visualization of AI-generated components
+- Template matching feeds into enrichment pipeline for consistent output
+- Relationship management enforces business rules across all components
+- Wizard system orchestrates user interaction with AI capabilities
 
 $END$
 

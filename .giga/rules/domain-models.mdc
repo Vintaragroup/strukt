@@ -1,57 +1,65 @@
 ---
-description: Documents core data models, relationships and validation rules for architectural mapping and domain modeling
+description: Specification for domain model implementation including node types, relationships, workspaces and templates
 ---
 
 
 # domain-models
 
-Core Domain Model Components:
+Core Domain Models:
 
-1. Node Type System (Importance: 95/100)
-- Strict node type hierarchy with parent-child validation
-- Core types: root, requirement, frontend, backend, documentation
-- Type-specific relationship constraints and validation rules
-- Domain context awareness for node positioning and connections
+1. Node Types
+- Custom domain-driven node classification system
+- Categories: Business, Product, Technical, Data/AI, Operations 
+- Required attributes: type, domain, relationships, metadata
+- Validation rules enforce domain-specific constraints
+- File: `/server/src/models/Workspace.ts`
+Importance: 90/100
 
-2. Domain Ring Structure (Importance: 90/100)
-- Five primary domain rings: Business, Product, Tech, Data/AI, Operations
-- Inter-domain relationship validation and constraints
-- Domain-specific metadata and attributes
-- Hierarchical organization within each domain ring
-
-3. Workspace Model (Importance: 85/100)
-- Single root node requirement per workspace
-- Version history tracking with snapshot capabilities
-- Workspace-level validation rules and constraints
-- Template association and inheritance
-
-4. Relationship Types (Importance: 80/100)
-- Bidirectional relationship tracking
-- Core types: implements, depends-on, documents, tests
-- Domain-specific validation rules for relationship creation
+2. Relationships Model
+- Directed acyclic graph structure enforced between nodes
+- Relationship types: depends_on, implements, documents, blocks, tests
+- Cross-domain relationship validation rules
 - Circular dependency prevention
+- File: `/client/src/utils/relationships.ts`
+Importance: 85/100
 
-5. Template System (Importance: 75/100)
-- Domain-categorized templates with metadata
-- Template inheritance and composition rules
-- Validation rules for template instantiation
-- Context-aware template suggestions
+3. Workspace Model
+- Multi-user collaborative workspace structure
+- Version control with snapshot management
+- Access control and sharing rules
+- Workspace templates with predefined node structures
+- File: `/server/src/models/WorkspaceVersion.ts`
+Importance: 80/100
 
-Key Validation Rules:
-- Root node must be a requirement type
-- Relationships must respect domain ring hierarchy
-- Cross-domain connections require explicit validation
-- Template instantiation must preserve domain context
-- Node type changes must validate existing relationships
+4. Template System
+- Industry-specific project templates
+- Domain-based component organization
+- Pre-defined relationship patterns
+- Node type distribution rules per domain
+- File: `/server/src/models/PRDTemplate.ts`
+Importance: 75/100
 
-File Paths:
-/server/src/models/
-- Workspace.ts
-- WorkspaceVersion.ts
-- PRDTemplate.ts
-- GenerationRequest.ts
+5. Domain Layout Model
+- Radial sector allocation by domain type
+- Ring-based hierarchy system
+- Department sub-grouping within domains
+- Node positioning constraints
+- File: `/client/src/utils/domainLayout.ts`
+Importance: 85/100
 
-The domain model implements a specialized graph-based architecture mapping system with strict hierarchical rules and domain-specific constraints, focusing on maintaining architectural integrity across different technical domains.
+Key Validations:
+- Nodes must belong to valid domains
+- Relationships cannot cross certain domain boundaries
+- Templates must maintain domain balance
+- Workspace versions track all model changes
+- Node type consistency within domains
+
+Domain Integration Points:
+- Cross-domain relationship rules
+- Template-based workspace generation
+- Domain-specific node validation
+- Multi-domain workspace organization
+- Version control across all models
 
 $END$
 

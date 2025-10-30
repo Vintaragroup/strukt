@@ -26,7 +26,7 @@ config()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/strukt'
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/strukt'
 const TEMPLATES_DIR = path.join(__dirname, '../data/prd_templates')
 
 interface TemplateFile {
@@ -51,9 +51,10 @@ interface TemplateFile {
 
 async function loadTemplates(): Promise<void> {
   try {
-    console.log('🔗 Connecting to MongoDB...')
-    await mongoose.connect(MONGO_URI)
-    console.log(`✅ Connected to MongoDB at ${MONGO_URI}`)
+  console.log('🔗 Connecting to MongoDB...')
+  await mongoose.connect(MONGO_URI)
+  const redact = (uri: string) => uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:@]+):([^@]+)@/i, (_m, p1, user) => `${p1}${user}:******@`)
+  console.log(`✅ Connected to MongoDB at ${redact(MONGO_URI)}`)
 
     // Check for --reset flag
     const shouldReset = process.argv.includes('--reset')

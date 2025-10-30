@@ -1,5 +1,10 @@
 import { Node, Edge } from "@xyflow/react";
 
+const CENTER_ID_FALLBACKS = new Set(['center', 'center-node']);
+
+const isCenterNode = (node: Node | null | undefined) =>
+  Boolean(node && (node.type === 'center' || CENTER_ID_FALLBACKS.has(node.id)));
+
 // Relationship types with semantic meaning
 export type RelationshipType =
   | "depends-on"    // This node depends on the target (can't start until target is done)
@@ -604,7 +609,7 @@ export function suggestRelationships(
   nodes.forEach((sourceNode) => {
     nodes.forEach((targetNode) => {
       if (sourceNode.id === targetNode.id) return;
-      if (sourceNode.id === "center" || targetNode.id === "center") return;
+      if (isCenterNode(sourceNode) || isCenterNode(targetNode)) return;
 
       // Check if relationship already exists
       const existingEdge = edges.find(

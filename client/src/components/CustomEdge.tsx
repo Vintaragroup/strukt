@@ -59,11 +59,16 @@ export const CustomEdge = memo(({
         `[data-id="${nodeId}"]`
       ) as HTMLElement | null;
       if (!element) return null;
-      const viewport = getViewport?.() ?? { zoom: 1 };
-      const zoom = viewport?.zoom || 1;
+
+      const viewport = getViewport?.();
+      const zoom = Number.isFinite(viewport?.zoom) && viewport!.zoom! > 0 ? viewport!.zoom! : 1;
+      const rect = element.getBoundingClientRect();
+      const width = rect?.width && rect.width > 0 ? rect.width : element.offsetWidth;
+      const height = rect?.height && rect.height > 0 ? rect.height : element.offsetHeight;
+
       return {
-        width: element.offsetWidth / zoom,
-        height: element.offsetHeight / zoom,
+        width: Math.max(1, Math.round(width / zoom)),
+        height: Math.max(1, Math.round(height / zoom)),
       };
     } catch {
       return null;

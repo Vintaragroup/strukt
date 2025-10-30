@@ -1,50 +1,53 @@
 ---
-description: Analysis of domain-specific graph layout, relationship management, cycle detection, and auto-layout logic
+description: Specification for domain-specific graph algorithms including layout, routing, and relationship management
 ---
 
 
 # graph-algorithms
 
-Core graph algorithm implementations for domain-specific visualization and relationship management:
+Core Graph Algorithm Components:
 
-1. Domain Ring Layout System (90/100)
-- Specialized radial layout algorithm organizing nodes into 5 business domains
-- Dynamic sector calculation based on domain hierarchies 
-- Smart node positioning within domain rings using force-directed placement
-- Automatic radius and angle calculations for optimal domain separation
+1. Domain Ring Layout System (client/src/utils/domainLayout.ts)
+- Radial layout algorithm organizing nodes into business domain sectors
+- Smart node positioning within domain rings based on relationships
+- Dynamic sector sizing based on node density
+- Cross-domain relationship optimization
+Importance Score: 95/100
 
-2. Relationship Management Engine (85/100)
-- Custom graph traversal for detecting circular dependencies
-- Domain-aware edge routing with specialized rules per node type
-- Relationship validation based on node domain and type
-- Automatic relationship suggestion based on node proximity and type
-
-3. Auto-Layout Algorithm (80/100)
-- Force-directed layout optimized for domain boundaries
-- Collision detection system respecting domain constraints
-- Node clustering by relationship density
-- Automatic spacing adjustments for readability
-
-4. Edge Routing System (75/100) 
-- Smart path calculation avoiding domain boundary crossings
-- Specialized routing for inter-domain vs intra-domain connections
+2. Edge Routing Engine (client/src/utils/edgeRouting.ts)
+- Domain-aware edge routing between related nodes
+- Smart path calculation avoiding domain ring intersections
+- Relationship type visualization rules
 - Edge bundling for related connections
-- Automatic bend point calculation based on connection type
+Importance Score: 85/100
 
-5. Graph Analysis Engine (70/100)
-- Domain hierarchy validation
-- Path optimization between related nodes
-- Connection pattern detection
-- Relationship cycle identification
+3. Cycle Detection System (client/src/utils/graphOps.ts)
+- Business domain-specific cycle validation
+- Semantic relationship cycle rules by node type
+- Dependency chain validation across domains
+- Critical path identification in node graphs
+Importance Score: 80/100
 
-Relevant Files:
-```
-client/src/utils/autoLayout.ts
-client/src/utils/domainLayout.ts 
-client/src/utils/edgeRouting.ts
-client/src/utils/relationships.ts
-client/src/utils/collision.ts
-```
+4. Force-Directed Layout (client/src/utils/d3Relax.ts)
+- Custom force parameters based on node domains
+- Domain boundary respecting node placement
+- Relationship strength modeling based on connection types
+- Hierarchical clustering within domains
+Importance Score: 75/100
+
+5. Relationship Management (client/src/utils/relationships.ts)
+- Domain-specific relationship type validation
+- Cross-domain connection rules
+- Bidirectional relationship handling
+- Connection metadata management
+Importance Score: 70/100
+
+Key Domain-Specific Features:
+- Business domain-aware node positioning
+- Semantic relationship validation
+- Cross-domain connection optimization
+- Domain boundary preservation
+- Hierarchical node clustering
 
 $END$
 

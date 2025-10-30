@@ -36,9 +36,11 @@ export function BulkTagEditor({
   const [mode, setMode] = useState<'add' | 'remove' | 'replace'>('add');
   const [newTagInput, setNewTagInput] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const isCenterNode = (node: Node | null | undefined) =>
+    Boolean(node && (node.type === 'center' || node.id === 'center' || node.id === 'center-node'));
 
   // Get existing tags from selected nodes
-  const selectedNodes = nodes.filter((n) => n.selected && n.id !== 'center');
+  const selectedNodes = nodes.filter((n) => n.selected && !isCenterNode(n));
   const existingTags = new Set<string>();
   selectedNodes.forEach((node) => {
     const data: any = node.data || {};

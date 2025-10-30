@@ -104,7 +104,10 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[85vh] backdrop-blur-xl bg-white/95">
+      <DialogContent
+        className="sm:max-w-[700px] max-h-[85vh] backdrop-blur-xl bg-white/95 flex flex-col overflow-hidden"
+        data-testid="ai-suggest-modal"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-500" />
@@ -115,7 +118,7 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="templates" className="w-full">
+        <Tabs defaultValue="templates" className="w-full flex-1 min-h-0 flex flex-col">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="templates" className="gap-2">
               <Layout className="w-4 h-4" />
@@ -128,8 +131,8 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
           </TabsList>
 
           {/* Templates Tab */}
-          <TabsContent value="templates" className="space-y-4">
-            <ScrollArea className="h-[480px] pr-4">
+          <TabsContent value="templates" className="space-y-4 flex-1 min-h-0">
+            <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-gray-500 mb-3">
                   <Lightbulb className="w-4 h-4" />
@@ -185,7 +188,7 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
           </TabsContent>
 
           {/* AI Suggestions Tab */}
-          <TabsContent value="suggestions" className="space-y-4">
+          <TabsContent value="suggestions" className="space-y-4 flex-1 min-h-0">
             {/* Prompt Input */}
             <div className="space-y-2">
               <Textarea
@@ -202,7 +205,7 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
             </div>
 
             {/* Suggestions List */}
-            <ScrollArea className="h-[360px] pr-4">
+            <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-gray-500 mb-3">
                   <Lightbulb className="w-4 h-4" />

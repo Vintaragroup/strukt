@@ -2,17 +2,20 @@ import { useState } from "react";
 import { Layout, MousePointer2, GitBranch, Loader2, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "motion/react";
-import { suggestStartNodes } from "@/services/aiSuggestions";
+import { continueWizard, suggestStartNodes } from "@/services/aiSuggestions";
 import type { SuggestedNode } from "@/types/ai";
 
 interface EmptyStateProps {
   onConnectSources: () => void;
   onStartTutorial: () => void;
   onDismiss: () => void;
-  onAcceptSuggestions: (suggestions: SuggestedNode[]) => void;
+  onAcceptSuggestions: (suggestions: SuggestedNode[], options?: { suggestionId?: string }) => void;
+  workspaceId: string;
+  sessionId: string | null;
+  onSession: (sessionId: string | null) => void;
 }
 
-export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcceptSuggestions }: EmptyStateProps) {
+export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcceptSuggestions, workspaceId, sessionId, onSession }: EmptyStateProps) {
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedNode[]>([]);
@@ -23,7 +26,12 @@ export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcc
     setLoading(true);
     setError(null);
     try {
-      const result = await suggestStartNodes(idea.trim());
+      const result = sessionId
+        ? await continueWizard({ sessionId, idea: idea.trim() })
+        : await suggestStartNodes({ workspaceId, idea: idea.trim() });
+      if (result.sessionId) {
+        onSession(result.sessionId);
+      }
       setSuggestions(result.suggestions);
     } catch (err) {
       console.error("Failed to fetch start suggestions", err);
@@ -34,9 +42,9 @@ export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcc
     }
   };
 
-  const handleAccept = (items: SuggestedNode[]) => {
+  const handleAccept = (items: SuggestedNode[], suggestionId?: string) => {
     if (!items || items.length === 0) return;
-    onAcceptSuggestions(items);
+    onAcceptSuggestions(items, suggestionId ? { suggestionId } : undefined);
     handleDismiss();
     setSuggestions([]);
   };
@@ -52,9 +60,10 @@ export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcc
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed inset-0 flex items-center justify-center pointer-events-none z-[200] bg-white/30 backdrop-blur-lg"
+      className="fixed inset-0 z-[200] bg-white/30 backdrop-blur-lg flex items-center justify-center px-4 py-6"
+      data-testid="welcome-empty-state"
     >
-      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-indigo-100 p-8 max-w-2xl pointer-events-auto">
+      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-indigo-100 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 pointer-events-auto scroll-smooth">
         <button
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 border border-indigo-100 flex items-center justify-center text-indigo-500 hover:bg-white transition"
           onClick={handleDismiss}
@@ -146,7 +155,7 @@ export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcc
                     <Button
                       size="sm"
                       className="bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => handleAccept([suggestion])}
+                      onClick={() => handleAccept([suggestion], suggestion.id)}
                     >
                       Add Node
                     </Button>

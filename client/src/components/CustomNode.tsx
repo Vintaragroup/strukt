@@ -47,6 +47,9 @@ export interface CustomNodeData {
   maxNodeHeight?: number;
 }
 
+const BASE_NODE_WIDTH = 280;
+const ROOT_NODE_WIDTH = 320;
+
 const nodeConfig = {
   root: {
     icon: Layers,
@@ -182,6 +185,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   const [footerHeight, setFooterHeight] = useState(ADD_BUTTON_RESERVE);
   const maxNodeHeight = data.maxNodeHeight ?? DEFAULT_MAX_NODE_HEIGHT;
   const bodyAvailable = Math.max(0, maxNodeHeight - headerHeight - footerHeight);
+  const cardWidth = isRoot ? ROOT_NODE_WIDTH : BASE_NODE_WIDTH;
   
   // Ref to store cleanup functions - MUST be declared before sync effect
   const eventCleanupRef = useRef<(() => void) | null>(null);
@@ -377,13 +381,14 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
       }}
   onMouseEnter={() => setIsHovered(true)}
   onMouseLeave={() => setIsHovered(false)}
-  className="relative w-full"
+  className="relative"
+  style={{ width: cardWidth }}
     >
       {/* Node Resizer - Invisible handles, cursor changes on hover */}
       <NodeResizer
         color="transparent"
         isVisible={selected && !isCollapsed}
-        minWidth={isRoot ? 320 : 280}
+        minWidth={cardWidth}
         minHeight={isCollapsed ? 0 : 200}
         handleStyle={{
           width: "12px",
@@ -513,6 +518,9 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
             : isHovered
             ? "0 25px 30px -5px rgba(0, 0, 0, 0.12), 0 15px 15px -5px rgba(0, 0, 0, 0.06)"
             : undefined,
+          width: cardWidth,
+          minWidth: cardWidth,
+          maxWidth: cardWidth,
           maxHeight: maxNodeHeight,
         }}
       >
@@ -526,7 +534,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
               <Icon className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0 relative">
-              <h3 className="text-white leading-snug">
+              <h3 className="text-white leading-snug break-words">
                 {data.label}
               </h3>
               {data.enrichmentCount && data.enrichmentCount > 0 && (
@@ -674,7 +682,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
           <div className="flex-1 overflow-y-auto">
             {data.summary && (
               <div className="px-4 pt-3 pb-2">
-                <p className="text-gray-600 leading-relaxed text-sm">
+                <p className="text-gray-600 leading-relaxed text-sm break-words">
                   {data.summary}
                 </p>
               </div>

@@ -49,9 +49,14 @@ export function CommandPalette({
     }
   }, [isOpen]);
 
+  const centerNode = nodes.find((node) => node?.type === "center");
+  const centerId = centerNode?.id ?? "center";
+  const isCenterNode = (node: Node | null | undefined) =>
+    Boolean(node && (node.type === "center" || node.id === centerId || node.id === "center-node"));
+
   // Filter nodes based on search
   const filteredNodes = nodes.filter((node) => {
-    if (node.id === "center") return false; // Don't show center node
+    if (isCenterNode(node)) return false; // Don't show center node
     const data = node.data as unknown as CustomNodeData;
     const searchLower = search.toLowerCase();
     return (
@@ -185,7 +190,7 @@ export function CommandPalette({
               )}
               <CommandItem
                 onSelect={() => {
-                  onNodeSelect("center");
+                  onNodeSelect(centerId);
                   onClose();
                 }}
               >

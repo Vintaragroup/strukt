@@ -48,6 +48,8 @@ const iconPresets = [
   "📱", "💻", "🌐", "📈", "🏆", "🎁", "🔔", "⚡", "🎪", "🎭"
 ];
 
+const CENTER_NODE_WIDTH = 360;
+
 export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData>) => {
   const [isPlacingMode, setIsPlacingMode] = useState(false);
   const [handleHovered, setHandleHovered] = useState(false);
@@ -278,7 +280,8 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
         damping: 20,
         delay: 0.1
       }}
-      className="relative w-full"
+      className="relative"
+      style={{ width: CENTER_NODE_WIDTH }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -286,8 +289,9 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
       <NodeResizer
         color="transparent"
         isVisible={selected && !isCollapsed}
-        minWidth={320}
+        minWidth={CENTER_NODE_WIDTH}
         minHeight={isCollapsed ? 0 : undefined}
+        maxWidth={CENTER_NODE_WIDTH}
         handleStyle={{
           width: "12px",
           height: "12px",
@@ -425,6 +429,9 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
             : isHovered
             ? "0 30px 60px -12px rgba(99, 102, 241, 0.4)"
             : "0 25px 50px -12px rgba(99, 102, 241, 0.25)",
+          width: CENTER_NODE_WIDTH,
+          minWidth: CENTER_NODE_WIDTH,
+          maxWidth: CENTER_NODE_WIDTH,
         }}
         onTransitionEnd={stopFollowingHandles}
       >
@@ -525,7 +532,7 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
         {/* Collapsed header-only view */}
         {isCollapsed && (
           <div className="px-4 py-3 text-center">
-            <h2 className="text-white text-sm font-medium tracking-tight truncate" title={data.label}>
+            <h2 className="text-white text-sm font-medium tracking-tight truncate break-words" title={data.label}>
               {data.label}
             </h2>
           </div>
@@ -572,7 +579,7 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
             />
           ) : (
             <h2 
-              className="text-white text-xl mb-2 tracking-tight cursor-text hover:opacity-80 transition-opacity"
+              className="text-white text-xl mb-2 tracking-tight cursor-text hover:opacity-80 transition-opacity break-words"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingLabel(true);
@@ -598,11 +605,11 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
                   setIsEditingDescription(false);
                 }
               }}
-              className="text-center mb-4 bg-white/20 border-white/40 text-white placeholder:text-white/60 text-sm min-h-[60px] nopan nodrag"
+              className="text-center mb-4 bg-white/20 border-white/40 text-white placeholder:text-white/60 text-sm min-h-[60px] nopan nodrag break-words"
             />
           ) : (
             <p 
-              className="text-indigo-100 text-sm leading-relaxed mb-4 cursor-text hover:opacity-80 transition-opacity"
+              className="text-indigo-100 text-sm leading-relaxed mb-4 cursor-text hover:opacity-80 transition-opacity break-words"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingDescription(true);
