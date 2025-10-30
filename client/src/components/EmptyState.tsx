@@ -1,61 +1,34 @@
 import { useState } from "react";
-import { Layout, MousePointer2, GitBranch, Loader2, Plus } from "lucide-react";
+import { Layout, MousePointer2, GitBranch, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "motion/react";
-import { continueWizard, suggestStartNodes } from "@/services/aiSuggestions";
-import type { SuggestedNode } from "@/types/ai";
 
 interface EmptyStateProps {
   onConnectSources: () => void;
   onStartTutorial: () => void;
   onDismiss: () => void;
-  onAcceptSuggestions: (suggestions: SuggestedNode[], options?: { suggestionId?: string }) => void;
-  workspaceId: string;
-  sessionId: string | null;
-  onSession: (sessionId: string | null) => void;
+  onLaunchWizard: (prompt?: string) => void;
 }
 
-export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcceptSuggestions, workspaceId, sessionId, onSession }: EmptyStateProps) {
+export function EmptyState({
+  onConnectSources,
+  onStartTutorial,
+  onDismiss,
+  onLaunchWizard,
+}: EmptyStateProps) {
   const [idea, setIdea] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<SuggestedNode[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    if (!idea.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = sessionId
-        ? await continueWizard({ sessionId, idea: idea.trim() })
-        : await suggestStartNodes({ workspaceId, idea: idea.trim() });
-      if (result.sessionId) {
-        onSession(result.sessionId);
-      }
-      setSuggestions(result.suggestions);
-    } catch (err) {
-      console.error("Failed to fetch start suggestions", err);
-      setError("We couldn't generate ideas right now. Try again in a moment.");
-      setSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAccept = (items: SuggestedNode[], suggestionId?: string) => {
-    if (!items || items.length === 0) return;
-    onAcceptSuggestions(items, suggestionId ? { suggestionId } : undefined);
-    handleDismiss();
-    setSuggestions([]);
-  };
 
   const handleDismiss = () => {
-    setSuggestions([]);
-    setError(null);
-    setLoading(false);
     setIdea("");
     onDismiss();
   };
+
+  const handleLaunchWizard = () => {
+    const trimmed = idea.trim();
+    onLaunchWizard(trimmed.length > 0 ? trimmed : undefined);
+    handleDismiss();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -101,69 +74,15 @@ export function EmptyState({ onConnectSources, onStartTutorial, onDismiss, onAcc
           />
           <div className="mt-3 flex items-center gap-2">
             <Button
-              onClick={handleGenerate}
-              disabled={loading || idea.trim().length === 0}
+              onClick={handleLaunchWizard}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Thinking...
-                </span>
-              ) : (
-                "Generate"
-              )}
+              Launch AI blueprint wizard
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleAccept(suggestions)}
-              disabled={suggestions.length === 0}
-            >
-              Add All
+            <Button variant="outline" onClick={handleDismiss}>
+              Skip for now
             </Button>
           </div>
-
-          {error && (
-            <div className="mt-3 text-sm text-red-600 border border-red-200 rounded-lg bg-red-50 px-3 py-2">
-              {error}
-            </div>
-          )}
-
-          {suggestions.length > 0 && (
-            <ul className="mt-4 space-y-3">
-              {suggestions.map((suggestion) => (
-                <li
-                  key={`${suggestion.label}-${suggestion.type}`}
-                  className="border border-indigo-100 rounded-xl p-3 bg-white/70"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        {suggestion.label}
-                      </div>
-                      {suggestion.summary && (
-                        <div className="text-xs text-slate-500 mt-1">
-                          {suggestion.summary}
-                        </div>
-                      )}
-                      <div className="mt-2 flex flex-wrap gap-2 text-[10px] uppercase tracking-wide text-slate-400">
-                        {suggestion.domain && <span>{suggestion.domain}</span>}
-                        {typeof suggestion.ring === "number" && <span>Ring {suggestion.ring}</span>}
-                        <span>{suggestion.type}</span>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => handleAccept([suggestion], suggestion.id)}
-                    >
-                      Add Node
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
 
         {/* Quick Actions */}

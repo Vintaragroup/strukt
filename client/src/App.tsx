@@ -506,11 +506,11 @@ const initialNodes = [
     selectable: false,
     data: {
       label: "Welcome to Strukt",
-      description: "This blank canvas is yours. Click the button below to add your first node and start mapping your architecture.",
+      description: "Describe the mission for this workspace so every node orbits the same north star.",
       icon: "🧭",
       link: "",
-      buttonText: "Connect your Git or Wiki",
-      secondaryButtonText: "Create your first node",
+      buttonText: "Launch AI Blueprint Wizard",
+      secondaryButtonText: "Create Your First Node",
       // buttonAction will be added dynamically in nodesWithCallbacks
     } as CenterNodeData,
     positionAbsolute: { x: 0, y: 0 },
@@ -613,6 +613,7 @@ function FlowCanvas() {
     startPos: { x: number; y: number };
   } | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardInitialPrompt, setWizardInitialPrompt] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(false);
@@ -2839,7 +2840,10 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   );
 
   const handleAcceptSuggestions = useCallback(
-    async (suggestions: SuggestedNode[], options?: { suggestionId?: string }) => {
+    async (
+      suggestions: SuggestedNode[],
+      options?: { suggestionId?: string; renameTo?: string; centerSummary?: string }
+    ) => {
       if (!suggestions || suggestions.length === 0) {
         return;
       }
@@ -2866,16 +2870,39 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
         setEdges(edgeResult);
 
+        const renameTo = options?.renameTo?.trim();
+        const rawSummary = options?.centerSummary?.trim();
+        const normalizedSummary = rawSummary
+          ? rawSummary.replace(/\s+/g, " ").trim()
+          : undefined;
+        const summaryText = normalizedSummary && normalizedSummary.length > 320
+          ? `${normalizedSummary.slice(0, 317)}…`
+          : normalizedSummary;
+
         const viewportDimensions =
           typeof window !== "undefined"
             ? { width: window.innerWidth, height: window.innerHeight }
             : undefined;
 
-        const layouted = applyDomainRadialLayout(nodeResult, {
+        let layouted = applyDomainRadialLayout(nodeResult, {
           centerNodeId: centerId,
           viewMode: "radial",
           viewportDimensions,
         });
+
+        if (renameTo || summaryText) {
+          layouted = layouted.map((node) => {
+            if (!isCenterNode(node)) return node;
+            return {
+              ...node,
+              data: {
+                ...(node.data || {}),
+                ...(renameTo ? { label: renameTo } : {}),
+                ...(summaryText ? { description: summaryText } : {}),
+              },
+            };
+          });
+        }
 
         await applyLayoutAndRelax(layouted, { padding: 12, maxPasses: 10, fit: true });
 
@@ -2892,6 +2919,18 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
           }, 2000);
         }
 
+        if (renameTo) {
+          setWorkspaceName(renameTo);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, renameTo);
+          }
+          try {
+            await persistWorkspace({ renameTo, force: true });
+          } catch (err) {
+            console.warn("Failed to persist renamed workspace", err);
+          }
+        }
+
         setIsSaved(false);
         setIsWizardOpen(false);
         setIsSuggestionPanelOpen(false);
@@ -2902,7 +2941,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         });
       }
     },
-    [nodes, edges, applyLayoutAndRelax, setNodes]
+    [nodes, edges, applyLayoutAndRelax, setNodes, isCenterNode, persistWorkspace, setWorkspaceName]
   );
 
   const selectedNode = useMemo(
@@ -3939,6 +3978,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         onAISuggest={() => setIsAISuggestPanelOpen(true)}
         onStartWizard={() => {
           setShowEmptyState(false);
+          setWizardInitialPrompt(null);
           setIsWizardOpen(true);
         }}
         onSave={() => {
@@ -4010,11 +4050,16 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
       <StartWizard
         isOpen={isWizardOpen}
-        onClose={() => setIsWizardOpen(false)}
+        onClose={() => {
+          setIsWizardOpen(false);
+          setWizardInitialPrompt(null);
+        }}
         onAccept={handleAcceptSuggestions}
         workspaceId={workspaceId}
         sessionId={wizardSessionId}
         onSession={(sessionId) => setWizardSessionId(sessionId)}
+        initialPrompt={wizardInitialPrompt ?? undefined}
+        onInitialPromptConsumed={() => setWizardInitialPrompt(null)}
       />
 
       <AddNodeModal
@@ -4075,15 +4120,16 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
       {/* Empty State */}
       {showEmptyState && !showOnboarding && (
-      <EmptyState
-        onConnectSources={handleOpenConnectSources}
-        onStartTutorial={handleStartTutorial}
-        onDismiss={() => setShowEmptyState(false)}
-        onAcceptSuggestions={handleAcceptSuggestions}
-        workspaceId={workspaceId}
-        sessionId={wizardSessionId}
-        onSession={setWizardSessionId}
-      />
+        <EmptyState
+          onConnectSources={handleOpenConnectSources}
+          onStartTutorial={handleStartTutorial}
+          onDismiss={() => setShowEmptyState(false)}
+          onLaunchWizard={(prompt) => {
+            setShowEmptyState(false);
+            setWizardInitialPrompt(prompt ?? null);
+            setIsWizardOpen(true);
+          }}
+        />
       )}
 
       {/* Onboarding Overlay */}

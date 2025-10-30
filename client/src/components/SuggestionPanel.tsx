@@ -9,7 +9,10 @@ interface SuggestionPanelProps {
   node: Node | null;
   workspaceId: string;
   sessionId: string | null;
-  onAdd: (suggestions: SuggestedNode[], options?: { suggestionId?: string }) => void;
+  onAdd: (
+    suggestions: SuggestedNode[],
+    options?: { suggestionId?: string; renameTo?: string; centerSummary?: string }
+  ) => void;
   isOpen: boolean;
   onClose: () => void;
   refreshKey?: number;

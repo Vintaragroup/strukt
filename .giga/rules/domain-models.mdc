@@ -1,5 +1,5 @@
 ---
-description: Specification for domain model implementation including node types, relationships, workspaces and templates
+description: Specification for core domain models including node types, relationships, workspaces and templates with validation rules
 ---
 
 
@@ -7,59 +7,50 @@ description: Specification for domain model implementation including node types,
 
 Core Domain Models:
 
-1. Node Types
-- Custom domain-driven node classification system
-- Categories: Business, Product, Technical, Data/AI, Operations 
-- Required attributes: type, domain, relationships, metadata
-- Validation rules enforce domain-specific constraints
-- File: `/server/src/models/Workspace.ts`
-Importance: 90/100
+1. Node Types (Importance: 90)
+- Root node: Single allowed per workspace, defines project scope
+- Implementation nodes: Frontend, backend, infrastructure 
+- Documentation nodes: Requirements, specifications, testing
+- Support nodes: Tasks, blockers, dependencies
+- Each type has strict validation rules for properties and relationships
 
-2. Relationships Model
-- Directed acyclic graph structure enforced between nodes
-- Relationship types: depends_on, implements, documents, blocks, tests
-- Cross-domain relationship validation rules
-- Circular dependency prevention
-- File: `/client/src/utils/relationships.ts`
-Importance: 85/100
+2. Domain Categories (Importance: 85)
+- Business: Strategic and process nodes
+- Product: Feature and UX components 
+- Technology: Implementation and architecture
+- Data/AI: Analytics and ML components
+- Operations: DevOps and infrastructure
 
-3. Workspace Model
-- Multi-user collaborative workspace structure
-- Version control with snapshot management
-- Access control and sharing rules
-- Workspace templates with predefined node structures
-- File: `/server/src/models/WorkspaceVersion.ts`
-Importance: 80/100
+3. Relationship Types (Importance: 90)
+- depends_on: Hard dependency between nodes
+- implements: Requirements implementation link
+- blocks: Blocker relationship with priority
+- informs: Soft dependency/information flow
+- documents: Documentation relationship
+- Strict validation prevents circular dependencies
 
-4. Template System
-- Industry-specific project templates
-- Domain-based component organization
-- Pre-defined relationship patterns
-- Node type distribution rules per domain
-- File: `/server/src/models/PRDTemplate.ts`
-Importance: 75/100
+4. Workspace Model (Importance: 85)
+- Template-based initialization
+- Version control with 50-state history
+- Node placement rules using ring system
+- Domain-based node clustering
+- Change tracking at node/edge level
 
-5. Domain Layout Model
-- Radial sector allocation by domain type
-- Ring-based hierarchy system
-- Department sub-grouping within domains
-- Node positioning constraints
-- File: `/client/src/utils/domainLayout.ts`
-Importance: 85/100
+5. Template System (Importance: 80)
+- Industry-specific starter templates
+- Custom validation schemas per template
+- Auto-generated relationship rules
+- Domain-specific node suggestions
+- Context-aware template matching
 
-Key Validations:
-- Nodes must belong to valid domains
-- Relationships cannot cross certain domain boundaries
-- Templates must maintain domain balance
-- Workspace versions track all model changes
-- Node type consistency within domains
-
-Domain Integration Points:
-- Cross-domain relationship rules
-- Template-based workspace generation
-- Domain-specific node validation
-- Multi-domain workspace organization
-- Version control across all models
+Relevant Files:
+```
+server/src/models/PRDTemplate.ts
+server/src/models/Workspace.ts 
+server/src/models/WorkspaceVersion.ts
+client/src/utils/relationships.ts
+client/src/utils/domainLayout.ts
+```
 
 $END$
 

@@ -13,50 +13,48 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-The system implements an AI-powered software architecture visualization platform with five core business components:
-
-1. Domain Ring System (client/src/components/DomainRings.tsx)
-- Radial layout engine organizing nodes into business domains
-- Smart sector allocation for Business, Product, Tech, Data/AI, Operations
-- Dynamic ring hierarchy with domain-specific positioning rules
-- Custom node distribution algorithms within sectors
+Visual Architecture Mapping System
 Importance Score: 85/100
 
-2. AI Enrichment Pipeline (server/src/services/GenerationService.ts)
-- Specialized workspace generation using GPT models
-- Node suggestion system with business context awareness
+Core Business Components:
+
+1. Domain Layout Engine (client/src/utils/domainLayout.ts)
+- Ring-based domain organization with 5 primary sectors
+- Business, Product, Tech, Data/AI, Operations domain mapping
+- Hierarchical node placement with domain constraints
+- Dynamic sector allocation based on node relationships
+
+2. AI Enrichment System (client/src/utils/enrich/MockAIGenerator.ts)
+- Domain-specific content generation
+- Context-aware node suggestion pipeline
+- Specialized question banks per domain type
 - Template-based architecture recommendations
-- Intelligent feedback processing for continuous improvement
-Importance Score: 90/100
 
 3. Relationship Management (client/src/utils/relationships.ts)
-- Domain-specific relationship types (depends-on, blocks, implements)
-- Critical path analysis with circular dependency prevention
-- Business relationship validation rules
-- Semantic connection inference system
-Importance Score: 80/100
+- Business relationship types (depends-on, blocks, implements)  
+- Critical path detection in dependency chains
+- Circular dependency prevention
+- Context-aware relationship suggestions
 
-4. Template Matching Engine (server/src/services/PRDRetrievalService.ts)
-- Vector-based PRD template retrieval
-- Intelligent workspace-template matching
-- Domain-specific scoring algorithms
-- Context-aware template recommendations
-Importance Score: 75/100
+4. PRD Template Engine (server/src/services/PRDRetrievalService.ts)
+- Intelligent template matching using domain context
+- Multi-factor relevance scoring system
+- Industry-specific template customization
+- Domain pattern recognition
 
-5. Architecture Wizard (server/src/services/ai/wizard.ts)
-- Guided architecture planning workflow
-- Context-preserving conversation management
-- Smart suggestion generation
-- Business rule validation during node creation
-Importance Score: 70/100
+5. Workspace Graph Controller (client/src/store/useWorkspaceStore.ts)
+- Single-root enforcement with domain validation
+- History management with 50-state limit
+- Node categorization by business domain
+- Relationship integrity monitoring
 
-The system integrates these components to create an intelligent workspace for software architecture design, with AI assistance providing contextual suggestions while maintaining domain-specific constraints and relationships.
+Key Integration Points:
+- AI suggestion pipeline feeds domain layout engine
+- Template engine provides domain-specific starting points
+- Relationship management enforces domain hierarchy rules
+- Graph controller maintains overall domain integrity
 
-Key integration points:
-- Domain layout engine drives visualization of AI-generated components
-- Template matching feeds into enrichment pipeline for consistent output
-- Relationship management enforces business rules across all components
-- Wizard system orchestrates user interaction with AI capabilities
+The system implements a unique approach to software architecture visualization by combining AI-assisted suggestions with strict domain modeling and relationship constraints.
 
 $END$
 
