@@ -13,60 +13,52 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Domain-Specific Architecture Management System
+The project implements an AI-powered software architecture visualization and planning system with these core components:
 
-Core Business Components:
+IMPORTANCE SCORE: 85/100
 
-1. AI-Driven Architecture Generation (85/100)
-Location: server/src/services/GenerationService.ts
-- Domain-specific workspace architecture generation
-- Custom validation rules for architectural structures 
-- Node relationship management with business constraints
-- Context-aware template matching and suggestion system
+1. Domain Ring Layout Engine
+- Specialized radial layout system organizing nodes into business domains
+- Custom angle calculations for domain sector positioning
+- Hierarchical ring placement for department organization
+- Dynamic radius optimization based on node density
+- Automatic node positioning by business context
 
-2. Domain Ring Layout Engine (85/100)
-Location: client/src/utils/domainLayout.ts
-- Specialized radial layout for business domains
-- Department-specific positioning within domains
-- Ring-based hierarchy visualization
-- Domain-specific angle calculations
+2. Intelligent Workspace Management
+- Graph-based structure with enforced single root and DAG validation
+- Custom version control with relationship preservation
+- Business-specific node typing (frontend, backend, requirements, documentation)
+- Context-aware workspace state validation
 
-3. Business Process Modeling (80/100)
-Location: client/src/utils/relationships.ts
-- Domain-specific relationship types (depends-on, implements, documents)
-- Dependency cycle detection and validation
-- Critical path analysis for project planning
-- Custom validation rules for relationships
+3. AI Enrichment Pipeline
+`client/src/services/ai/suggestions.ts`
+- Domain-specific content generation for different node types
+- Context-aware suggestion system using workspace topology
+- Custom question generation based on node context
+- Intelligent template matching with semantic search
 
-4. Workspace Graph Management (75/100)
-Location: client/src/store/useWorkspaceStore.ts
-- Single-root node constraint enforcement
-- Graph cycle detection for workspace relationships
-- Custom history management system
-- Node/edge relationship validation
+4. API Integration Analysis
+`server/src/services/specs/SpecSummaryService.ts`
+- Semantic analysis of OpenAPI/Postman specifications
+- Business-aware operation categorization
+- Integration point detection and mapping
+- Custom token budget management for API context
 
-5. AI Suggestion System (75/100)
-Location: client/src/services/aiSuggestions.ts
-- Domain-aware suggestion mapping
-- Specialized node categorization (business, tech, data-ai)
-- Context preservation across suggestion cycles
-- Fallback mechanisms with heuristic backup
+5. Template Management System
+`server/src/services/PRDRetrievalService.ts`
+- Specialized ranking algorithm for template matching
+- Domain-specific search with weighted relevance scoring
+- Intelligent template recommendations
+- Industry-specific content adaptation
 
-Key Integration Points:
+Key Business Rules:
+- Enforced single root node per workspace
+- Strict circular dependency prevention
+- Domain-specific relationship validation
+- Hierarchical workspace organization
+- Template-based node generation rules
 
-1. PRD Template System
-- Domain-specific template matching
-- Project structure recommendations
-- Context-aware template selection
-- Custom ranking algorithms
-
-2. Version Control
-- Specialized snapshot system for node graphs
-- Differential comparison engine
-- Auto-snapshot with importance scoring
-- Custom version metadata tracking
-
-The system implements a unique combination of AI-assisted architecture design with strict domain modeling and hierarchical constraints. Core value stems from specialized algorithms for workspace organization, relationship management, and context-aware suggestions.
+The system uniquely combines graph visualization, AI assistance, and domain-driven design principles to create a specialized software architecture planning tool.
 
 $END$
 

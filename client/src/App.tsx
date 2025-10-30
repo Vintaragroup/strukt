@@ -78,6 +78,7 @@ import { DomainRings } from "./components/DomainRings";
 import { EdgeContextMenu } from "./components/EdgeContextMenu";
 import { ConnectSourcesModal } from "./components/ConnectSourcesModal";
 import { applySuggestions } from "./utils/graphOps";
+import { SpecContextDialog } from "./components/SpecContextDialog";
 import { applySuggestion, submitFeedback } from "./services/aiSuggestions";
 import { workspacesAPI } from "./api/client";
 import type { Workspace } from "./types";
@@ -580,6 +581,7 @@ function FlowCanvas() {
   const [isAddNodeModalOpen, setIsAddNodeModalOpen] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isAISuggestPanelOpen, setIsAISuggestPanelOpen] = useState(false);
+  const [isSpecContextDialogOpen, setIsSpecContextDialogOpen] = useState(false);
   const [isSaveLoadDialogOpen, setIsSaveLoadDialogOpen] = useState(false);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
@@ -614,6 +616,7 @@ function FlowCanvas() {
   } | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardInitialPrompt, setWizardInitialPrompt] = useState<string | null>(null);
+  const [pendingWizardPrompt, setPendingWizardPrompt] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(false);
@@ -656,12 +659,96 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       Boolean(node && (node.type === "center" || node.id === centerNodeIdRef.current)),
     []
   );
-  const [edgeContextMenu, setEdgeContextMenu] = useState<{
-    isOpen: boolean;
-    position: { x: number; y: number };
-    edgeId: string | null;
-    relationshipType?: RelationshipType;
-  }>({ isOpen: false, position: { x: 0, y: 0 }, edgeId: null });
+const [edgeContextMenu, setEdgeContextMenu] = useState<{
+  isOpen: boolean;
+  position: { x: number; y: number };
+  edgeId: string | null;
+  relationshipType?: RelationshipType;
+}>({ isOpen: false, position: { x: 0, y: 0 }, edgeId: null });
+const lastPersistedWorkspaceNameRef = useRef<string>("");
+
+const hasCustomNodes = useMemo(
+  () => nodes.some((node) => node.type !== "center"),
+  [nodes]
+);
+
+const openWizard = useCallback(
+  (prompt?: string | null) => {
+    setWizardInitialPrompt(prompt ?? null);
+    setPendingWizardPrompt(null);
+    setIsWizardOpen(true);
+  },
+  []
+);
+
+const openQuickAddModal = useCallback(
+  (options?: {
+    type?: string;
+    prompt?: string;
+    position?: { x: number; y: number } | null;
+    sourceNodeId?: string | null;
+    edgeToReplace?: { id: string; targetNodeId?: string } | null;
+  }) => {
+    setNodeTypeToAdd(options?.type);
+    setEdgePosition(options?.position ?? null);
+    setDragSourceNodeId(options?.sourceNodeId ?? null);
+    setEdgeToReplace(options?.edgeToReplace ?? null);
+    setPendingWizardPrompt(options?.prompt ?? null);
+    setIsAddNodeModalOpen(true);
+  },
+  []
+);
+
+const launchNodeCreator = useCallback(
+  (options?: {
+    type?: string;
+    prompt?: string;
+    position?: { x: number; y: number } | null;
+    sourceNodeId?: string | null;
+    edgeToReplace?: { id: string; targetNodeId?: string } | null;
+    forceWizard?: boolean;
+  }) => {
+    if (!hasCustomNodes || options?.forceWizard) {
+      openWizard(options?.prompt ?? pendingWizardPrompt ?? null);
+      return;
+    }
+
+    openQuickAddModal({
+      type: options?.type,
+      prompt: options?.prompt,
+      position: options?.position ?? null,
+      sourceNodeId: options?.sourceNodeId ?? null,
+      edgeToReplace: options?.edgeToReplace ?? null,
+    });
+  },
+  [hasCustomNodes, openQuickAddModal, openWizard, pendingWizardPrompt]
+);
+
+const handleAddNodeFromSidebar = useCallback(
+  (type: string) => {
+    launchNodeCreator({ type });
+  },
+  [launchNodeCreator]
+);
+
+const handleAddNodeFromEdge = useCallback(
+  (x: number, y: number, sourceNodeId?: string, targetNodeId?: string, originalEdgeId?: string) => {
+    launchNodeCreator({
+      position: { x, y },
+      sourceNodeId: sourceNodeId ?? null,
+      edgeToReplace: originalEdgeId ? { id: originalEdgeId, targetNodeId } : null,
+    });
+  },
+  [launchNodeCreator]
+);
+
+const handleSwitchToWizard = useCallback(
+  (prompt?: string) => {
+    setIsAddNodeModalOpen(false);
+    openWizard(prompt ?? pendingWizardPrompt ?? null);
+  },
+  [openWizard, pendingWizardPrompt]
+);
 
   const bootstrapWorkspace = useCallback(async () => {
     if (isWorkspaceReady) {
@@ -694,6 +781,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       const resolvedName = active.name || "My Workspace";
       setWorkspaceId(resolvedId);
       setWorkspaceName(resolvedName);
+      lastPersistedWorkspaceNameRef.current = resolvedName;
       let flowNodes = toFlowNodes((active.nodes as unknown as SerializableWorkspaceNode[]) || []);
       const centerFromNodes = flowNodes.find((node) => node?.type === "center");
       if (centerFromNodes?.id) {
@@ -777,7 +865,8 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       }
 
       isPersistingWorkspaceRef.current = true;
-      const previousName = workspaceName;
+      const previousName =
+        lastPersistedWorkspaceNameRef.current || workspaceName;
 
       try {
         const updated = await workspacesAPI.update(previousName, payload);
@@ -791,12 +880,13 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         if (options?.renameTo) {
           setWorkspaceName(resolvedName);
         }
-        setWorkspaceId(resolvedId);
+        lastPersistedWorkspaceNameRef.current = resolvedName;
+       setWorkspaceId(resolvedId);
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, resolvedName);
-          localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, resolvedId);
-        }
+       if (typeof window !== "undefined") {
+         localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, resolvedName);
+         localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, resolvedId);
+       }
 
         if (options?.toastOnSuccess) {
           toast.success("Workspace saved", {
@@ -1987,15 +2077,15 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       const { clientX, clientY } = event as MouseEvent;
       const pos = reactFlowInstance.screenToFlowPosition({ x: clientX, y: clientY });
       // Open Add Node modal at drop position, pre-linking source node
-      setEdgePosition(pos);
-      setNodeTypeToAdd(undefined);
-      setDragSourceNodeId(connectStartInfoRef.current.nodeId);
-      setIsAddNodeModalOpen(true);
+      launchNodeCreator({
+        position: pos,
+        sourceNodeId: connectStartInfoRef.current.nodeId,
+      });
     }
     // Reset flags
     didConnectRef.current = false;
     connectStartInfoRef.current = null;
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, launchNodeCreator]);
 
   const handleExpandCard = useCallback((nodeId: string, cardId: string) => {
     const node = nodes.find(n => n.id === nodeId);
@@ -2187,15 +2277,18 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
     });
   }, [setNodes]);
 
-  const handleDragNewNode = useCallback((sourceNodeId: string, position: { x: number; y: number }) => {
-    setDragSourceNodeId(sourceNodeId);
-    setEdgePosition(position);
-    setNodeTypeToAdd(undefined);
-    setDragPreview(null); // Clear preview when opening modal
-    setIsPlacingNode(false); // Clear placing mode
-    setPlacingNodeInfo(null); // Clear placing info
-    setIsAddNodeModalOpen(true);
-  }, []);
+  const handleDragNewNode = useCallback(
+    (sourceNodeId: string, position: { x: number; y: number }) => {
+      setDragPreview(null); // Clear preview when opening modal
+      setIsPlacingNode(false); // Clear placing mode
+      setPlacingNodeInfo(null); // Clear placing info
+      launchNodeCreator({
+        position,
+        sourceNodeId,
+      });
+    },
+    [launchNodeCreator]
+  );
 
   const handleDragPreviewUpdate = useCallback((start: { x: number; y: number } | null, end: { x: number; y: number } | null) => {
     if (start && end) {
@@ -2404,9 +2497,9 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
                 secondaryButtonAction: () => {
                   const centerId = centerNodeIdRef.current || "center";
                   setShowEmptyState(false);
-                  setIsAddNodeModalOpen(true);
-                  setDragSourceNodeId(centerId);
-                  setEdgePosition(null);
+                  launchNodeCreator({
+                    sourceNodeId: centerId,
+                  });
                 },
                 onUpdateCenterNode: handleUpdateCenterNode,
                 isConnectSource: true,
@@ -2436,9 +2529,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
     handleUpdateCenterNode,
     handleOpenConnectSources,
     setShowEmptyState,
-    setIsAddNodeModalOpen,
-    setDragSourceNodeId,
-    setEdgePosition,
+    launchNodeCreator,
     setSelectedNodeId,
     setIsWizardOpen,
     isCenterNode
@@ -2536,31 +2627,11 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       setDragPreview(null); // Clear the locked preview after node is added
       setIsPlacingNode(false);
       setPlacingNodeInfo(null);
+      setPendingWizardPrompt(null);
       toast.success("Node added successfully");
     },
     [nodes, setNodes, edgePosition, dragSourceNodeId, edgeToReplace, setEdges]
   );
-
-  const handleAddNodeFromSidebar = useCallback((type: string) => {
-    setNodeTypeToAdd(type);
-    setEdgePosition(null);
-    setIsAddNodeModalOpen(true);
-  }, []);
-
-  const handleAddNodeFromEdge = useCallback((x: number, y: number, sourceNodeId?: string, targetNodeId?: string, originalEdgeId?: string) => {
-    setEdgePosition({ x, y });
-    setNodeTypeToAdd(undefined);
-    // Store the source node ID so we can create a connection from it to the new node
-    if (sourceNodeId) {
-      setDragSourceNodeId(sourceNodeId);
-      // Store the original edge info to potentially remove or update it
-      setEdgeToReplace(originalEdgeId ? { id: originalEdgeId, targetNodeId } : null);
-    } else {
-      setDragSourceNodeId(null);
-      setEdgeToReplace(null);
-    }
-    setIsAddNodeModalOpen(true);
-  }, []);
 
   // Edge context menu handler
   const onEdgeContextMenuHandler = useCallback((event: React.MouseEvent, edge: Edge) => {
@@ -3144,8 +3215,8 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
   // Context menu action handlers
   const handleContextMenuAddNode = useCallback(() => {
-    setIsAddNodeModalOpen(true);
-  }, []);
+    launchNodeCreator();
+  }, [launchNodeCreator]);
 
   const handleContextMenuSelectAll = useCallback(() => {
     setNodes((nds) =>
@@ -3466,15 +3537,40 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   // Template handlers
   const handleLoadTemplate = useCallback((template: Template) => {
     try {
+      if (
+        !template ||
+        !Array.isArray(template.nodes) ||
+        !Array.isArray(template.edges)
+      ) {
+        toast.error("Template data is invalid", {
+          description: "Unable to apply this template. Please try another one.",
+        });
+        return;
+      }
+
       // Clear existing nodes and edges (except we'll replace everything)
       setNodes(template.nodes);
       setEdges(template.edges);
       
-      // Update workspace name to match template
-      setWorkspaceName(template.name);
+      const nextName = template.name?.trim() ?? "";
+      const shouldRename = Boolean(nextName && nextName !== workspaceName);
+
+      if (shouldRename) {
+        setWorkspaceName(nextName);
+      }
       
       // Reset saved state
       setIsSaved(false);
+
+      // Persist new structure (and rename if applicable)
+      setTimeout(() => {
+        persistWorkspace({
+          force: true,
+          ...(shouldRename ? { renameTo: nextName } : {}),
+        }).catch(() => {
+          /* errors surfaced by persistWorkspace */
+        });
+      }, 0);
       
       // Center view on the new template
       setTimeout(() => {
@@ -3489,7 +3585,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       console.error("Error loading template:", error);
       toast.error("Failed to load template");
     }
-  }, [setNodes, setEdges, setWorkspaceName, reactFlowInstance, layoutDebug]);
+  }, [setNodes, setEdges, setWorkspaceName, reactFlowInstance, layoutDebug, persistWorkspace, workspaceName]);
 
   // Auto-snapshot on significant changes
   useEffect(() => {
@@ -3587,7 +3683,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       // Cmd/Ctrl + N - Add Node
       if (metaKey && event.key === 'n') {
         event.preventDefault();
-        setIsAddNodeModalOpen(true);
+        launchNodeCreator();
       }
 
       // Cmd/Ctrl + I - Import
@@ -3706,7 +3802,8 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
     handleUndo,
     handleRedo,
     handleOpenEnrichment,
-    isCenterNode
+    isCenterNode,
+    launchNodeCreator
   ]);
 
   const handleViewModeChange = useCallback(async (newViewMode: "radial" | "process") => {
@@ -3979,13 +4076,15 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       />
 
       <Toolbar
-        onAddNode={() => setIsAddNodeModalOpen(true)}
+        onAddNode={() => {
+          setShowEmptyState(false);
+          launchNodeCreator();
+        }}
         onConnect={() => setIsConnectModalOpen(true)}
         onAISuggest={() => setIsAISuggestPanelOpen(true)}
         onStartWizard={() => {
           setShowEmptyState(false);
-          setWizardInitialPrompt(null);
-          setIsWizardOpen(true);
+          launchNodeCreator({ forceWizard: true });
         }}
         onSave={() => {
           setSaveLoadMode("save");
@@ -4016,6 +4115,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         onRelationships={() => setIsRelationshipsPanelOpen(true)}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
+        onSpecContext={() => setIsSpecContextDialogOpen(true)}
       />
 
       <FloatingFormatToolbar isVisible={isEditingText} />
@@ -4070,15 +4170,21 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
       <AddNodeModal
         isOpen={isAddNodeModalOpen}
-        onClose={() => {
-          setIsAddNodeModalOpen(false);
-          setNodeTypeToAdd(undefined);
-          setDragPreview(null);
-          setIsPlacingNode(false);
-          setPlacingNodeInfo(null);
-        }}
-        onAdd={handleAddNode}
         initialType={nodeTypeToAdd}
+        initialPrompt={pendingWizardPrompt ?? undefined}
+        onClose={() => {
+      setIsAddNodeModalOpen(false);
+      setNodeTypeToAdd(undefined);
+      setDragPreview(null);
+      setIsPlacingNode(false);
+      setPlacingNodeInfo(null);
+      setDragSourceNodeId(null);
+      setEdgePosition(null);
+      setEdgeToReplace(null);
+      setPendingWizardPrompt(null);
+    }}
+        onAdd={handleAddNode}
+        onUseWizard={handleSwitchToWizard}
       />
 
       <ConnectModal
@@ -4098,6 +4204,12 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         onClose={() => setIsAISuggestPanelOpen(false)}
         onAddSuggestion={handleAddNode}
         onLoadTemplate={handleLoadTemplate}
+      />
+
+      <SpecContextDialog
+        open={isSpecContextDialogOpen}
+        onOpenChange={setIsSpecContextDialogOpen}
+        workspaceId={workspaceId}
       />
 
       <SaveLoadDialog

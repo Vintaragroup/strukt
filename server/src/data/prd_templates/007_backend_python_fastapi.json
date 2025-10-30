@@ -1,0 +1,60 @@
+{
+  "template_id": "backend_fastapi_007",
+  "name": "Python FastAPI Service PRD",
+  "version": "1.0.0",
+  "tags": ["backend", "python", "fastapi", "async", "rest"],
+  "category": "Backend",
+  "description": "Async Python service built with FastAPI, Pydantic models, and PostgreSQL persistence.",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "Backend service exposes RESTful endpoints with automatic OpenAPI docs, async performance, and strong typing."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "CRUD endpoints, JWT authentication, background tasks, pagination, health checks."
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "P95 latency under 150ms, 99.9% uptime, structured logging, observability via OpenTelemetry."
+    },
+    {
+      "title": "Technical Stack",
+      "key": "tech_stack",
+      "content": "Python 3.12+, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, PostgreSQL, uvicorn."
+    }
+  ],
+  "suggested_technologies": ["fastapi", "pydantic", "sqlalchemy", "postgresql", "uvicorn", "alembic"],
+  "technology_profile": {
+    "languages": ["Python"],
+    "backend": ["FastAPI", "SQLAlchemy 2"],
+    "data": ["PostgreSQL", "Redis cache"],
+    "devops": ["Docker", "uvicorn", "Gunicorn", "Prometheus"],
+    "testing": ["Pytest", "Httpx", "Coverage.py"],
+    "tooling": ["pre-commit", "ruff", "mypy"],
+    "notes": "Optimised for async IO workloads with auto-generated schemas using Pydantic."
+  },
+  "api_guidance": [
+    {
+      "name": "Stripe Billing API",
+      "category": "payments",
+      "rationale": "Handles subscription billing with webhook-based lifecycle events and first-class Python SDK.",
+      "recommended_calls": ["POST /v1/subscriptions", "GET /v1/invoices"],
+      "integration_points": ["BillingService", "WebhookProcessor"]
+    },
+    {
+      "name": "SendGrid Mail API",
+      "category": "notifications",
+      "rationale": "Provides transactional email delivery with templating and analytics.",
+      "recommended_calls": ["POST /v3/mail/send"],
+      "integration_points": ["NotificationService"]
+    }
+  ],
+  "complexity": "medium",
+  "estimated_effort_hours": 55,
+  "team_size": 2,
+  "knowledge_graph_tags": ["python-backend", "fastapi", "payments", "notifications"]
+}

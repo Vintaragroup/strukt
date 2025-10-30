@@ -27,6 +27,9 @@ interface NextSuggestionParams {
   focusRing?: number
   focusId?: string
   limit?: number
+  specContext?: string
+  apiIntent?: string
+  requireApiNarrative?: boolean
 }
 
 interface AIResult {
@@ -45,7 +48,9 @@ const BASE_SYSTEM_PROMPT = `You are Strukt AI, the lead architect for a software
 
 const NEXT_SYSTEM_PROMPT = BASE_SYSTEM_PROMPT +
   `Focus on deepening or extending the existing architecture. Recommend 1-3 nodes that progress the plan without repeating existing work.` +
-  ` When a focus node id is supplied, every suggested node must include a metadata object with {"parentId":"<focusId>"} so the client can link it correctly.`
+  ` When a focus node id is supplied, every suggested node must include a metadata object with {"parentId":"<focusId>"} so the client can link it correctly.` +
+  ` When API specification context is provided, include metadata.apiIntegration with {"apiName":"string","specHash":"string","rationale":"string","recommendedCalls":["VERB path"],"integrationPoints":["component or service names"]}.` +
+  ` Summaries must explain why the API call matters and what part of the workspace benefits.`
 
 export function isAIProviderAvailable() {
   return Boolean(openAIClient)
@@ -146,6 +151,20 @@ function buildNextMessages(params: NextSuggestionParams): ChatCompletionMessageP
   if (params.focusId) {
     context.push(`All suggestions must deepen or unblock the focus node (id: ${params.focusId}).`)
     context.push(`Return each node with metadata.parentId set to "${params.focusId}" so the client can link it correctly.`)
+  }
+  if (params.specContext) {
+    context.push('API specification summary:\n' + params.specContext)
+    context.push(
+      'Reference the endpoints above when recommending integrations. Cite concrete calls and integration points.'
+    )
+  }
+  if (params.apiIntent) {
+    context.push(`API intent from user: ${params.apiIntent}`)
+  }
+  if (params.requireApiNarrative) {
+    context.push(
+      'Each node must describe why the API is needed, the key request(s) or webhook(s) involved, and where it integrates.'
+    )
   }
   context.push('Suggest the next 1-3 concrete additions that progress this plan. Each node should describe a specific deliverable or action that directly supports the focus node.')
 

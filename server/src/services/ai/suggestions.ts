@@ -1,10 +1,12 @@
 import Workspace from '../../models/Workspace.js'
-import { ensureObjectId, summarizeWorkspace, summarizeNode, buildMockNodes } from './utils.js'
+import { ensureObjectId, summarizeWorkspace, summarizeNode, buildMockNodes, buildApiIntegrationNodes } from './utils.js'
 import { generateNextSuggestions } from './provider.js'
 import { persistSuggestions } from './storage.js'
 import { SuggestedNode, SuggestionResult } from '../../types/ai.js'
 import Suggestion from '../../models/Suggestion.js'
 import WizardSession from '../../models/WizardSession.js'
+import { getCachedSpecSummary } from '../specs/specCache.js'
+import { serialiseSpecSummary } from '../specs/SpecSummaryService.js'
 
 interface GenerateParams {
   workspaceId: string
@@ -15,12 +17,27 @@ interface GenerateParams {
   focusType?: string
   focusDomain?: string
   focusRing?: number
+  specReferenceId?: string
+  apiIntent?: string
 }
 
-export async function generateSuggestions({ workspaceId, limit = 3, cursorNodeId, focusDomain, focusLabel, focusSummary, focusType, focusRing }: GenerateParams): Promise<SuggestionResult> {
+export async function generateSuggestions({
+  workspaceId,
+  limit = 3,
+  cursorNodeId,
+  focusDomain,
+  focusLabel,
+  focusSummary,
+  focusType,
+  focusRing,
+  specReferenceId,
+  apiIntent,
+}: GenerateParams): Promise<SuggestionResult> {
   const workspaceObjectId = ensureObjectId(workspaceId)
   const workspace = await Workspace.findById(workspaceObjectId).lean()
   const focusNode = workspace?.nodes?.find((node: any) => node.id === cursorNodeId)
+  const specSummary = specReferenceId ? getCachedSpecSummary(specReferenceId) : undefined
+  const specContext = specSummary ? serialiseSpecSummary(specSummary) : undefined
 
   const derivedFocusLabel = focusLabel
     || focusNode?.data?.title
@@ -47,11 +64,24 @@ export async function generateSuggestions({ workspaceId, limit = 3, cursorNodeId
     focusRing: derivedFocusRing,
     focusId: cursorNodeId,
     limit,
+    specContext,
+    apiIntent,
+    requireApiNarrative: Boolean(specSummary),
   })
 
   let nodes = aiResult.nodes
+  let source: 'ai' | 'heuristic' = nodes.length ? 'ai' : 'heuristic'
+
   if (!nodes.length) {
-    nodes = buildMockNodes(cursorNodeId || new Date().toISOString(), limit)
+    if (specSummary) {
+      nodes = buildApiIntegrationNodes(specSummary, limit, {
+        apiIntent,
+        parentId: cursorNodeId,
+      })
+    } else {
+      nodes = buildMockNodes(cursorNodeId || new Date().toISOString(), limit)
+    }
+    source = 'heuristic'
   }
 
   if (cursorNodeId) {
@@ -64,15 +94,20 @@ export async function generateSuggestions({ workspaceId, limit = 3, cursorNodeId
     }))
   }
 
+  const rationale =
+    aiResult.rationale ||
+    (specSummary ? `Integration recommendations based on ${specSummary.title} specification.` : undefined)
+
   const persisted = await persistSuggestions({
     workspaceId: workspaceObjectId,
     sessionId: null,
     nodes,
-    rationale: aiResult.rationale,
+    rationale,
   })
 
   return {
     suggestions: persisted,
+    source,
   }
 }
 

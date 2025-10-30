@@ -16,6 +16,7 @@ import generationRouter from './routes/generation.js'
 import wizardRouter from './routes/wizard.js'
 import suggestionsRouter from './routes/suggestions.js'
 import feedbackRouter from './routes/feedback.js'
+import integrationsRouter from './routes/integrations.js'
 
 const app: Express = express()
 
@@ -44,6 +45,7 @@ app.use('/api/generation', generationRouter)
 app.use('/api/wizard', wizardRouter)
 app.use('/api/suggestions', suggestionsRouter)
 app.use('/api/feedback', feedbackRouter)
+app.use('/api/integrations', integrationsRouter)
 
 // 404 handler
 app.use((req: Request, res: Response) => {

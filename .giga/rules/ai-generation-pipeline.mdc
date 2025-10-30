@@ -1,68 +1,64 @@
 ---
-description: Handles AI content generation flows, context injection, template matching, and generation queue management
+description: Specifications for the AI content generation pipeline including context injection, template matching, and queue management
 ---
 
 
 # ai-generation-pipeline
 
-Core generation pipeline components:
+Core AI Generation Pipeline Components:
 
-1. AI Content Generation Service (server/src/services/GenerationService.ts)
-- Manages workspace architecture generation flows
-- Domain-specific parsing of AI responses into node structures
-- Template-based fallback generation for common architectures
-- Custom validation rules for generated content
-Importance Score: 90/100
+1. Context Injection System (server/src/services/ContextInjector.ts)
+- Workspace context analysis and categorization
+- Custom prompt assembly with domain-specific templates
+- Intelligent token budget allocation based on request type
+- Dynamic context pruning based on relevance scoring
+Importance: 90/100
 
-2. Context Injection System (server/src/services/ContextInjector.ts)
-- Builds specialized context objects for generation prompts
-- Injects domain terminology and project-specific terms
-- Maintains context hierarchy based on node relationships
-- Template matching based on workspace characteristics
-Importance Score: 85/100
+2. Generation Queue Management (server/src/services/GenerationQueue.ts)
+- Priority-based request scheduling with domain weights
+- Request batching by template type and context similarity
+- Automated retry logic with exponential backoff
+- Request correlation and dependency tracking
+Importance: 85/100
 
-3. Generation Queue Management (server/src/services/GenerationQueue.ts)
-- Priority-based queue for generation requests
-- Domain-specific rate limiting per request type
-- Queue state persistence with recovery
-- Request deduplication with context awareness
-Importance Score: 80/100
+3. Template Matching Engine (server/src/services/PRDRetrievalService.ts) 
+- Semantic template selection based on workspace content
+- Multi-stage filtering with business domain awareness
+- Weighted template scoring using domain heuristics
+- Template fusion for complex generation requests
+Importance: 80/100
 
-4. Template Matching Algorithm (server/src/services/PRDRetrievalService.ts)
-- Semantic matching of workspace context to PRD templates
-- Custom template ranking based on domain similarity
-- Hybrid retrieval combining exact and fuzzy matching
-- Domain-specific template filtering
-Importance Score: 75/100
+4. Generation Service Orchestration (server/src/services/GenerationService.ts)
+- Request validation and enrichment pipeline
+- Custom fallback chains for generation failures
+- Domain-specific output normalization rules
+- Generation history tracking with metadata
+Importance: 85/100
 
-Key Generation Pipeline Flows:
-1. Content Generation:
-- Request validation
-- Context building
-- Template selection
-- AI generation
-- Response parsing
-- Node structure creation
+Key Business Rules:
+- Template selection must consider workspace domain context
+- Generation requests require minimum context quality scores
+- Queue priority determined by request type and user role
+- Generated content must maintain workspace consistency
 
-2. Template Processing:
-- Context analysis
+Business-Critical Flows:
+1. Context Assembly:
+- Workspace analysis
+- Domain detection
+- Context scoring
 - Template matching
-- Priority assignment
-- Queue placement
-- Generation scheduling
 
-File Structure:
-```
-server/src/services/
-  ├── GenerationService.ts
-  ├── ContextInjector.ts  
-  ├── GenerationQueue.ts
-  ├── PRDRetrievalService.ts
-  └── ai/
-      ├── provider.ts
-      ├── normalize.ts
-      └── storage.ts
-```
+2. Generation Pipeline:
+- Request queuing
+- Priority scheduling
+- Content generation
+- Output normalization
+
+3. Quality Control:
+- Context validation
+- Output verification
+- Consistency checking
+- History tracking
 
 $END$
 

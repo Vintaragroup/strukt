@@ -8,6 +8,27 @@ export const PRDSectionSchema = z.object({
   content: z.string(),
 })
 
+const TechnologyProfileSchema = z.object({
+  languages: z.array(z.string()).optional(),
+  frontend: z.array(z.string()).optional(),
+  backend: z.array(z.string()).optional(),
+  mobile: z.array(z.string()).optional(),
+  data: z.array(z.string()).optional(),
+  devops: z.array(z.string()).optional(),
+  testing: z.array(z.string()).optional(),
+  tooling: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+})
+
+const APIGuidanceSchema = z.object({
+  name: z.string(),
+  provider: z.string().optional(),
+  category: z.string().optional(),
+  rationale: z.string(),
+  recommended_calls: z.array(z.string()).optional(),
+  integration_points: z.array(z.string()).optional(),
+})
+
 export const PRDTemplateCreateSchema = z.object({
   template_id: z.string(),
   name: z.string(),
@@ -19,9 +40,12 @@ export const PRDTemplateCreateSchema = z.object({
   updated_at: z.string().optional(),
   sections: z.array(PRDSectionSchema),
   suggested_technologies: z.array(z.string()).optional(),
+  technology_profile: TechnologyProfileSchema.optional(),
+  api_guidance: z.array(APIGuidanceSchema).optional(),
   complexity: z.enum(['simple', 'medium', 'complex', 'high']).optional(),
   estimated_effort_hours: z.number().optional(),
   team_size: z.number().optional(),
+  knowledge_graph_tags: z.array(z.string()).optional(),
   embedding: z.array(z.number()).optional(),
 })
 
@@ -74,6 +98,36 @@ const PRDTemplateSchema = new Schema(
       type: [String],
       default: [],
     },
+    technology_profile: {
+      type: {
+        languages: { type: [String], default: undefined },
+        frontend: { type: [String], default: undefined },
+        backend: { type: [String], default: undefined },
+        mobile: { type: [String], default: undefined },
+        data: { type: [String], default: undefined },
+        devops: { type: [String], default: undefined },
+        testing: { type: [String], default: undefined },
+        tooling: { type: [String], default: undefined },
+        notes: { type: String, default: undefined },
+      },
+      default: undefined,
+    },
+    api_guidance: {
+      type: [
+        new Schema(
+          {
+            name: { type: String, required: true },
+            provider: { type: String, default: undefined },
+            category: { type: String, default: undefined },
+            rationale: { type: String, required: true },
+            recommended_calls: { type: [String], default: undefined },
+            integration_points: { type: [String], default: undefined },
+          },
+          { _id: false }
+        ),
+      ],
+      default: undefined,
+    },
     complexity: {
       type: String,
       enum: ['simple', 'medium', 'complex', 'high'],
@@ -86,6 +140,10 @@ const PRDTemplateSchema = new Schema(
     team_size: {
       type: Number,
       default: 1,
+    },
+    knowledge_graph_tags: {
+      type: [String],
+      default: undefined,
     },
     // Vector embedding for semantic search
     embedding: {
@@ -152,9 +210,29 @@ export interface IPRDTemplate extends Document {
   description: string
   sections: IPRDSection[]
   suggested_technologies?: string[]
+  technology_profile?: {
+    languages?: string[]
+    frontend?: string[]
+    backend?: string[]
+    mobile?: string[]
+    data?: string[]
+    devops?: string[]
+    testing?: string[]
+    tooling?: string[]
+    notes?: string
+  }
+  api_guidance?: Array<{
+    name: string
+    provider?: string
+    category?: string
+    rationale: string
+    recommended_calls?: string[]
+    integration_points?: string[]
+  }>
   complexity?: 'simple' | 'medium' | 'complex' | 'high'
   estimated_effort_hours?: number
   team_size?: number
+  knowledge_graph_tags?: string[]
   embedding?: number[]
   created_at: Date
   updated_at: Date

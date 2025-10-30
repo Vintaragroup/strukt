@@ -1,0 +1,62 @@
+{
+  "template_id": "go_microservices_011",
+  "name": "Go Microservices Platform PRD",
+  "version": "1.0.0",
+  "tags": ["go", "microservices", "grpc", "kubernetes", "devops"],
+  "category": "Backend",
+  "description": "Event-driven microservices platform built with Go, gRPC, and Kubernetes-native deployment.",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "A distributed system composed of small Go services communicating via gRPC and asynchronous messaging to power a scalable business application."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Service composition, API gateway, async event bus, idempotent commands, service discovery, observability."
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "p99 latency under 250ms, zero-downtime deployments, horizontal auto-scaling, SLO of 99.9% availability."
+    },
+    {
+      "title": "Operations",
+      "key": "operations",
+      "content": "Deploy on Kubernetes with Argo CD pipelines, implement distributed tracing, rate limiting, and centralized logging."
+    }
+  ],
+  "suggested_technologies": ["go", "grpc", "protobuf", "kubernetes", "argo-cd", "prometheus", "grafana", "cockroachdb", "kafka"],
+  "technology_profile": {
+    "languages": ["Go"],
+    "backend": ["Go microservices", "gRPC", "REST Gateway"],
+    "data": ["CockroachDB", "Redis cache"],
+    "devops": ["Kubernetes", "Argo CD", "Helm", "Prometheus", "Grafana"],
+    "tooling": ["golangci-lint", "buf", "protoc-gen-go"],
+    "testing": ["Go test", "Testcontainers", "k6"],
+    "notes": "Structured around service boundaries with gRPC contracts and async outbox patterns."
+  },
+  "api_guidance": [
+    {
+      "name": "AWS EventBridge",
+      "provider": "AWS",
+      "category": "event-bus",
+      "rationale": "Managed event bus to decouple microservices and fan out domain events.",
+      "recommended_calls": ["PutEvents", "CreateEventBus"],
+      "integration_points": ["EventDispatcherService", "AuditTrailService"]
+    },
+    {
+      "name": "Auth0 Management API",
+      "provider": "Auth0",
+      "category": "authentication",
+      "rationale": "Provides OAuth2, JWT issuing, and user management for services that must stay stateless.",
+      "recommended_calls": ["POST /oauth/token", "GET /api/v2/roles"],
+      "integration_points": ["IdentityService", "API Gateway"]
+    }
+  ],
+  "complexity": "high",
+  "estimated_effort_hours": 140,
+  "team_size": 4,
+  "knowledge_graph_tags": ["go", "microservices", "event-driven", "observability"]
+}

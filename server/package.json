@@ -11,7 +11,8 @@
     "lint": "eslint src --ext ts --report-unused-disable-directives --max-warnings 0",
     "seed:prd-templates": "tsx src/scripts/seed-prd-templates.ts",
     "seed:prd-templates:reset": "tsx src/scripts/seed-prd-templates.ts --reset",
-    "generate:embeddings": "tsx src/scripts/generate-embeddings.ts"
+    "generate:embeddings": "tsx src/scripts/generate-embeddings.ts",
+    "convert:templates": "tsx src/scripts/convert-md-templates.ts"
   },
   "dependencies": {
     "@types/compression": "^1.8.1",

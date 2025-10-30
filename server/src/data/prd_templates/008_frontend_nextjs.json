@@ -1,0 +1,62 @@
+{
+  "template_id": "frontend_nextjs_008",
+  "name": "Next.js Frontend Platform PRD",
+  "version": "1.0.0",
+  "tags": ["frontend", "react", "nextjs", "typescript", "ssr"],
+  "category": "Frontend",
+  "description": "Full-stack Next.js application with hybrid rendering, edge deployment, and API routes.",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "Next.js 14+ application leveraging the app router for server components, streaming, and incremental static regeneration."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Marketing pages, authenticated dashboard, API proxy routes, CMS integration, localization."
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "Core Web Vitals LCP < 2.5s, edge cache hit rate > 85%, accessibility AA, image optimization pipeline."
+    },
+    {
+      "title": "Technical Stack",
+      "key": "tech_stack",
+      "content": "Next.js 14+, React 18, TypeScript 5, Tailwind CSS, TanStack Query, Vercel Edge, Playwright."
+    }
+  ],
+  "suggested_technologies": ["nextjs", "react", "typescript", "tailwindcss", "tanstack-query", "vercel", "playwright"],
+  "technology_profile": {
+    "languages": ["TypeScript", "JavaScript"],
+    "frontend": ["Next.js app router", "Tailwind CSS"],
+    "backend": ["Next.js API routes", "Edge functions"],
+    "devops": ["Vercel", "Docker (optional)"],
+    "testing": ["Jest", "Testing Library", "Playwright"],
+    "tooling": ["ESLint", "Biome", "Husky"],
+    "notes": "Leverages Next.js server components for data fetching and incremental static regeneration."
+  },
+  "api_guidance": [
+    {
+      "name": "Contentful Delivery API",
+      "provider": "Contentful",
+      "category": "cms",
+      "rationale": "Delivers localized CMS content ideal for marketing and knowledge base experiences.",
+      "recommended_calls": ["GET /spaces/{space_id}/environments/{env_id}/entries", "GET /assets/{asset_id}"],
+      "integration_points": ["MarketingPages", "BlogRenderer"]
+    },
+    {
+      "name": "Auth0 Management API",
+      "provider": "Auth0",
+      "category": "authentication",
+      "rationale": "Provides authentication, user management, and role-based access for Next.js apps.",
+      "recommended_calls": ["POST /oauth/token", "GET /api/v2/users/{id}"],
+      "integration_points": ["AuthService", "AdminDashboard"]
+    }
+  ],
+  "complexity": "medium",
+  "estimated_effort_hours": 60,
+  "team_size": 3,
+  "knowledge_graph_tags": ["nextjs", "edge-computing", "cms", "authentication"]
+}

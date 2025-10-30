@@ -1,4 +1,10 @@
 import { Types } from 'mongoose'
+import type { SpecSummary } from '../specs/SpecSummaryService.js'
+
+interface IntegrationNodeOptions {
+  apiIntent?: string
+  parentId?: string
+}
 
 export function ensureObjectId(value: string): Types.ObjectId {
   if (Types.ObjectId.isValid(value)) {
@@ -26,6 +32,56 @@ export function buildMockNodes(seed: string, count = 3) {
   }
 
   return nodes
+}
+
+export function buildApiIntegrationNodes(
+  summary: SpecSummary,
+  count = 3,
+  options: IntegrationNodeOptions = {}
+) {
+  const operations = summary.operations.slice(0, count)
+  if (!operations.length) {
+    return buildMockNodes(summary.importHash, count)
+  }
+
+  return operations.map((operation, index) => {
+    const labelBase = operation.summary
+      ? operation.summary.split('.')[0]
+      : `${operation.method} ${operation.path}`
+    const label = truncateLabel(labelBase || `${summary.title} integration`, 48)
+    const recommendedCalls = [`${operation.method} ${operation.path}`]
+    const nodeSummaryParts = [
+      `Connect to ${summary.title} endpoint ${operation.method} ${operation.path}`,
+    ]
+    if (operation.summary) {
+      nodeSummaryParts.push(`Purpose: ${operation.summary}`)
+    }
+    if (options.apiIntent) {
+      nodeSummaryParts.push(`Supports intent: ${options.apiIntent}`)
+    }
+
+    return {
+      label,
+      type: 'backend',
+      summary: nodeSummaryParts.join('. '),
+      domain: 'tech',
+      ring: 2,
+      metadata: {
+        ...(options.parentId ? { parentId: options.parentId } : {}),
+        apiIntegration: {
+          apiName: summary.title,
+          specHash: summary.importHash,
+          specType: summary.specType,
+          rationale:
+            operation.summary ||
+            options.apiIntent ||
+            `Enable ${summary.title} integration`,
+          recommendedCalls,
+          integrationPoints: options.parentId ? ['linked-parent-node'] : ['integration-service'],
+        },
+      },
+    }
+  })
 }
 
 export function summarizeWorkspace(workspace: any, limit = 10): string | undefined {
@@ -70,4 +126,9 @@ function suggestLabel(domain: string, type: string, index: number) {
   const capitalized = domainLabel.charAt(0).toUpperCase() + domainLabel.slice(1)
   const typeLabel = type.charAt(0).toUpperCase() + type.slice(1)
   return `${capitalized} ${typeLabel} #${index + 1}`
+}
+
+function truncateLabel(label: string, maxLength: number) {
+  if (label.length <= maxLength) return label
+  return `${label.slice(0, maxLength - 3)}...`
 }

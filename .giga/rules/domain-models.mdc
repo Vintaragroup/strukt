@@ -1,70 +1,60 @@
 ---
-description: Specifies data models, relationships and validation rules for managing nodes, workspaces and templates
+description: Defines core data models, relationships, and validation rules for nodes, workspaces, templates and domain organization
 ---
 
 
 # domain-models
 
-Core Domain Models:
+Core Data Models:
 
-1. Node Model (85/100)
-- Types: root, frontend, backend, requirement, documentation
-- Attributes:
-  - id: Unique identifier
-  - type: Node classification
-  - domain: business, product, tech, data-ai, operations
-  - metadata: Custom domain-specific properties
-  - relationships: Array of connected node references
-- Validation:
-  - Single root node per workspace
-  - Required domain assignment
-  - Cycle prevention in relationships
-  - Domain-specific attribute validation
+1. Node Types
+- Root nodes: Single allowed per workspace, defines project context
+- Frontend nodes: UI/UX components and interactions
+- Backend nodes: Services, APIs, data models
+- Requirements nodes: Business rules and acceptance criteria
+- Documentation nodes: Specifications and technical docs
 
-2. Workspace Model (80/100)
-- Properties:
-  - nodes: Collection of workspace nodes
-  - edges: Node relationships/dependencies  
-  - version: Current workspace version
-  - history: Limited to 50 state changes
-  - templates: Applied workspace templates
-- Rules:
-  - Enforces DAG structure
-  - Validates node/edge consistency
-  - Maintains version history
-  - Domain ring enforcement
+2. Domain Organization
+- Business domain: Strategic and process nodes
+- Product domain: Features and user stories
+- Technical domain: Architecture and implementation
+- Data/AI domain: Analytics and ML components
+- Operations domain: DevOps and infrastructure
 
-3. Template Model (75/100)
-- Categories:
-  - Backend API templates
-  - Frontend application templates
-  - SaaS product templates
-  - Data pipeline templates
-  - ML feature templates
-- Components:
-  - Base node structure
-  - Predefined relationships
-  - Domain assignments
-  - Default metadata
+3. Relationship Types
+- depends-on: Technical dependencies
+- implements: Feature implementation links
+- documents: Documentation connections
+- blocks: Blocker relationships
+- tests: Test coverage mapping
 
-4. Relationship Model (70/100)
-Types:
-- depends-on: Dependency relationship
-- implements: Implementation connection
-- documents: Documentation link
-- extends: Inheritance/extension
-- references: Loose coupling
-Rules:
-- Type-specific validation
-- Cross-domain restrictions
-- Cycle prevention
-- Cardinality constraints
+4. Workspace Structure
+- Single root node requirement
+- Strict hierarchy enforcement
+- No circular dependencies allowed
+- Domain-based node grouping
+- Version history tracking
 
-Core Files:
-- client/src/utils/relationships.ts
-- client/src/utils/templates.ts
+5. Template Models
+- Project type templates (SaaS, Mobile, API, etc)
+- Domain-specific node suggestions
+- Relationship recommendations
+- Default validation rules
+
+Validation Rules:
+- Root node uniqueness per workspace
+- Valid parent-child relationships
+- Domain boundary constraints
+- Required fields by node type
+- Relationship type compatibility
+
+Key Files:
 - server/src/models/Workspace.ts
 - server/src/models/PRDTemplate.ts
+- server/src/utils/relationships.ts
+- client/src/utils/validation.ts
+
+Importance Score: 95/100
 
 $END$
 

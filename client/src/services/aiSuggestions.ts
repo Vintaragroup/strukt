@@ -106,10 +106,12 @@ function mapRawSuggestions(raw: RawSuggestion[], parentId?: string): SuggestedNo
 }
 
 function normalizeSuggestionResult(
-  result: SuggestionResult,
+  result: SuggestionResult | null | undefined,
   parentId?: string
 ): SuggestionResult {
-  if (!result) return { suggestions: [] };
+  if (!result) {
+    return { suggestions: [], source: "heuristic" };
+  }
   return {
     ...result,
     suggestions: mapRawSuggestions(result.suggestions, parentId),
@@ -126,6 +128,8 @@ export async function suggestNextNodes(params: {
     domain?: string;
     ring?: number;
   };
+  specReferenceId?: string;
+  apiIntent?: string;
 }): Promise<SuggestionResult> {
   if (USE_MOCK) {
     return new Promise((resolve) =>
@@ -144,6 +148,8 @@ export async function suggestNextNodes(params: {
     focusType: params.context?.type,
     focusDomain: params.context?.domain,
     focusRing: params.context?.ring,
+    specReferenceId: params.specReferenceId,
+    apiIntent: params.apiIntent,
   };
 
   const controller = new AbortController();
@@ -161,7 +167,14 @@ export async function suggestNextNodes(params: {
     return normalizeSuggestionResult(json, params.cursorNodeId ?? undefined);
   } catch (error) {
     clearTimeout(timeoutId);
-    console.warn("AI suggestions timed out, falling back to heuristics", error);
+    const isAbortError =
+      error instanceof DOMException && error.name === "AbortError";
+    if (!isAbortError) {
+      console.warn(
+        "AI suggestions failed, falling back to heuristics",
+        (error as Error)?.message ?? error
+      );
+    }
     // Heuristic fallback that runs fast server-side
     const res = await fetch(`${API_BASE}/ai/suggest`, {
       method: "POST",
@@ -180,11 +193,16 @@ export async function suggestNextNodes(params: {
             ]
           : [],
         edges: [],
+        specReferenceId: params.specReferenceId,
+        apiIntent: params.apiIntent,
       }),
     });
     const fallback = await toJson(res);
     return normalizeSuggestionResult(
-      { suggestions: fallback.suggestions ?? [] },
+      {
+        suggestions: fallback.suggestions ?? [],
+        source: fallback.source ?? "heuristic",
+      },
       params.cursorNodeId ?? undefined
     );
   }

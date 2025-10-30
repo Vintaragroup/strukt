@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import type { Node } from "@xyflow/react";
 import type { SuggestedNode } from "@/types/ai";
 import { applySuggestion, suggestNextNodes, submitFeedback } from "@/services/aiSuggestions";
+import { useAISpecSettings } from "@/store/useAISpecSettings";
+import { SpecContextControls } from "./SpecContextControls";
 
 const USE_MOCK_SUGGESTIONS = import.meta.env.VITE_MOCK_AI_SUGGESTIONS !== "false";
 
@@ -32,12 +34,22 @@ export function SuggestionPanel({
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedNode[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [resultSource, setResultSource] = useState<"ai" | "heuristic" | null>(null);
+  const {
+    allowSpecContext,
+    specReferenceId,
+    promptFragment,
+    promptBudgetTokens,
+    setEstimatedTokens,
+    apiIntent,
+  } = useAISpecSettings();
 
   useEffect(() => {
     let cancelled = false;
     async function fetchSuggestions() {
-      if (!node) {
+      if (!node || !isOpen) {
         setSuggestions([]);
+        setResultSource(null);
         return;
       }
       setLoading(true);
@@ -56,19 +68,43 @@ export function SuggestionPanel({
           domain: typeof data.domain === "string" ? data.domain : undefined,
           ring: typeof data.ring === "number" ? data.ring : undefined,
         };
+
+        const effectiveSpecReference = allowSpecContext ? specReferenceId : undefined;
+        const intent = allowSpecContext ? apiIntent?.trim() || undefined : undefined;
+
+        if (allowSpecContext && promptFragment) {
+          const approxTokens = Math.ceil(promptFragment.length / 4);
+          setEstimatedTokens(approxTokens);
+          if (approxTokens > promptBudgetTokens) {
+            if (!cancelled) {
+              setError(
+                `Spec context requires approximately ${approxTokens} tokens (budget ${promptBudgetTokens}). Increase the budget or trim the spec.`,
+              );
+              setSuggestions([]);
+            }
+            return;
+          }
+        } else if (!allowSpecContext) {
+          setEstimatedTokens(0);
+        }
+
         const result = await suggestNextNodes({
           workspaceId,
           cursorNodeId: node.id,
           context: focusContext,
+          specReferenceId: effectiveSpecReference,
+          apiIntent: intent,
         });
         if (!cancelled) {
           setSuggestions(result.suggestions);
+          setResultSource(result.source ?? null);
         }
       } catch (err) {
         console.error("Failed to fetch next suggestions", err);
         if (!cancelled) {
           setError("Unable to load suggestions. Try again later.");
           setSuggestions([]);
+          setResultSource(null);
         }
       } finally {
         if (!cancelled) {
@@ -81,7 +117,18 @@ export function SuggestionPanel({
     return () => {
       cancelled = true;
     };
-  }, [node, refreshKey]);
+  }, [
+        node,
+        refreshKey,
+        isOpen,
+        allowSpecContext,
+        specReferenceId,
+        apiIntent,
+        promptFragment,
+        promptBudgetTokens,
+        setEstimatedTokens,
+        workspaceId,
+      ]);
 
   const handleAdd = useCallback(
     async (items: SuggestedNode[]) => {
@@ -150,6 +197,17 @@ export function SuggestionPanel({
           </button>
         </div>
 
+        <SpecContextControls workspaceId={workspaceId} variant="panel" />
+
+        {resultSource === "heuristic" && (
+          <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <span className="font-semibold">Heads-up:</span> Suggestions are using the fast fallback engine.
+            {allowSpecContext
+              ? " Spec details were still applied where possible, but you can retry once the AI service is back online."
+              : " Attach an API spec or retry later for richer context."}
+          </div>
+        )}
+
         {loading && (
           <div className="mt-3 text-xs text-slate-500">Loading suggestions…</div>
         )}
@@ -178,6 +236,30 @@ export function SuggestionPanel({
               {suggestion.summary && (
                 <div className="mt-1 text-xs text-slate-500">
                   {suggestion.summary}
+                </div>
+              )}
+              {suggestion.metadata?.apiIntegration && (
+                <div className="mt-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                  <div className="font-semibold">
+                    {suggestion.metadata.apiIntegration.apiName}
+                  </div>
+                  {suggestion.metadata.apiIntegration.recommendedCalls && (
+                    <ul className="mt-1 space-y-1">
+                      {suggestion.metadata.apiIntegration.recommendedCalls.slice(0, 2).map((call) => (
+                        <li key={call} className="flex items-center gap-2 text-[11px] font-medium">
+                          <span className="rounded-sm bg-emerald-600 px-1.5 py-0.5 text-[10px] text-white">
+                            CALL
+                          </span>
+                          <span>{call}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {suggestion.metadata.apiIntegration.integrationPoints && (
+                    <div className="mt-1 text-[11px]">
+                      Integrates with: {suggestion.metadata.apiIntegration.integrationPoints.join(", ")}
+                    </div>
+                  )}
                 </div>
               )}
               <div className="mt-2 flex flex-wrap gap-2 text-[10px] uppercase tracking-wide text-slate-400">

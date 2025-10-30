@@ -40,6 +40,7 @@ import {
   Network,
   CircleDot,
   ArrowRight,
+  FileCode,
 } from "lucide-react";
 import { AlignmentType } from "../utils/alignment";
 import { ExportMenu } from "./ExportMenu";
@@ -72,6 +73,7 @@ interface ToolbarProps {
   viewMode?: "radial" | "process";
   onViewModeChange?: (mode: "radial" | "process") => void;
   onStartWizard?: () => void;
+  onSpecContext?: () => void;
 }
 
 export function Toolbar({
@@ -102,6 +104,7 @@ export function Toolbar({
   onRelationships,
   viewMode = "radial",
   onViewModeChange,
+  onSpecContext,
 }: ToolbarProps) {
   const showAlignmentTools = selectedNodeCount >= 2;
   
@@ -158,6 +161,24 @@ export function Toolbar({
               <p>AI Suggest</p>
             </TooltipContent>
           </Tooltip>
+
+          {onSpecContext && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onSpecContext}
+                  className="h-8 w-8 hover:bg-gray-100 text-emerald-600"
+                >
+                  <FileCode className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>API Spec Context</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {onStartWizard && (
             <Tooltip>

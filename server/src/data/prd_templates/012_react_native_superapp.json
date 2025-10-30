@@ -1,0 +1,62 @@
+{
+  "template_id": "react_native_superapp_012",
+  "name": "React Native Super App PRD",
+  "version": "1.0.0",
+  "tags": ["react-native", "mobile", "super-app", "expo", "typescript"],
+  "category": "Mobile",
+  "description": "Cross-platform React Native application with modular feature packs, offline sync, and push engagement.",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "A React Native super app delivering multiple feature verticals (commerce, messaging, loyalty) with shared navigation and design system."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Modular feature packs, deep linking, offline data cache, push notifications, analytics instrumentation."
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "60 FPS interactions, bundle size under 30MB, crash-free sessions > 99.3%, offline resilience with automatic conflict resolution."
+    },
+    {
+      "title": "User Engagement",
+      "key": "engagement",
+      "content": "Target DAU/MAU ratio of 35%, track retention cohorts, drive push open rate above 18%."
+    }
+  ],
+  "suggested_technologies": ["react-native", "expo", "typescript", "redux-toolkit", "react-query", "sqlite", "firebase"],
+  "technology_profile": {
+    "languages": ["TypeScript", "JavaScript"],
+    "mobile": ["React Native 0.74+", "Expo", "React Navigation"],
+    "frontend": ["Design tokens", "UI Kitten/Native Base"],
+    "data": ["SQLite", "WatermelonDB", "Realm optional"],
+    "devops": ["Expo EAS", "Fastlane", "App Center"],
+    "testing": ["React Native Testing Library", "Detox", "Jest"],
+    "notes": "Focus on adaptive navigation, OTA updates, and consistent module boundaries."
+  },
+  "api_guidance": [
+    {
+      "name": "Firebase Cloud Messaging",
+      "provider": "Firebase",
+      "category": "notifications",
+      "rationale": "Unified push notifications and topics for iOS + Android.",
+      "recommended_calls": ["POST /fcm/send"],
+      "integration_points": ["NotificationCenter", "MarketingCampaignService"]
+    },
+    {
+      "name": "Segment Tracking API",
+      "provider": "Segment",
+      "category": "analytics",
+      "rationale": "Client analytics pipeline streaming to downstream tools.",
+      "recommended_calls": ["POST /v1/track", "POST /v1/identify"],
+      "integration_points": ["AnalyticsService", "ExperimentationEngine"]
+    }
+  ],
+  "complexity": "medium",
+  "estimated_effort_hours": 90,
+  "team_size": 3,
+  "knowledge_graph_tags": ["react-native", "mobile-engagement", "analytics", "offline-first"]
+}

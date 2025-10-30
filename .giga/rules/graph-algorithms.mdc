@@ -1,46 +1,58 @@
 ---
-description: Specification for core graph algorithms including layout systems, relationship management, and cycle detection
+description: Defines core graph algorithms for domain-driven node layout, relationship management, cycle detection, and auto-organization of architectural components
 ---
 
 
 # graph-algorithms
 
-## Domain Layout Engine (85/100)
-Location: client/src/utils/domainLayout.ts
-- Radial layout algorithm optimized for business domain visualization
-- Multi-ring positioning system with domain-specific angle calculations
-- Node clustering by business context (frontend, backend, data/AI, operations)
-- Smart overlap prevention with domain boundary respect
-- Dynamic radius adjustment based on node density
+Core Graph Algorithm Components:
 
-## Relationship Management (80/100) 
-Location: client/src/utils/relationships.ts
-- Domain-specific relationship validation (depends-on, implements, documents)
-- Cycle detection with business context preservation
-- Critical path analysis for project dependencies
-- Custom validation rules for cross-domain relationships
-- Relationship suggestion engine with domain awareness
+1. Domain-Based Layout Engine (85/100)
+`client/src/utils/domainLayout.ts`
+- Radial layout system organizing nodes into business domain sectors
+- Dynamic angle calculations for optimal sector spacing
+- Node placement optimization within domain boundaries
+- Automated radius adjustment based on node density
+- Parent-child relationship preservation during layout
 
-## Graph Operations Core (75/100)
-Location: client/src/utils/graphOps.ts
-- Business domain partitioning algorithms
-- Node hierarchy enforcement with domain constraints
-- Custom traversal patterns respecting business boundaries
-- Domain-aware node grouping and ungrouping operations
+2. Relationship Management System (90/100) 
+`client/src/utils/relationships.ts`
+- Bidirectional relationship tracking between nodes
+- Cycle detection for preventing circular dependencies
+- Domain-aware edge routing with collision avoidance
+- Relationship type validation and enforcement
+- Hierarchical relationship preservation
 
-## Auto-Layout System (70/100)
-Location: client/src/utils/autoLayout.ts
-- Force-directed layout with business domain weights
-- Smart node distribution based on relationship types
-- Domain cluster preservation during layout
-- Dynamic spacing rules based on node importance
+3. Auto-Layout Algorithm (80/100)
+`client/src/utils/autoLayout.ts`
+- Force-directed layout specialized for domain structures
+- Custom node repulsion based on relationship types
+- Domain boundary constraints during force simulation
+- Incremental layout updates for performance
+- Edge crossing minimization for clarity
 
-## Edge Routing (65/100)
-Location: client/src/utils/edgeRouting.ts
-- Business context-aware path finding
-- Domain boundary-respecting edge placement
-- Relationship type-specific routing rules
-- Smart bundling for related domain connections
+4. Domain Ring System (75/100)
+`client/src/components/DomainRings.tsx`
+- Visual domain separation with configurable rings
+- Dynamic ring sizing based on contained nodes
+- Drag constraints within domain boundaries
+- Domain transition animations
+- Hierarchical domain nesting support
+
+5. Graph Operations Engine (70/100)
+`client/src/utils/graphOps.ts`
+- Domain-specific node grouping operations
+- Relationship batch processing system
+- Graph state validation rules
+- Node type compatibility checking
+- Domain membership management
+
+Key Business Rules:
+- Nodes must belong to exactly one domain
+- Circular dependencies are prevented across all relationship types
+- Domain boundaries cannot overlap
+- Parent-child relationships must preserve domain hierarchy
+- Cross-domain relationships require explicit validation
 
 $END$
 

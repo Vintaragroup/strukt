@@ -1,14 +1,41 @@
 import { Router, Request, Response } from 'express'
 import OpenAI from 'openai'
 import { config } from '../config/env.js'
+import { getCachedSpecSummary } from '../services/specs/specCache.js'
+import { serialiseSpecSummary } from '../services/specs/SpecSummaryService.js'
+import { buildApiIntegrationNodes } from '../services/ai/utils.js'
 
 const router = Router()
 
 // Heuristic suggestions when OpenAI API key is not available
 function getHeuristicSuggestions(
-  nodes: Array<{ type: string }>,
-  edges: Array<{ source: string; target: string }>
+  nodes: Array<{ id?: string; type: string }>,
+  edges: Array<{ source: string; target: string }>,
+  options?: {
+    specReferenceId?: string
+    apiIntent?: string
+  }
 ) {
+  const specSummary = options?.specReferenceId
+    ? getCachedSpecSummary(options.specReferenceId)
+    : undefined
+
+  if (specSummary) {
+    const integrationNodes = buildApiIntegrationNodes(specSummary, 3, {
+      apiIntent: options?.apiIntent,
+    })
+    if (integrationNodes.length) {
+      return integrationNodes.map((node) => ({
+        type: node.type,
+        data: {
+          title: node.label,
+          summary: node.summary,
+          metadata: node.metadata,
+        },
+      }))
+    }
+  }
+
   const nodeTypes = new Set(nodes.map((n) => n.type))
   const suggestions = []
 
@@ -191,12 +218,16 @@ function generateFromPromptHeuristic(prompt: string) {
  */
 router.post('/suggest', async (req: Request, res: Response) => {
   try {
-    const { nodes = [], edges = [] } = req.body
+    const { nodes = [], edges = [], specReferenceId, apiIntent } = req.body
+    const specSummary = typeof specReferenceId === 'string' ? getCachedSpecSummary(specReferenceId) : undefined
 
     // Use heuristics if no API key
     if (!config.openaiApiKey) {
-      const suggestions = getHeuristicSuggestions(nodes, edges)
-      return res.json({ suggestions })
+      const suggestions = getHeuristicSuggestions(nodes, edges, {
+        specReferenceId,
+        apiIntent,
+      })
+      return res.json({ source: 'heuristic', suggestions })
     }
 
     // Call OpenAI API
@@ -215,13 +246,26 @@ For each suggestion, return a JSON object with:
 Respond with ONLY a valid JSON array, no other text.
 Example: [{"type":"frontend","data":{"title":"Web App","summary":"React UI","stackHint":"React"}}]`
 
-    const userMessage = `Current workspace nodes (types): ${JSON.stringify(
-      nodes.map((n: any) => ({ id: n.id, type: n.type, title: n.data?.title }))
-    )}
+    const sections: string[] = [
+      `Current workspace nodes (types): ${JSON.stringify(
+        nodes.map((n: any) => ({ id: n.id, type: n.type, title: n.data?.title }))
+      )}`,
+      `Current edges: ${edges.length}`,
+    ]
 
-Current edges: ${edges.length}
+    if (specSummary) {
+      sections.push(`API specification context:\n${serialiseSpecSummary(specSummary)}`)
+    }
 
-What 1-3 nodes would you suggest adding to improve this architecture?`
+    if (typeof apiIntent === 'string' && apiIntent.trim().length > 0) {
+      sections.push(`API intent supplied by user: ${apiIntent}`)
+    }
+
+    sections.push(
+      'What 1-3 nodes would you suggest adding to improve this architecture? Provide metadata.apiIntegration when referencing an API.'
+    )
+
+    const userMessage = sections.join('\n\n')
 
     const completion = await client.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -236,13 +280,17 @@ What 1-3 nodes would you suggest adding to improve this architecture?`
     const content = completion.choices[0]?.message?.content || '[]'
     const suggestions = JSON.parse(content)
 
-    res.json({ suggestions })
+    res.json({ source: 'ai', suggestions })
   } catch (error) {
     console.error('AI suggestion error:', error)
     // Fall back to heuristics on error
     const { nodes = [] } = req.body
-    const suggestions = getHeuristicSuggestions(nodes, [])
-    res.json({ suggestions })
+    const { specReferenceId, apiIntent } = req.body
+    const suggestions = getHeuristicSuggestions(nodes, [], {
+      specReferenceId,
+      apiIntent,
+    })
+    res.json({ source: 'heuristic', suggestions })
   }
 })
 

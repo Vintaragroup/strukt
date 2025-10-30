@@ -1,0 +1,61 @@
+{
+  "template_id": "mobile_flutter_006",
+  "name": "Flutter Mobile App PRD",
+  "version": "1.0.0",
+  "tags": ["mobile", "flutter", "dart", "cross-platform"],
+  "category": "Mobile",
+  "description": "Cross-platform Flutter application covering UI layers, state management, and native integrations.",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "Flutter-based mobile experience targeting iOS and Android with a shared Dart codebase and native plugin access."
+    },
+    {
+      "title": "Functional Requirements",
+      "key": "functional",
+      "content": "Onboarding flow, authenticated dashboard, offline caching, push notifications, analytics instrumentation."
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional",
+      "content": "60 fps animations on target devices, bundle size under 25MB, crash-free sessions > 99.5%, offline-first resilience."
+    },
+    {
+      "title": "Technical Stack",
+      "key": "tech_stack",
+      "content": "Flutter 3+, Dart 3+, Riverpod/Bloc state management, Firebase Cloud Messaging, native plugin bridges."
+    }
+  ],
+  "suggested_technologies": ["flutter", "dart", "riverpod", "bloc", "firebase", "native_plugins"],
+  "technology_profile": {
+    "languages": ["Dart"],
+    "frontend": ["Flutter UI toolkit"],
+    "mobile": ["Flutter 3+", "Android", "iOS"],
+    "devops": ["Fastlane", "Codemagic"],
+    "testing": ["Flutter Test", "goldens", "integration_test"],
+    "notes": "Ideal for product teams targeting simultaneous iOS and Android releases with consistent UI."
+  },
+  "api_guidance": [
+    {
+      "name": "Firebase Cloud Messaging",
+      "provider": "Firebase",
+      "category": "push-notifications",
+      "rationale": "Delivers push notifications across iOS and Android with high reliability and Flutter SDK support.",
+      "recommended_calls": ["POST /fcm/send"],
+      "integration_points": ["NotificationService", "UserPreferencesService"]
+    },
+    {
+      "name": "Firebase Analytics",
+      "provider": "Firebase",
+      "category": "analytics",
+      "rationale": "Tracks mobile engagement events with low overhead and prebuilt dashboards.",
+      "recommended_calls": ["logEvent('screen_view')", "setUserId"],
+      "integration_points": ["AnalyticsService", "OnboardingFlow"]
+    }
+  ],
+  "complexity": "medium",
+  "estimated_effort_hours": 65,
+  "team_size": 3,
+  "knowledge_graph_tags": ["mobile-ui", "flutter", "firebase"]
+}

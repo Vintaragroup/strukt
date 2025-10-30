@@ -1,0 +1,62 @@
+{
+  "template_id": "data_science_playbook_013",
+  "name": "Data Science Delivery Playbook PRD",
+  "version": "1.0.0",
+  "tags": ["data-science", "mlops", "notebooks", "mlflow", "dagster"],
+  "category": "Data & AI",
+  "description": "Collaborative data science workflow covering exploration, feature engineering, model training, and production deployment.",
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "A structured process enabling data scientists to explore, prototype, and deploy models with reproducibility and observability."
+    },
+    {
+      "title": "Workflow",
+      "key": "workflow",
+      "content": "Notebook experimentation, feature store registration, training pipelines, evaluation, CI/CD promotion, model registry."
+    },
+    {
+      "title": "Governance",
+      "key": "governance",
+      "content": "Dataset lineage, approval gates, responsible AI checklist, monitoring of drift and fairness metrics."
+    },
+    {
+      "title": "Platform Requirements",
+      "key": "platform",
+      "content": "Managed compute, parameter tracking, dataset versioning, automated retraining triggers, alerting."
+    }
+  ],
+  "suggested_technologies": ["python", "jupyter", "pandas", "mlflow", "dagster", "great-expectations", "feast", "sagemaker"],
+  "technology_profile": {
+    "languages": ["Python"],
+    "data": ["Delta Lake", "Feature store (Feast)", "Great Expectations"],
+    "backend": ["Dagster orchestration", "FastAPI inference service"],
+    "devops": ["MLflow", "SageMaker", "GitHub Actions"],
+    "testing": ["Pytest", "Great Expectations suites"],
+    "tooling": ["Black", "Ruff", "Pre-commit hooks"],
+    "notes": "Emphasis on reproducibility, data contracts, and promotion workflow from staging to production."
+  },
+  "api_guidance": [
+    {
+      "name": "OpenAI Assistants API",
+      "provider": "OpenAI",
+      "category": "ai-services",
+      "rationale": "Augment analyst workflows with code completion and summarisation for notebooks.",
+      "recommended_calls": ["POST /v1/assistants", "POST /v1/threads/{id}/messages"],
+      "integration_points": ["NotebookCopilotService", "InsightsMessenger"]
+    },
+    {
+      "name": "Weights & Biases API",
+      "provider": "Weights & Biases",
+      "category": "mlops",
+      "rationale": "Centralized experiment tracking, comparisons, and reports.",
+      "recommended_calls": ["POST /graphql", "GET /projects/{entity}/{project}"],
+      "integration_points": ["ExperimentTracker", "ModelPromotionService"]
+    }
+  ],
+  "complexity": "high",
+  "estimated_effort_hours": 110,
+  "team_size": 4,
+  "knowledge_graph_tags": ["mlops", "data-science", "model-governance", "feature-store"]
+}

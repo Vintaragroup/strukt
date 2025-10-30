@@ -5,6 +5,7 @@ import { globalResponseCache } from '../utils/performanceMonitor'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
 const REQUEST_TIMEOUT = 15000 // 15 seconds
+const WORKSPACE_UPDATE_TIMEOUT = 45000 // Auto-save can wait longer than default
 
 // Optimized cache TTL values for different resource types (Task 3.9)
 const CACHE_TTL = {
@@ -99,7 +100,9 @@ export const workspacesAPI = {
 
   update: async (name: string, workspace: Partial<Workspace>): Promise<Workspace> => {
     try {
-      const { data } = await apiClient.put(`/api/workspaces/${name}`, workspace)
+      const { data } = await apiClient.put(`/api/workspaces/${name}`, workspace, {
+        timeout: WORKSPACE_UPDATE_TIMEOUT,
+      })
       return data
     } catch (error) {
       const appError = ErrorHandler.parseError(error)
@@ -295,4 +298,3 @@ export const getRetryDelay = (error: unknown, attempt: number = 0): number => {
 }
 
 export default apiClient
-

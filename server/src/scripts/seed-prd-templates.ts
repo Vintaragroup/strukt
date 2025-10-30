@@ -18,6 +18,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import mongoose from 'mongoose'
+import OpenAI from 'openai'
 import PRDTemplate from '../models/PRDTemplate'
 import { config } from 'dotenv'
 
@@ -28,6 +29,8 @@ const __dirname = path.dirname(__filename)
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/strukt'
 const TEMPLATES_DIR = path.join(__dirname, '../data/prd_templates')
+const GENERATE_EMBEDDINGS =
+  process.argv.includes('--embed') || process.env.GENERATE_TEMPLATE_EMBEDDINGS === 'true'
 
 interface TemplateFile {
   template_id: string
@@ -36,25 +39,107 @@ interface TemplateFile {
   tags: string[]
   category: string
   description: string
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
   sections: Array<{
     title: string
     key: string
     content: string
   }>
-  suggested_technologies: string[]
-  complexity: 'simple' | 'medium' | 'complex'
-  estimated_effort_hours: number
-  team_size: number
+  suggested_technologies?: string[]
+  technology_profile?: {
+    languages?: string[]
+    frontend?: string[]
+    backend?: string[]
+    mobile?: string[]
+    data?: string[]
+    devops?: string[]
+    testing?: string[]
+    tooling?: string[]
+    notes?: string
+  }
+  api_guidance?: Array<{
+    name: string
+    provider?: string
+    category?: string
+    rationale: string
+    recommended_calls?: string[]
+    integration_points?: string[]
+  }>
+  complexity?: 'simple' | 'medium' | 'complex' | 'high'
+  estimated_effort_hours?: number
+  team_size?: number
+  knowledge_graph_tags?: string[]
+  embedding?: number[]
+}
+
+const openAIApiKey = process.env.OPENAI_API_KEY
+const openAIClient = GENERATE_EMBEDDINGS && openAIApiKey ? new OpenAI({ apiKey: openAIApiKey }) : null
+
+function redactMongoUri(uri: string) {
+  return uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:@]+):([^@]+)@/i, (_m, p1, user) => `${p1}${user}:******@`)
+}
+
+function summariseTemplate(template: TemplateFile) {
+  const parts: string[] = [
+    template.name,
+    template.category,
+    template.description,
+    `tags: ${template.tags.join(', ')}`,
+  ]
+
+  if (template.suggested_technologies?.length) {
+    parts.push(`suggested: ${template.suggested_technologies.join(', ')}`)
+  }
+  if (template.technology_profile) {
+    const profileEntries = Object.entries(template.technology_profile)
+      .filter(([, value]) => Array.isArray(value) ? value.length : Boolean(value))
+      .map(([key, value]) =>
+        Array.isArray(value) ? `${key}: ${value.join(', ')}` : `${key}: ${value}`
+      )
+    if (profileEntries.length) {
+      parts.push(`profile: ${profileEntries.join(' | ')}`)
+    }
+  }
+  if (template.api_guidance?.length) {
+    const apiHints = template.api_guidance
+      .map((item) => `${item.name}: ${item.rationale}`)
+      .join(' | ')
+    parts.push(`apis: ${apiHints}`)
+  }
+  return parts.join('\n')
+}
+
+async function maybeGenerateEmbedding(templateData: TemplateFile): Promise<number[] | undefined> {
+  if (!GENERATE_EMBEDDINGS) return undefined
+  if (!openAIClient) {
+    console.warn('⚠️  Skipping embeddings (OpenAI client unavailable)')
+    return undefined
+  }
+
+  try {
+    const summary = summariseTemplate(templateData)
+    const response = await openAIClient.embeddings.create({
+      model: process.env.TEMPLATE_EMBEDDING_MODEL || 'text-embedding-3-small',
+      input: summary,
+    })
+    const embedding = response.data?.[0]?.embedding
+    if (!embedding) {
+      console.warn(`⚠️  Received empty embedding for ${templateData.name}`)
+      return undefined
+    }
+    return embedding
+  } catch (error) {
+    console.error(`⚠️  Failed to generate embedding for ${templateData.name}:`, error)
+    return undefined
+  }
 }
 
 async function loadTemplates(): Promise<void> {
   try {
   console.log('🔗 Connecting to MongoDB...')
   await mongoose.connect(MONGO_URI)
-  const redact = (uri: string) => uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:@]+):([^@]+)@/i, (_m, p1, user) => `${p1}${user}:******@`)
-  console.log(`✅ Connected to MongoDB at ${redact(MONGO_URI)}`)
+  console.log(`✅ Connected to MongoDB at ${redactMongoUri(MONGO_URI)}`)
 
     // Check for --reset flag
     const shouldReset = process.argv.includes('--reset')
@@ -81,6 +166,8 @@ async function loadTemplates(): Promise<void> {
       const templateData: TemplateFile = JSON.parse(content)
 
       try {
+        const embedding = templateData.embedding ?? (await maybeGenerateEmbedding(templateData))
+
         // Check if template already exists
         const existing = await PRDTemplate.findOne({
           template_id: templateData.template_id,
@@ -101,6 +188,7 @@ async function loadTemplates(): Promise<void> {
           { template_id: templateData.template_id },
           {
             ...templateData,
+            embedding,
             updated_at: new Date(),
           },
           {

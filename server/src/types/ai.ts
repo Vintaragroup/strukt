@@ -32,6 +32,7 @@ export const SuggestionResultSchema = z.object({
   suggestions: z.array(SuggestedNodeSchema),
   edges: z.array(SuggestedEdgeSchema).optional(),
   rationale: z.string().optional(),
+  source: z.enum(['ai', 'heuristic']).optional(),
 })
 
 export const StartWizardBody = z.object({
@@ -53,6 +54,8 @@ export const SuggestionRequestBody = z.object({
   focusType: z.string().min(1).optional(),
   focusDomain: z.string().min(1).optional(),
   focusRing: z.number().int().min(1).max(6).optional(),
+  specReferenceId: z.string().regex(/^[0-9a-f]{64}$/i, 'Invalid spec reference').optional(),
+  apiIntent: z.string().min(3).max(500).optional(),
 })
 
 export const ApplySuggestionBody = z.object({

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -9,15 +10,16 @@ import {
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { ScrollArea } from "./ui/scroll-area";
-import { Sparkles, Lightbulb, Plus, Layout, Rocket, ShoppingCart, MessageSquare } from "lucide-react";
+import { Sparkles, Lightbulb, Plus, Layout, Rocket, Microscope, Code } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Template, getTemplateById } from "../utils/templates";
 
 interface AISuggestPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onAddSuggestion: (suggestion: any) => void;
-  onLoadTemplate?: (template: any) => void;
+  onLoadTemplate?: (template: Template) => void;
 }
 
 const mockSuggestions = [
@@ -47,42 +49,46 @@ const mockSuggestions = [
   },
 ];
 
-const templates = [
+const templateCards = [
   {
-    id: "saas-app",
-    name: "SaaS Application",
-    description: "Complete structure for a modern SaaS product with authentication, dashboards, and billing",
+    id: "product-launch",
+    label: "SaaS Launch Plan",
+    description: "Kick off a full go-to-market plan with features, marketing, and launch timeline.",
     icon: Rocket,
     color: "from-blue-500 to-cyan-600",
-    nodes: 12,
-    tags: ["SaaS", "Full Stack", "Popular"],
+    fallbackTags: ["SaaS", "Launch"],
   },
   {
-    id: "ecommerce",
-    name: "E-Commerce Platform",
-    description: "Product catalog, shopping cart, checkout flow, and order management system",
-    icon: ShoppingCart,
+    id: "research-project",
+    label: "Research Project",
+    description: "Structure questions, methodology, findings, and documentation for research work.",
+    icon: Microscope,
     color: "from-green-500 to-emerald-600",
-    nodes: 10,
-    tags: ["E-Commerce", "Retail"],
+    fallbackTags: ["Research", "Insights"],
   },
   {
-    id: "social-app",
-    name: "Social Media App",
-    description: "User profiles, feeds, messaging, notifications, and content sharing features",
-    icon: MessageSquare,
+    id: "fullstack-app",
+    label: "Fullstack App Blueprint",
+    description: "Frontend, backend, database, and deployment scaffolding to jumpstart development.",
+    icon: Code,
     color: "from-purple-500 to-pink-600",
-    nodes: 15,
-    tags: ["Social", "Mobile"],
+    fallbackTags: ["Engineering", "Architecture"],
+  },
+  {
+    id: "design-system",
+    label: "Design System",
+    description: "Tokens, components, patterns, and documentation for cohesive product design.",
+    icon: Layout,
+    color: "from-amber-500 to-orange-600",
+    fallbackTags: ["Design", "UI"],
   },
   {
     id: "blank",
-    name: "Blank Canvas",
-    description: "Start from scratch with just the center focal node",
+    label: "Blank Canvas",
+    description: "Start fresh with just the center focal node and build your own structure.",
     icon: Layout,
     color: "from-gray-500 to-slate-600",
-    nodes: 1,
-    tags: ["Custom"],
+    fallbackTags: ["Custom"],
   },
 ];
 
@@ -96,10 +102,20 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
   };
 
   const handleLoadTemplate = (templateId: string) => {
-    if (onLoadTemplate) {
-      onLoadTemplate(templateId);
-      onClose();
+    if (!onLoadTemplate) {
+      return;
     }
+
+    const template = getTemplateById(templateId);
+    if (!template) {
+      toast.error("Template unavailable", {
+        description: "We couldn't find the selected template. Please try another option.",
+      });
+      return;
+    }
+
+    onLoadTemplate(template);
+    onClose();
   };
 
   return (
@@ -139,31 +155,38 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
                   <span>Choose a Template</span>
                 </div>
 
-                {templates.map((template) => {
-                  const Icon = template.icon;
+                {templateCards.map((card) => {
+                  const template = getTemplateById(card.id);
+                  const Icon = card.icon;
+                  const nodeCount = template?.nodes?.length ?? 0;
+                  const tags =
+                    template?.metadata?.tags && template.metadata.tags.length > 0
+                      ? template.metadata.tags
+                      : card.fallbackTags;
+
                   return (
                     <div
-                      key={template.id}
+                      key={card.id}
                       className="group p-5 rounded-2xl border-2 border-gray-200 bg-white hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer"
-                      onClick={() => handleLoadTemplate(template.id)}
+                      onClick={() => handleLoadTemplate(card.id)}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform`}>
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform`}>
                           <Icon className="w-7 h-7 text-white" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="text-gray-900 mb-1">{template.name}</h4>
-                              <p className="text-sm text-gray-600">{template.description}</p>
+                              <h4 className="text-gray-900 mb-1">{card.label}</h4>
+                              <p className="text-sm text-gray-600">{card.description}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 mt-3">
                             <Badge variant="outline" className="text-xs">
-                              {template.nodes} {template.nodes === 1 ? 'node' : 'nodes'}
+                              {nodeCount} {nodeCount === 1 ? "node" : "nodes"}
                             </Badge>
-                            {template.tags.map((tag, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
+                            {tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
                                 {tag}
                               </Badge>
                             ))}
@@ -174,7 +197,7 @@ export function AISuggestPanel({ isOpen, onClose, onAddSuggestion, onLoadTemplat
                           className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleLoadTemplate(template.id);
+                            handleLoadTemplate(card.id);
                           }}
                         >
                           Use Template
