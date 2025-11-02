@@ -1,64 +1,62 @@
 ---
-description: Specifications for the AI content generation pipeline including context injection, template matching, and queue management
+description: Specification for AI content generation pipeline including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-Core AI Generation Pipeline Components:
+## Core Generation Pipeline Components
 
-1. Context Injection System (server/src/services/ContextInjector.ts)
-- Workspace context analysis and categorization
-- Custom prompt assembly with domain-specific templates
-- Intelligent token budget allocation based on request type
-- Dynamic context pruning based on relevance scoring
-Importance: 90/100
+### 1. Generation Service (Importance: 95)
+File: server/src/services/GenerationService.ts
+- Multi-stage generation pipeline with context building, prompt engineering, and result validation
+- Domain-specific template matching based on node type and workspace context
+- Intelligent fallback mechanisms with circuit breaker pattern
+- Generation history tracking and version management
 
-2. Generation Queue Management (server/src/services/GenerationQueue.ts)
-- Priority-based request scheduling with domain weights
-- Request batching by template type and context similarity
-- Automated retry logic with exponential backoff
-- Request correlation and dependency tracking
-Importance: 85/100
+### 2. Context Injection System (Importance: 90) 
+File: server/src/services/ContextInjector.ts
+- Workspace analysis for contextual understanding
+- Dynamic prompt assembly based on node relationships
+- Template adaptation based on domain requirements
+- Historical context preservation across generations
 
-3. Template Matching Engine (server/src/services/PRDRetrievalService.ts) 
-- Semantic template selection based on workspace content
-- Multi-stage filtering with business domain awareness
-- Weighted template scoring using domain heuristics
-- Template fusion for complex generation requests
-Importance: 80/100
+### 3. Generation Queue (Importance: 85)
+File: server/src/services/GenerationQueue.ts
+- Priority-based queuing system for generation requests
+- Request batching and optimization 
+- Rate limiting and quota management
+- Parallel processing with dependency resolution
 
-4. Generation Service Orchestration (server/src/services/GenerationService.ts)
-- Request validation and enrichment pipeline
-- Custom fallback chains for generation failures
-- Domain-specific output normalization rules
-- Generation history tracking with metadata
-Importance: 85/100
+### 4. Template Matching (Importance: 80)
+File: server/src/services/cards/templatePlanner.ts
+- Intelligent template selection based on context signals
+- Multi-factor scoring for template relevance
+- Adaptive template modification based on generation history
+- Domain-specific template customization
 
-Key Business Rules:
-- Template selection must consider workspace domain context
-- Generation requests require minimum context quality scores
-- Queue priority determined by request type and user role
-- Generated content must maintain workspace consistency
+## Integration Points
 
-Business-Critical Flows:
-1. Context Assembly:
-- Workspace analysis
-- Domain detection
-- Context scoring
-- Template matching
+### 1. Feedback Loop System (Importance: 85)
+File: server/src/services/ai/feedback.ts
+- User feedback collection and analysis
+- Template refinement based on feedback patterns
+- Generation quality metrics tracking
+- Continuous improvement pipeline
 
-2. Generation Pipeline:
-- Request queuing
-- Priority scheduling
-- Content generation
-- Output normalization
+### 2. Suggestion Engine (Importance: 80)
+File: server/src/services/ai/suggestions.ts
+- Context-aware suggestion generation
+- Relationship inference between nodes
+- Template-based completion suggestions
+- Domain validation rules
 
-3. Quality Control:
-- Context validation
-- Output verification
-- Consistency checking
-- History tracking
+### 3. Normalization Engine (Importance: 75)
+File: server/src/services/ai/normalize.ts
+- Output standardization across different templates
+- Context-aware content formatting
+- Domain-specific validation rules
+- Relationship preservation during normalization
 
 $END$
 

@@ -1,0 +1,61 @@
+{
+  "template_id": "bravo19er_md_tools_mobile",
+  "name": "MD Tools Mobile",
+  "version": "1.0.0",
+  "tags": [
+    "tools",
+    "mobile",
+    "sponsor",
+    "https",
+    "img",
+    "shields",
+    "badge",
+    "ff69b4"
+  ],
+  "category": "Mobile",
+  "description": "[![Sponsor](https://img.shields.io/badge/sponsor-❤️-ff69b4?style=flat)](https://github.com/sponsors/Bravo19er) Clean, mobile-friendly Markdown templates built for freelancers, consultants,",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "What's Included",
+      "key": "what_s_included",
+      "content": "- `readme-clean.md` – professional README format\n- `freelance-pricing-table.md` – simple hourly rate table\n- `personal-finance-tracker.md` – income and expense tracker\n- `changelog-logical.md` – versioned update log\n- `system-design-lean.md` – lightweight technical planning page"
+    },
+    {
+      "title": "Features",
+      "key": "features",
+      "content": "- **Mobile-first**: Templates are formatted for easy use and editing on any\n  phone or browser.\n- **Freelancer-focused**: Built for consultants, creators, and business owners.\n- **Drop-in Ready**: No setup, dependencies, or special tools required.\n- **Clear and Practical**: No bloat—just simple, reusable Markdown files.\n- **Sponsor-supported**: Project growth is powered by community support.\n- **Open Source**: MIT License. Use for personal or commercial projects.\n\n**Keywords:** Markdown templates, freelancer tools, mobile-friendly Markdown,\nconsulting, project docs, simple templates, sponsor-supported"
+    },
+    {
+      "title": "Getting Started",
+      "key": "getting_started",
+      "content": "1. **Browse the Templates**\n   - Explore the Markdown files in this repository, such as\n     `freelance-pricing-table.md`, `personal-finance-tracker.md`, and others.\n\n2. **Download a Template**\n   - Click the file you want, then tap the \"Raw\" button.\n   - Save it to your device, or copy the contents directly.\n\n3. **Use in Your Workflow**\n   - Open the template in your favorite Markdown editor, GitHub, or\n     compatible mobile app.\n   - Customize to fit your needs—these files are designed for fast editing\n     on desktop and mobile.\n\n4. **Drop Into Projects**\n   - Add templates to your repositories, proposals, docs, or personal systems.\n\n*No setup or installation required. All files are plain Markdown for maximum\ncompatibility.*"
+    },
+    {
+      "title": "License",
+      "key": "license",
+      "content": "MIT License. Open for personal or commercial use."
+    },
+    {
+      "title": "Sponsor",
+      "key": "sponsor",
+      "content": "If you find this useful, consider\n[sponsoring on GitHub](https://github.com/sponsors/Bravo19er).\n\n---\n\n**Want to contribute? See\n[How to Open a Pull Request](./PULL_REQUEST_DEMO.md).**"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "medium",
+  "estimated_effort_hours": 80,
+  "team_size": 3,
+  "knowledge_graph_tags": [
+    "mobile",
+    "tools",
+    "sponsor",
+    "https",
+    "img",
+    "shields",
+    "badge",
+    "ff69b4"
+  ]
+}

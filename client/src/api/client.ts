@@ -246,6 +246,101 @@ export const aiAPI = {
 }
 
 /**
+ * Card Templates API
+ */
+export interface GeneratedCardDraft {
+  templateId: string
+  title: string
+  type: string
+  sections?: Array<{ title: string; body?: string }>
+  checklist?: string[]
+  description?: string
+  suggestedPrdTemplates?: string[]
+  tags?: string[]
+  reason?: string
+}
+
+export interface CardAccuracy {
+  score: number
+  status: 'fresh' | 'fallback'
+  factors: string[]
+  lastGeneratedAt: string
+  qualityConfidence?: number
+  needsReview?: boolean
+}
+
+export interface GenerateCardContentPayload {
+  node: {
+    id: string
+    label: string
+    type: string
+    domain?: string
+    summary?: string
+    tags?: string[]
+    relatedNodes?: Array<{
+      id?: string
+      label: string
+      type: string
+      relation?: string
+      summary?: string
+    }>
+  }
+  card: {
+    id: string
+    title: string
+    templateId: string
+    sections: Array<{ title: string; body?: string }>
+    checklist?: string[]
+  }
+}
+
+export interface GeneratedCardContent {
+  sections: Array<{ title: string; body: string }>
+  checklist?: string[]
+  warnings?: string[]
+  usedFallback: boolean
+  accuracy: CardAccuracy
+  template?: { id: string; label: string; description?: string }
+  prdTemplateId?: string
+}
+
+export const cardsAPI = {
+  generate: async (payload: {
+    nodeType?: string
+    domain?: string
+    templateId?: string
+    templateIds?: string[]
+  }): Promise<GeneratedCardDraft[]> => {
+    try {
+      const { data } = await apiClient.post('/api/cards/generate', payload)
+      return data.cards ?? []
+    } catch (error) {
+      const appError = ErrorHandler.parseError(error)
+      throw appError
+    }
+  },
+  generateContent: async (
+    payload: GenerateCardContentPayload
+  ): Promise<GeneratedCardContent> => {
+    try {
+      const { data } = await apiClient.post('/api/cards/generate-content', payload)
+      return {
+        sections: data.card?.sections ?? [],
+        checklist: data.card?.checklist,
+        warnings: data.card?.warnings ?? [],
+        usedFallback: Boolean(data.card?.usedFallback),
+        accuracy: data.accuracy,
+        template: data.template,
+        prdTemplateId: data.prdTemplateId,
+      }
+    } catch (error) {
+      const appError = ErrorHandler.parseError(error)
+      throw appError
+    }
+  },
+}
+
+/**
  * Error handling utilities
  */
 export const getErrorMessage = (error: unknown): string => {

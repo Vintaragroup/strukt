@@ -1,0 +1,51 @@
+{
+  "template_id": "visiondocument",
+  "name": "Vision Document",
+  "version": "1.0.0",
+  "tags": [
+    "vision",
+    "document",
+    "product"
+  ],
+  "category": "Product",
+  "description": "Template generated from VisionDocument",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "1. Introduction",
+      "key": "1_introduction",
+      "content": "*In this section provide introductory details about the software (application, system, etc.). This can include where the inspiration for the initial idea originated.*"
+    },
+    {
+      "title": "2. Product / Solution Overview",
+      "key": "2_product_solution_overview",
+      "content": "*In this section provide an overview of what solutions are provided by the software. Who is the target audience? How will the software help them? What are the expected improvements (time, efficiency, ease of access, etc) to be expected by the target audience?*"
+    },
+    {
+      "title": "3. Business Needs / Requirements",
+      "key": "3_business_needs_requirements",
+      "content": "*Provide here a brief overview of the user requirements/needs that the software will solve. The detailed list of requirements will be outlined in the requirements document.*"
+    },
+    {
+      "title": "4. Major Features",
+      "key": "4_major_features",
+      "content": "*Many applications or systems have multiple parts and features. Here describe briefly each of the major features that will provide the user with functionality.*"
+    },
+    {
+      "title": "5. Scope and Limitations",
+      "key": "5_scope_and_limitations",
+      "content": "*It is good to define a scope for software development to avoid excess feature drift and detect when potential redesign maybe needed due to an increasing scope. Also, list the limitations of the proposed architecture in order to identify some of the shortfalls of the proposed system.*"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "medium",
+  "estimated_effort_hours": 80,
+  "team_size": 3,
+  "knowledge_graph_tags": [
+    "product",
+    "vision",
+    "document"
+  ]
+}

@@ -1,42 +1,51 @@
 ---
-description: Handles the core domain-based radial visualization and node organization system for mapping software architectures
+description: Technical documentation for domain-centric node organization and visualization system using concentric rings and sectors
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements a specialized radial layout engine for organizing software architecture components into distinct business domains. Core components include:
+The domain ring system implements specialized business logic for organizing and visualizing nodes in a radial layout with domain-specific sectors:
 
-## Ring Layout Engine (85/100)
-`client/src/utils/domainLayout.ts`
-- Calculates optimal ring positions using normalized sector angles
-- Manages 5 core domains: Business, Product, Technology, Data/AI, Operations
-- Dynamically adjusts ring radii based on node density and hierarchy depth
-- Implements snap-to-grid positioning within domain sectors
-- Preserves parent-child relationships during node repositioning
+### Core Ring Layout Engine
+- Calculates optimal ring positions based on node hierarchies and domain types
+- Maps business domains to specific ring sectors (Tech, Product, Business, Data/AI, Operations) 
+- Dynamically adjusts sector angles based on node density and importance
+- Importance Score: 95
 
-## Domain Sector Management (80/100)
-`client/src/components/DomainRings.tsx`
-- Renders domain-specific sectors with visual separation
-- Implements domain-based color coding and visual hierarchies
-- Handles node containment rules within domain boundaries
-- Manages domain transitions and node movement between sectors
-- Enforces domain-specific node placement constraints
+File: `client/src/components/DomainRings.tsx`
 
-## Node Hierarchy Control (75/100)
-`client/src/components/CenterNode.tsx`
-- Maintains central root node as domain anchor point
-- Controls hierarchical node relationships across domain rings
-- Implements domain-aware node expansion/collapse logic
-- Manages domain-specific node connection rules
-- Enforces single-root architecture constraints
+### Domain-Specific Node Positioning
+- Places nodes within appropriate domain sectors based on type classification
+- Implements smart spacing algorithms to prevent node overlap while maintaining domain grouping
+- Handles node repositioning when domains are resized or reorganized
+- Importance Score: 90
 
-Key Business Rules:
-- Nodes must belong to exactly one domain sector
-- Domain hierarchy flows from center outward through rings
-- Parent-child relationships cannot cross domain boundaries
-- Each domain sector has specific allowed node types
-- Ring positions reflect architectural hierarchy depth
+File: `client/src/utils/domainLayout.ts`
+
+### Sector Boundary Management
+- Maintains dynamic boundaries between domain sectors
+- Calculates sector angles based on weighted node distribution
+- Enforces minimum sector sizes to ensure readability
+- Importance Score: 85
+
+### Ring Hierarchy Rules
+- Inner rings contain higher-level architectural components
+- Outer rings contain implementation details and supporting elements
+- Automatic ring assignment based on node type and relationships
+- Importance Score: 80
+
+### Domain Classification System
+- Categorizes nodes into domain types based on content and relationships
+- Supports custom domain definitions for specialized projects
+- Provides domain suggestion engine for new nodes
+- Importance Score: 85
+
+### Visual Domain Indicators
+- Color coding for different domain sectors
+- Dynamic sector labels that adjust with ring rotation
+- Visual hierarchy indicators showing domain relationships
+- Importance Score: 75
 
 $END$
 

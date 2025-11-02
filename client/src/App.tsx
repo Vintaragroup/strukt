@@ -42,7 +42,8 @@ import { CenterNode, CenterNodeData } from "./components/CenterNode";
 import { StartWizard } from "./components/StartWizard";
 import { SuggestionPanel } from "./components/SuggestionPanel";
 import type { SuggestedNode } from "./types/ai";
-import { EditableCardData } from "./components/EditableCard";
+import { EditableCardData, CardType } from "./components/EditableCard";
+import { CARD_TEMPLATES, type NodeCardTemplateId } from "./config/nodeCardRegistry";
 import { CustomEdge } from "./components/CustomEdge";
 import { DragPreviewOverlay } from "./components/DragPreviewOverlay";
 import { AddNodeModal } from "./components/AddNodeModal";
@@ -80,7 +81,14 @@ import { ConnectSourcesModal } from "./components/ConnectSourcesModal";
 import { applySuggestions } from "./utils/graphOps";
 import { SpecContextDialog } from "./components/SpecContextDialog";
 import { applySuggestion, submitFeedback } from "./services/aiSuggestions";
-import { workspacesAPI } from "./api/client";
+import {
+  workspacesAPI,
+  cardsAPI,
+  type GeneratedCardDraft,
+  type GenerateCardContentPayload,
+  type GeneratedCardContent,
+  getErrorMessage,
+} from "./api/client";
 import type { Workspace } from "./types";
 import {
   bulkAddTags,
@@ -103,6 +111,7 @@ const DEFAULT_WORKSPACE_ID = import.meta.env.VITE_DEFAULT_WORKSPACE_ID || "00000
 const USE_MOCK_SUGGESTIONS = import.meta.env.VITE_MOCK_AI_SUGGESTIONS !== "false";
 const WORKSPACE_ID_STORAGE_KEY = "flowforge-active-workspace-id";
 const WORKSPACE_NAME_STORAGE_KEY = "flowforge-active-workspace-name";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const DEFAULT_WORKSPACE_NODE = {
   id: "center",
@@ -586,6 +595,7 @@ function FlowCanvas() {
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<{ nodeId: string; card: EditableCardData } | null>(null);
+  const [activeCardGeneration, setActiveCardGeneration] = useState<{ nodeId: string; cardId: string } | null>(null);
   const [saveLoadMode, setSaveLoadMode] = useState<"save" | "load">("save");
   const [workspaceName, setWorkspaceName] = useState(() => {
     if (typeof window === "undefined") return "My Workspace";
@@ -908,6 +918,214 @@ const handleSwitchToWizard = useCallback(
       }
     },
     [edges, isWorkspaceReady, nodes, workspaceId, workspaceName]
+  );
+
+  const handleGenerateCardContent = useCallback(
+    async (nodeId: string, cardId: string) => {
+      const targetNode = nodes.find((node) => node.id === nodeId);
+      if (!targetNode) {
+        toast.error("Unable to generate", {
+          description: "The target node no longer exists.",
+        });
+        return;
+      }
+
+      const targetCard = targetNode.data.cards?.find((card: EditableCardData) => card.id === cardId);
+      if (!targetCard) {
+        toast.error("Unable to generate", {
+          description: "The selected card could not be found.",
+        });
+        return;
+      }
+
+      const templateId = targetCard.metadata?.templateId as NodeCardTemplateId | undefined;
+      if (!templateId) {
+        toast.error("Template required", {
+          description: "Please choose a card template before generating requirements.",
+        });
+        return;
+      }
+
+      const template = CARD_TEMPLATES[templateId];
+      if (!template) {
+        toast.error("Template unavailable", {
+          description: "The selected card template is not registered in the client.",
+        });
+        return;
+      }
+
+      if (activeCardGeneration && activeCardGeneration.cardId === cardId) {
+        return;
+      }
+
+      setActiveCardGeneration({ nodeId, cardId });
+
+      try {
+        const relatedNodes = edges
+          .filter((edge) => edge.source === nodeId || edge.target === nodeId)
+          .map((edge) => {
+            const relatedId = edge.source === nodeId ? edge.target : edge.source;
+            const relatedNode = nodes.find((n) => n.id === relatedId);
+            if (!relatedNode) return null;
+            return {
+              id: relatedNode.id,
+              label:
+                relatedNode.data?.label ??
+                relatedNode.data?.title ??
+                relatedNode.id,
+              type: relatedNode.data?.type ?? relatedNode.type ?? "doc",
+              relation: edge.data?.relation ?? (edge as any).label,
+              summary: relatedNode.data?.summary,
+            };
+          })
+          .filter(Boolean) as GenerateCardContentPayload["node"]["relatedNodes"];
+
+        const sectionsForPayload =
+          targetCard.sections && targetCard.sections.length > 0
+            ? targetCard.sections.map((section) => ({
+                title: section.title,
+                body: section.body,
+              }))
+            : (template.defaultSections ?? []).map((section) => ({
+                title: section.title,
+                body: "",
+              }));
+
+        const checklist =
+          targetCard.type === "checklist" || targetCard.type === "todo"
+            ? (targetCard.todos ?? []).map((todo) => todo.text).filter((text) => text && text.length > 0)
+            : undefined;
+
+        const payload: GenerateCardContentPayload = {
+          node: {
+            id: targetNode.id,
+            label: targetNode.data.label ?? targetNode.data.title ?? targetNode.id,
+            type: targetNode.data.type ?? targetNode.type ?? "doc",
+            domain: targetNode.data.domain,
+            summary: targetNode.data.summary,
+            tags: targetNode.data.tags ?? [],
+            relatedNodes,
+          },
+          card: {
+            id: targetCard.id,
+            title: targetCard.title,
+            templateId,
+            sections: sectionsForPayload,
+            checklist,
+          },
+        };
+
+        const generated: GeneratedCardContent = await cardsAPI.generateContent(payload);
+
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.id !== nodeId) {
+              return node;
+            }
+
+            const updatedCards = (node.data.cards || []).map((card: EditableCardData) => {
+              if (card.id !== cardId) {
+                return card;
+              }
+
+              const updatedSections = generated.sections.map((section, index) => {
+                const existingSection = card.sections?.[index];
+                return {
+                  id: existingSection?.id ?? `${cardId}-section-${index}`,
+                  title: section.title,
+                  body: section.body,
+                };
+              });
+
+              const updatedTodos =
+                card.type === "checklist" || card.type === "todo"
+                  ? (generated.checklist ?? []).map((item, index) => ({
+                      id: card.todos?.[index]?.id ?? `${cardId}-todo-${index}`,
+                      text: item,
+                      completed: false,
+                    }))
+                  : card.todos;
+
+              const existingMetadata = card.metadata ?? {};
+              const mergedTags = Array.from(
+                new Set([...(existingMetadata.tags ?? [])])
+              );
+              const suggestedTemplateSet = new Set<string>(
+                existingMetadata.suggestedPrdTemplates ?? []
+              );
+              template.suggestedTemplates?.forEach((entry) => suggestedTemplateSet.add(entry));
+              if (generated.prdTemplateId) {
+                suggestedTemplateSet.add(generated.prdTemplateId);
+              }
+
+              const accuracyMeta = {
+                score: generated.accuracy.score,
+                status: generated.accuracy.status,
+                factors: generated.accuracy.factors,
+                lastGeneratedAt: generated.accuracy.lastGeneratedAt,
+                qualityConfidence: generated.accuracy.qualityConfidence,
+                needsReview: generated.accuracy.needsReview,
+              } as const;
+
+              return {
+                ...card,
+                sections: updatedSections,
+                todos: updatedTodos,
+                content: card.type === "text" ? generated.sections.map((s) => `### ${s.title}\n${s.body}`).join("\n\n") : undefined,
+                metadata: {
+                  ...existingMetadata,
+                  templateId,
+                  templateName: generated.template?.label ?? existingMetadata.templateName ?? card.title,
+                  generatedAt: new Date().toISOString(),
+                  generatedBy: generated.usedFallback ? "template" : "ai",
+                  tags: mergedTags,
+                  prdTemplateId: generated.prdTemplateId ?? existingMetadata.prdTemplateId,
+                  warnings: generated.warnings,
+                  accuracy: accuracyMeta,
+                  suggestedPrdTemplates:
+                    suggestedTemplateSet.size > 0
+                      ? Array.from(suggestedTemplateSet)
+                      : undefined,
+                  description: generated.template?.description ?? existingMetadata.description,
+                },
+              };
+            });
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                cards: updatedCards,
+                documentationAccuracy: {
+                  score: generated.accuracy.score,
+                  status: generated.accuracy.status,
+                  factors: generated.accuracy.factors,
+                  lastGeneratedAt: generated.accuracy.lastGeneratedAt,
+                  qualityConfidence: generated.accuracy.qualityConfidence,
+                  needsReview: generated.accuracy.needsReview,
+                  warnings: generated.warnings,
+                },
+              },
+            };
+          })
+        );
+
+        setIsSaved(false);
+
+        toast.success("Requirements generated", {
+          description: generated.usedFallback
+            ? "Generated from template fallback — please review before sharing."
+            : "Card populated with AI-authored requirements.",
+        });
+      } catch (error) {
+        toast.error("Failed to generate requirements", {
+          description: getErrorMessage(error),
+        });
+      } finally {
+        setActiveCardGeneration(null);
+      }
+    },
+    [nodes, edges, activeCardGeneration, setNodes, setIsSaved, getErrorMessage]
   );
 
   useEffect(() => {
@@ -2102,62 +2320,211 @@ const handleSwitchToWizard = useCallback(
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === selectedCard.nodeId) {
-          const updatedCards = node.data.cards?.map((c: EditableCardData) =>
-            c.id === updatedCard.id ? updatedCard : c
-          );
+          const updatedCards = node.data.cards?.map((c: EditableCardData) => {
+            if (c.id !== updatedCard.id) {
+              return c;
+            }
+            const mergedMetadata = {
+              ...(c.metadata ?? {}),
+              ...(updatedCard.metadata ?? {}),
+            };
+            if (mergedMetadata.accuracy) {
+              mergedMetadata.accuracy = {
+                ...mergedMetadata.accuracy,
+                status: "stale",
+              };
+            }
+            return {
+              ...c,
+              ...updatedCard,
+              metadata: Object.keys(mergedMetadata).length ? mergedMetadata : undefined,
+            };
+          });
           return {
             ...node,
             data: {
               ...node.data,
               cards: updatedCards,
+              documentationAccuracy: node.data.documentationAccuracy
+                ? { ...node.data.documentationAccuracy, status: "stale" as const }
+                : node.data.documentationAccuracy,
             },
           };
         }
         return node;
       })
     );
-    setSelectedCard({ ...selectedCard, card: updatedCard });
+    const mergedMetadata = {
+      ...(updatedCard.metadata ?? {}),
+      ...(selectedCard.card.metadata ?? {}),
+    };
+    if (mergedMetadata.accuracy) {
+      mergedMetadata.accuracy = {
+        ...mergedMetadata.accuracy,
+        status: "stale",
+      };
+    }
+    setSelectedCard({
+      ...selectedCard,
+      card: {
+        ...updatedCard,
+        metadata: Object.keys(mergedMetadata).length ? mergedMetadata : undefined,
+      },
+    });
     setIsSaved(false);
   }, [selectedCard, setNodes]);
 
-  const handleAddCard = useCallback((nodeId: string, type: "text" | "todo") => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          const newCard: EditableCardData = {
-            id: `c${Date.now()}`,
-            title: type === "text" ? "New Text Card" : "New To-Do List",
-            type,
-            content: type === "text" ? "" : undefined,
-            todos: type === "todo" ? [] : undefined,
-          };
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              cards: [...(node.data.cards || []), newCard],
-            },
-          };
+  const handleAddCard = useCallback(
+    async (nodeId: string, requestedType: CardType, templateId?: NodeCardTemplateId) => {
+      const targetNode = nodes.find((node) => node.id === nodeId);
+      if (!targetNode) {
+        toast.error("Card could not be added", {
+          description: "The target node is no longer available.",
+        });
+        return;
+      }
+
+      const template = templateId ? CARD_TEMPLATES[templateId] : undefined;
+      const nodeType = (targetNode.data?.type as string) ?? "doc";
+      const domain = targetNode.data?.domain as string | undefined;
+
+      let draft: GeneratedCardDraft | undefined;
+      let generationFailed = false;
+
+      if (templateId) {
+        try {
+          const drafts = await cardsAPI.generate({
+            nodeType,
+            domain,
+            templateId,
+          });
+          if (drafts.length) {
+            draft = templateId
+              ? drafts.find((entry) => entry.templateId === templateId) ?? drafts[0]
+              : drafts[0];
+          }
+        } catch (error) {
+          generationFailed = true;
+          console.error("[cards] Failed to load template draft", error);
+          toast.error("Template service unavailable", {
+            description: "Adding a blank card instead.",
+          });
         }
-        return node;
-      })
-    );
-    setIsSaved(false);
-    toast.success("Card added");
-  }, [setNodes]);
+      }
+
+      const cardType: CardType = (draft?.type as CardType | undefined) ?? template?.cardType ?? requestedType;
+      const cardId = `card-${Date.now()}`;
+      const todos =
+        cardType === "todo" || cardType === "checklist"
+          ? (draft?.checklist ?? template?.defaultChecklist ?? []).map((item, index) => ({
+              id: `${cardId}-todo-${index}`,
+              text: item,
+              completed: false,
+            }))
+          : undefined;
+
+      const sections = draft?.sections?.length
+        ? draft.sections.map((section, index) => ({
+            id: `${cardId}-section-${index}`,
+            title: section.title || `Section ${index + 1}`,
+            body: section.body ?? "",
+          }))
+        : template?.defaultSections?.map((section, index) => ({
+            id: `${cardId}-section-${index}`,
+            title: section.title,
+            body: "",
+          }));
+
+      const newCard: EditableCardData = {
+        id: cardId,
+        title:
+          draft?.title ??
+          template?.label ??
+          (cardType === "todo" || cardType === "checklist" ? "New Checklist" : "New Card"),
+        type: cardType,
+        content: cardType === "todo" || cardType === "checklist" ? undefined : "",
+        todos: todos ?? (cardType === "todo" || cardType === "checklist" ? [] : undefined),
+        sections,
+        metadata:
+          draft || template
+            ? {
+                templateId: draft?.templateId ?? template?.id,
+                templateName: draft?.title ?? template?.label,
+                generatedAt: new Date().toISOString(),
+                generatedBy: draft || template ? "template" : "user",
+                tags: draft?.tags ?? template?.tags,
+                suggestedPrdTemplates: draft?.suggestedPrdTemplates ?? template?.suggestedTemplates,
+                reason: draft?.reason,
+                description: draft?.description ?? template?.description,
+              }
+            : undefined,
+      };
+
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === nodeId) {
+            const existingAccuracy = node.data.documentationAccuracy
+              ? { ...node.data.documentationAccuracy, status: "stale" as const }
+              : undefined;
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                cards: [...(node.data.cards || []), newCard],
+                documentationAccuracy: existingAccuracy,
+              },
+            };
+          }
+          return node;
+        })
+      );
+      setIsSaved(false);
+      toast.success("Card added", {
+        description:
+          draft?.reason ??
+          draft?.title ??
+          template?.label ??
+          (generationFailed ? "Added without template content." : undefined),
+      });
+    },
+    [nodes, setNodes, setIsSaved]
+  );
 
   const handleUpdateCard = useCallback((nodeId: string, cardId: string, updatedCard: EditableCardData) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
-          const updatedCards = node.data.cards?.map((c: EditableCardData) =>
-            c.id === cardId ? updatedCard : c
-          );
+          const updatedCards = node.data.cards?.map((c: EditableCardData) => {
+            if (c.id !== cardId) {
+              return c;
+            }
+            const mergedMetadata = {
+              ...(c.metadata ?? {}),
+              ...(updatedCard.metadata ?? {}),
+            };
+            if (mergedMetadata.accuracy) {
+              mergedMetadata.accuracy = {
+                ...mergedMetadata.accuracy,
+                status: "stale",
+              };
+            }
+            return {
+              ...c,
+              ...updatedCard,
+              metadata: Object.keys(mergedMetadata).length ? mergedMetadata : undefined,
+            };
+          });
+
+          const documentationAccuracy = node.data.documentationAccuracy
+            ? { ...node.data.documentationAccuracy, status: "stale" as const }
+            : node.data.documentationAccuracy;
+
           return {
             ...node,
             data: {
               ...node.data,
               cards: updatedCards,
+              documentationAccuracy,
             },
           };
         }
@@ -2177,6 +2544,7 @@ const handleSwitchToWizard = useCallback(
             data: {
               ...node.data,
               cards: updatedCards,
+              documentationAccuracy: undefined,
             },
           };
         }
@@ -2265,6 +2633,9 @@ const handleSwitchToWizard = useCallback(
               tags: mergedTags,
               summary: enhancedSummary || node.data.summary,
               enrichmentCount,
+              documentationAccuracy: node.data.documentationAccuracy
+                ? { ...node.data.documentationAccuracy, status: "stale" as const }
+                : node.data.documentationAccuracy,
             },
           };
         }
@@ -2457,10 +2828,11 @@ const handleSwitchToWizard = useCallback(
           // Keep source node's handles visible while connecting from it
           isConnectSource: isConnecting && connectStartInfoRef.current?.nodeId === node.id,
           connectStartHandleId: isConnecting && connectStartInfoRef.current?.nodeId === node.id ? (connectStartInfoRef.current?.handleId || null) : null,
-          onAddCard: (type: "text" | "todo") => handleAddCard(node.id, type),
+          onAddCard: (type: CardType, templateId?: NodeCardTemplateId) => handleAddCard(node.id, type, templateId),
           onUpdateCard: (cardId: string, data: EditableCardData) => handleUpdateCard(node.id, cardId, data),
           onDeleteCard: (cardId: string) => handleDeleteCard(node.id, cardId),
           onExpandCard: (cardId: string) => handleExpandCard(node.id, cardId),
+          onGenerateCardContent: (cardId: string) => handleGenerateCardContent(node.id, cardId),
           onDragNewNode: handleDragNewNode,
           onDragPreviewUpdate: handleDragPreviewUpdate,
           onPlacingModeChange: handlePlacingModeChange,
@@ -2486,6 +2858,10 @@ const handleSwitchToWizard = useCallback(
             );
           },
           isPlacingFromThisNode: isPlacingNode && placingNodeInfo?.nodeId === node.id,
+          generatingCardId:
+            activeCardGeneration && activeCardGeneration.nodeId === node.id
+              ? activeCardGeneration.cardId
+              : null,
           // Add button actions and updater for the center node
           ...(isCenter
             ? {
@@ -2517,6 +2893,7 @@ const handleSwitchToWizard = useCallback(
     handleUpdateCard,
     handleDeleteCard,
     handleExpandCard,
+    handleGenerateCardContent,
     handleDragNewNode,
     handleDragPreviewUpdate,
     handlePlacingModeChange,
@@ -2532,7 +2909,8 @@ const handleSwitchToWizard = useCallback(
     launchNodeCreator,
     setSelectedNodeId,
     setIsWizardOpen,
-    isCenterNode
+    isCenterNode,
+    activeCardGeneration
     // Note: Export/copy handlers intentionally omitted from deps to avoid hoisting issues
     // These functions are stable and don't need to trigger re-computation
   ]);

@@ -1,0 +1,35 @@
+{
+  "template_id": "peter_yang_prd_template",
+  "name": "Peter Yang's PRD Template",
+  "version": "1.0.0",
+  "tags": [
+    "peter",
+    "yang",
+    "prd",
+    "template",
+    "product"
+  ],
+  "category": "Product",
+  "description": "Template generated from Peter Yang PRD Template",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Product/Feature Name",
+      "key": "product_feature_name",
+      "content": "### **1. Header**\r\n\r\nIn the header, include:\r\n\r\n1. **Links** to other essential artifacts like designs.\r\n2. **Team** names of people who are working on this feature.\r\n3. **Last updated** date.\r\n\r\n**Header Example:**\r\n\r\n**Links\r\n- [Design]\r\n- [Analytics]\r\n- [Meeting Notes]\r\n\r\n**Team\r\n-** PM: TBD\r\n- Design: TBD\r\n- EM: TBD\r\n- Analytics: TBD\r\n- Marketing: TBD\r\n\r\n**Last updated:** 5/10/24\r\n\r\n### **2. Problem**\r\n\r\nAlways start your PRD with the customer problem you’re trying to solve. Answer these questions in a few sentences:\r\n\r\n1. Who is the customer?\r\n2. What is the customer problem?\r\n3. How do we know that this is a problem?\r\n\r\n**Problem Example:**\r\n\r\nNew users want to view topics that they're interested in when they first sign up for Pinterest.Today, all new users see the same feed of the most popular content. This content is dominated by a few categories like women's fashion and decor that don't align with the diverse interests of all new users (see appendix for research).\r\n\r\nWe want to test letting new users select topics during onboarding to personalize their feed.\r\n\r\n### **3. Goals**\r\n\r\nList one output goal for your feature and 2-3 input metrics to drive the output. Include non-goals and guardrail metrics when relevant.\r\n\r\n**Goals Example:**\r\n\r\n**Output:\r\n-** Increase activation rate by 20% (% of sign-ups who return in 7 days).\r\n\r\n**Inputs:\r\n-** Users who visit topic selector screen.\r\n- Who select a topic and how many topics they select.\r\n- Who pin during their first session.\r\n\r\n### **4. Solution**\r\n\r\nDescribe the solution and key milestones at a high level. Then, for each milestone:\r\n\r\n1. List each feature as a user story and be concise.\r\n2. Mark clearly which features are P0 and P1.\r\n3. Highlight any open topics in the requirements for async discussion.\r\n4. Consider including a wireframe or design to bring the feature to life.\r\n\r\n**Solution Example:**\r\n\r\nWe want to test this topi in two milestones:\r\n1. **M1:** Test topic selector in onboarding and personalize feed based on topics\r\n2. **M2:** Test using age, gender, and language signals to personalize the topic selector\r\n\r\n**M1: Test topic selector in onboarding flow and personalized feed based on topics**\r\nLink To Design\r\n\r\nExample:\r\n\r\n| **P0** | **See topic selector during onboarding\r\n-** As a new user signing up to Pinterest, I see a *“Pick 5 or more topics to personalize your feed”* screen after signing up with email or phone number.\r\n- The screen shows a grid of the most popular topics and a button labeled *“Meet your home feed”* that is initially disabled.\r\n- Once I select 5+ topics, the button activates and I can click it to visit my Home Feed.\r\n\r\nDiscussion\r\n**-** Peter: How should we rank the topics? |\r\n| --- | --- |\r\n| **P0** | **Home feed with content from topics that I selected**\r\n\r\nWhen I visit the home feed for the first time, I see popular and recent content from the topics I selected. |\r\n\r\n### **5. Launch plan**\r\n\r\nDefine your launch plan (e.g., is it a staged rollout or an experiment?). For experiments, define the success criteria, eligibility, test, control, and ramp plan.\r\n\r\n**Launch Plan Example:**\r\n\r\n**Topic selector experiment\r\n1. Success criteria:** Grow activation rate by 20% (% of sign ups who visit again in 7 days)\r\n2. **Eligibility:** People who sign up for Pinterest on web and mweb\r\n3. **Test:** Experience described above\r\n4. **Control:** Existing onboarding experience without “topic selector” screen\r\n5. **Ramp plan:** 50/50 experiment\r\n\r\n### **6. Meeting Notes**\r\n\r\nTake meeting notes directly in the PRD. This ensures that the latest discussions and decisions are captured in a single document.\r\n\r\n**Meeting Notes Example:**\r\n\r\n**Team sync – 5/10**\r\n\r\n**1. Peter:** Why are we forcing users to select 5+ topics?\r\n2. **Wendy:** Data science has research showing that users who select at least 5 topics tend to retain better.\r\n3. **Bob:** Suggest A/B the minimum number of topics in a subsequent experiment.\r\n\r\n### **7. Appendix**\r\n\r\nKeep your PRD short and link to a lengthy appendix with relevant information, such as customer interviews, competitive research, and supporting data.\r\n\r\n\r\n**View Original Template:** [Peter Yang PRD Template](https://creatoreconomy.so/p/my-prd-template-how-to-write-with-ai)"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "simple",
+  "estimated_effort_hours": 40,
+  "team_size": 3,
+  "knowledge_graph_tags": [
+    "product",
+    "peter",
+    "yang",
+    "prd",
+    "template"
+  ]
+}

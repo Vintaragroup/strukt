@@ -1,0 +1,73 @@
+{
+  "template_id": "coda_prd_template",
+  "name": "Coda PRD Template",
+  "version": "1.0.0",
+  "tags": [
+    "coda",
+    "prd",
+    "template",
+    "product"
+  ],
+  "category": "Product",
+  "description": "Template generated from Coda PRD Template",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Product/Feature Name",
+      "key": "product_feature_name",
+      "content": "One-line summary of the feature/product."
+    },
+    {
+      "title": "Team",
+      "key": "team",
+      "content": "- **PM:** @mention the person\r\n- **Design:** @mention the person\r\n- **Engineering:** @mention the person"
+    },
+    {
+      "title": "Problem",
+      "key": "problem",
+      "content": "What need are you trying to solve? Why is it important to our users and our business? What insights lead you to believe this is a problem?"
+    },
+    {
+      "title": "Solution",
+      "key": "solution",
+      "content": "How are you solving this problem? Help the team imagine the possibilities and sense the scope."
+    },
+    {
+      "title": "Goals",
+      "key": "goals",
+      "content": "What does success look like? What metrics do you want to move?"
+    },
+    {
+      "title": "Core Features",
+      "key": "core_features",
+      "content": "What are you building? Provide an organized list (or table) of features. Helpful to include what you’re not building (yet)."
+    },
+    {
+      "title": "Core Flows",
+      "key": "core_flows",
+      "content": "Mocks or prototypes of the experience. Miro and/or Figma are good options.\r\n\r\n**Figma Prototype Embed**\r\n\r\nInsert Figma prototype link here. \r\n\r\n**Miro Diagram Embed**\r\n\r\nInsert Miro diagram link here."
+    },
+    {
+      "title": "Milestones",
+      "key": "milestones",
+      "content": "- Dogfood (date)\r\n- Beta (date)\r\n- Public Launch (date)"
+    },
+    {
+      "title": "Thoughts/Questions",
+      "key": "thoughts_questions",
+      "content": "| Done | Questions | Author |\r\n| --- | --- | --- |\r\n| false | I don’t think we are considering the user here. | John Scrugham |\r\n| false | What happens if our competitor designs the same thing? | Maria Marquis |\r\n\r\n\r\n**View Original Template:** https://coda.io/@john/prd/prd-template-2"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "coda",
+    "prd",
+    "template"
+  ]
+}

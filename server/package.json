@@ -12,7 +12,8 @@
     "seed:prd-templates": "tsx src/scripts/seed-prd-templates.ts",
     "seed:prd-templates:reset": "tsx src/scripts/seed-prd-templates.ts --reset",
     "generate:embeddings": "tsx src/scripts/generate-embeddings.ts",
-    "convert:templates": "tsx src/scripts/convert-md-templates.ts"
+    "convert:templates": "tsx src/scripts/convert-md-templates.ts",
+    "ingest:prd-sources": "tsx src/scripts/ingest-prd-sources.ts"
   },
   "dependencies": {
     "@types/compression": "^1.8.1",
@@ -25,6 +26,7 @@
     "mongoose": "^8.0.0",
     "morgan": "^1.10.0",
     "openai": "^4.26.0",
+    "node-fetch": "^3.3.2",
     "zod": "^3.22.0"
   },
   "devDependencies": {

@@ -1,0 +1,83 @@
+{
+  "template_id": "steve_morin_1_pager_template",
+  "name": "Steve Morin's 1-Pager Template",
+  "version": "1.0.0",
+  "tags": [
+    "steve",
+    "morin",
+    "pager",
+    "template",
+    "you",
+    "should",
+    "use",
+    "this",
+    "product"
+  ],
+  "category": "Product",
+  "description": "You should use this 1-Pager Project Brief template for an introduction to a new project. It’s used to introduce people to why a project is being pursued and what it is about, including context, how it’s being measured, strategy for implementation, and initial design/features if they exist. ---",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Objective",
+      "key": "objective",
+      "content": "- What are we trying to accomplish?\r\n\r\n### Key result(s)\r\n\r\n- What is a specific time-bound measurement to indicate success?\r\n\r\n# Strategy / How"
+    },
+    {
+      "title": "Name of the first strategy",
+      "key": "name_of_the_first_strategy",
+      "content": "- How to implement the first strategy. Details about what will and won’t be done for this strategy."
+    },
+    {
+      "title": "Goals",
+      "key": "goals",
+      "content": "- Operational Success Metric\r\n    - A measurable number to determine if the project or feature of the project is succeeding.\r\n- Counter Metrics\r\n    - A measurable number to determine if things aren’t regressing. So, even if a feature or project doesn’t increase a metric, it shouldn’t cause it to go down either. For example, adding a feature shouldn’t cause signups to go down, revenue to drop, or churn to go up.\r\n\r\n# Assumptions & Risks"
+    },
+    {
+      "title": "Platforms",
+      "key": "platforms",
+      "content": "- Web\r\n- iOS\r\n- Android\r\n- Backend"
+    },
+    {
+      "title": "Assumptions",
+      "key": "assumptions",
+      "content": "- In-Scope:\r\n- Activities, behaviors, or outcomes that are assumed to be part of this project.\r\n- Costs, estimates, or inputs into planning that are part of the project.\r\n- Add questions about the assumption below in open questions and reference that here.\r\n- Out-of-Scope:\r\n    - Things that are explicitly being left out of the project.\r\n    - Outcome or non-goals of the project."
+    },
+    {
+      "title": "Risks",
+      "key": "risks",
+      "content": "- Call out unknowns.\r\n- Difficult skills\r\n- Known risks in the market, execution team, or parts of the project."
+    },
+    {
+      "title": "Risk Mitigation Strategies",
+      "key": "risk_mitigation_strategies",
+      "content": "- What will be done to reduce risks?"
+    },
+    {
+      "title": "Features and Functionality (Optional)",
+      "key": "features_and_functionality_optional",
+      "content": "What features and functionality will be in the project? A list of assumed features and functionality should be added if it's unknown.\r\n\r\n- Feature 1\r\n- Functionality 1\r\n\r\n\r\nWhat features and functionality will be in the project? A list of assumed features and functionality should be added if it's unknown.\r\n\r\n- Feature 1\r\n- Functionality 1"
+    },
+    {
+      "title": "Dependencies",
+      "key": "dependencies",
+      "content": "| Dependency | Link to Execution Tracker | Owning Team/Person | Why it’s a dependency | When is it needed by? |\r\n| --- | --- | --- | --- | --- |\r\n|  |  |  |  |  |\r\n|  |  |  |  |  |\r\n\r\n# Technical Design (Optional)\r\n\r\nIf your project is primarily technical or backend, this section should definitely be filled out. Otherwise, it’s optional for more consumer-facing or business projects.\r\n\r\ni.e., we need X client work, Y server work, Z XFN\r\n\r\n# Reference Documents (Optional)\r\n\r\n- Document 1\r\n- Document 2\r\n\r\n# Open Questions\r\n\r\nIdentify anything unknown, unclear, undecided, and/or risky:\r\n\r\n- <question/statement> → <owner of this action item> to <take action X>\r\n    - <sub-question/item> → <owner> to <take action Y> by <date>\r\n    - <sub-question/item> → <owner> to <take action Z> by <date>\r\n\r\n# Next Steps and Action Items\r\n\r\n| Action | Status | Owner |\r\n| --- | --- | --- |\r\n|  |  |  |\r\n\r\n\r\n**View Original Template:** [Steve Morin’s 1-Pager Template](https://docs.google.com/document/d/1BeNK9BYd3-8pAqVYR_B0Gzp7kGNtWdPFHJKIXI52_84/edit?ts=5f264700#heading=h.6jynaot9cbnq)"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "steve",
+    "morin",
+    "pager",
+    "template",
+    "you",
+    "should",
+    "use",
+    "this"
+  ]
+}

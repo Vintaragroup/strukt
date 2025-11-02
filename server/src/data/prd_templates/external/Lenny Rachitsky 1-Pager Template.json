@@ -1,0 +1,70 @@
+{
+  "template_id": "lenny_rachitsky_1_pager_template",
+  "name": "Lenny Rachitsky's 1-Pager Template",
+  "version": "1.0.0",
+  "tags": [
+    "lenny",
+    "rachitsky",
+    "pager",
+    "template",
+    "product"
+  ],
+  "category": "Product",
+  "description": "Template generated from Lenny Rachitsky 1-Pager Template",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "**Description**",
+      "key": "description",
+      "content": "**What is it?**\r\n\r\n..."
+    },
+    {
+      "title": "**Problem**",
+      "key": "problem",
+      "content": "**What problem is this solving?**\r\n\r\n..."
+    },
+    {
+      "title": "**Why**",
+      "key": "why",
+      "content": "**How do we know this is a real problem and worth solving?**\r\n\r\n…"
+    },
+    {
+      "title": "**Success**",
+      "key": "success",
+      "content": "**How do we know if we’ve solved this problem?**\r\n\r\n..."
+    },
+    {
+      "title": "**Audience**",
+      "key": "audience",
+      "content": "**Who are we building for?**\r\n\r\n..."
+    },
+    {
+      "title": "**What**",
+      "key": "what",
+      "content": "**Roughly, what does this look like in the product?**\r\n\r\n..."
+    },
+    {
+      "title": "**How**",
+      "key": "how",
+      "content": "**What is the experiment plan?**\r\n\r\n..."
+    },
+    {
+      "title": "**When**",
+      "key": "when",
+      "content": "**When does it ship and what are the milestones?**\r\n\r\n\r\n…"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "lenny",
+    "rachitsky",
+    "pager",
+    "template"
+  ]
+}

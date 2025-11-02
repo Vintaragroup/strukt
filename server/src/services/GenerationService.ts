@@ -41,6 +41,56 @@ export interface ParsedGeneration {
   recommendations?: string[]
 }
 
+export interface CardContentRequest {
+  node: {
+    id?: string
+    label: string
+    type: string
+    domain?: string
+    summary?: string
+    tags?: string[]
+    relatedNodes?: Array<{
+      id?: string
+      label: string
+      type: string
+      relation?: string
+      summary?: string
+    }>
+  }
+  card: {
+    title: string
+    description?: string
+    sections: Array<{ title: string; description?: string }>
+    checklist?: string[]
+  }
+  prdContext?: {
+    templateId: string
+    name: string
+    description?: string
+    sections: Array<{ title: string; content: string }>
+  }
+  existingContent?: Array<{ title: string; body?: string }>
+}
+
+export interface CardContentSection {
+  title: string
+  body: string
+}
+
+export interface CardContentResponse {
+  success: boolean
+  sections: CardContentSection[]
+  checklist?: string[]
+  usedFallback: boolean
+  tokensUsed?: {
+    prompt: number
+    completion: number
+    total: number
+  }
+  warnings?: string[]
+  rawOutput?: string
+}
+
 class GenerationServiceClass {
   private client: OpenAI | null = null
   private contextInjector = contextInjector
@@ -381,6 +431,273 @@ Generate ONLY valid JSON. Start with { and end with }. No markdown. No explanati
       parsed,
       validation,
       tokensUsed: genResponse.tokensUsed,
+    }
+  }
+
+  /**
+   * Generate detailed card content (markdown-ready) based on node context
+   */
+  async generateCardContent(
+    request: CardContentRequest
+  ): Promise<CardContentResponse> {
+    const fallback = (
+      reason: string,
+      options: { warnings?: string[]; usedFallback?: boolean } = {}
+    ): CardContentResponse => {
+      const { warnings = [], usedFallback = true } = options
+      // Prefer existing content, otherwise pull from PRD context, finally leave blank
+      const lookupBody = (title: string, index: number): string => {
+        const titleLower = title.toLowerCase()
+
+        const existing = request.existingContent?.find(
+          (section) => section.title?.toLowerCase() === titleLower
+        )
+        if (existing?.body && existing.body.trim().length > 0) {
+          return existing.body
+        }
+
+        const prdMatch = request.prdContext?.sections?.find(
+          (section) => {
+            const sectionTitle = section.title?.toLowerCase() ?? ''
+            return (
+              sectionTitle === titleLower ||
+              sectionTitle.includes(titleLower) ||
+              titleLower.includes(sectionTitle)
+            )
+          }
+        )
+        if (prdMatch?.content) {
+          return prdMatch.content
+        }
+
+        const heuristics: string[] = []
+        heuristics.push(
+          `### ${title}\n` +
+            `- **Node focus:** ${request.node.label} (${request.node.type})` +
+            `${request.node.domain ? ` within the ${request.node.domain} domain` : ''}.`
+        )
+
+        if (request.node.summary) {
+          heuristics.push(`- **Summary context:** ${request.node.summary}`)
+        }
+
+        if (request.node.tags?.length) {
+          heuristics.push(`- **Relevant tags:** ${request.node.tags.join(', ')}`)
+        }
+
+        if (request.card.description && index === 0) {
+          heuristics.push(`- **Template guidance:** ${request.card.description}`)
+        }
+
+        heuristics.push(
+          '- **Action items:** Describe current state, desired outcome, success metrics, and open questions.'
+        )
+
+        if (request.card.checklist?.length) {
+          heuristics.push(
+            `- **Checklist alignment:** Ensure the following are covered:\n${request.card.checklist
+              .map((item) => `  - ${item}`)
+              .join('\n')}`
+          )
+        }
+
+        if (request.prdContext?.name) {
+          heuristics.push(
+            `- **Reference PRD:** Align with ${request.prdContext.name}${
+              request.prdContext.templateId ? ` (${request.prdContext.templateId})` : ''
+            }.`
+          )
+        }
+
+        return heuristics.join('\n\n')
+      }
+
+      const sections = request.card.sections.map((section, index) => ({
+        title: section.title,
+        body: lookupBody(section.title, index),
+      }))
+
+      return {
+        success: !usedFallback,
+        usedFallback,
+        sections,
+        checklist: request.card.checklist,
+        warnings: [
+          reason,
+          ...(warnings.length ? warnings : []),
+        ],
+      }
+    }
+
+    if (!this.client) {
+      return fallback(this.apiKeyError || 'OpenAI client not initialized')
+    }
+
+    const systemPrompt = `You are an expert product requirements author.
+Respond ONLY with valid JSON matching this schema:
+{
+  "sections": [
+    {
+      "title": "string",
+      "body": "markdown content tailored to the node"
+    }
+  ],
+  "notes": "optional string explaining assumptions",
+  "quality": {
+    "confidence": "0-100 integer score estimating usefulness",
+    "factors": ["short bullet list summarising why"]
+  }
+}
+
+Do NOT wrap the JSON in markdown code fences.`
+
+    const parts: string[] = []
+    parts.push(`### Node Context
+- Label: ${request.node.label}
+- Type: ${request.node.type}
+${request.node.domain ? `- Domain: ${request.node.domain}` : ''}
+${request.node.summary ? `- Summary: ${request.node.summary}` : ''}
+${request.node.tags && request.node.tags.length ? `- Tags: ${request.node.tags.join(', ')}` : ''}`)
+
+    if (request.node.relatedNodes?.length) {
+      parts.push(
+        `### Related Nodes\n${request.node.relatedNodes
+          .map(
+            (rel) =>
+              `- ${rel.label} (${rel.type})${rel.relation ? ` – relation: ${rel.relation}` : ''}${
+                rel.summary ? ` – ${rel.summary}` : ''
+              }`
+          )
+          .join('\n')}`
+      )
+    }
+
+    parts.push(
+      `### Card Template
+- Title: ${request.card.title}${request.card.description ? `\n- Description: ${request.card.description}` : ''}
+- Sections:\n${request.card.sections
+        .map(
+          (section, index) =>
+            `${index + 1}. ${section.title}${
+              section.description ? ` – ${section.description}` : ''
+            }`
+        )
+        .join('\n')}`
+    )
+
+    if (request.prdContext) {
+      parts.push(
+        `### Reference PRD
+- Template: ${request.prdContext.name} (${request.prdContext.templateId})
+- Overview: ${request.prdContext.description || 'n/a'}
+- Key Sections:\n${request.prdContext.sections
+          .slice(0, 10)
+          .map(
+            (section) =>
+              `• ${section.title}: ${section.content.substring(0, 220)}${
+                section.content.length > 220 ? '...' : ''
+              }`
+          )
+          .join('\n')}`
+      )
+    }
+
+    if (request.card.checklist?.length) {
+      parts.push(
+        `### Checklist Items to Cover
+${request.card.checklist.map((item) => `- ${item}`).join('\n')}`
+      )
+    }
+
+    const userPrompt = `${parts.join('\n\n')}\n\nProduce requirement content tailored to this node. Each section body must be specific to the node context, actionable, and written in markdown with headings, bullet lists, and tables when useful.`
+
+    const timeoutMs = Number(process.env.CARD_GENERATION_TIMEOUT_MS ?? 12000)
+    const controller = new AbortController()
+    const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs)
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.6,
+        max_tokens: 2000,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+      }, { signal: controller.signal })
+
+      clearTimeout(timeoutHandle)
+
+      const rawOutput = response.choices[0].message.content || ''
+      const usage = {
+        prompt: response.usage?.prompt_tokens || 0,
+        completion: response.usage?.completion_tokens || 0,
+        total: response.usage?.total_tokens || 0,
+      }
+
+      let parsed: any = null
+      const trimmed = rawOutput.trim()
+
+      try {
+        parsed = JSON.parse(trimmed)
+      } catch {
+        const match = trimmed.match(/\{[\s\S]*\}/)
+        if (match) {
+          parsed = JSON.parse(match[0])
+        }
+      }
+
+      if (!parsed || !Array.isArray(parsed.sections)) {
+        return fallback('AI response could not be parsed', {
+          warnings: ['Returned content was not valid JSON.'],
+        })
+      }
+
+      const sections: CardContentSection[] = parsed.sections.map((section: any, index: number) => ({
+        title:
+          section.title && typeof section.title === 'string'
+            ? section.title
+            : request.card.sections[index]?.title || `Section ${index + 1}`,
+        body:
+          section.body && typeof section.body === 'string'
+            ? section.body.trim()
+            : '',
+      }))
+
+      const emptyBodies = sections.filter((section) => !section.body || section.body.length === 0)
+      if (emptyBodies.length === sections.length) {
+        return fallback('AI returned empty section bodies', {
+          warnings: ['No section content generated.'],
+        })
+      }
+
+      const warnings: string[] = []
+      if (parsed.quality?.confidence && parsed.quality.confidence < 60) {
+        warnings.push(
+          `Model confidence reported as ${parsed.quality.confidence}—review recommended.`
+        )
+      }
+
+      return {
+        success: true,
+        usedFallback: false,
+        sections,
+        checklist: request.card.checklist,
+        tokensUsed: usage,
+        warnings,
+        rawOutput,
+      }
+    } catch (error) {
+      clearTimeout(timeoutHandle)
+      const warning =
+        error instanceof Error
+          ? error.name === 'AbortError'
+            ? `Generation timed out after ${timeoutMs}ms`
+            : error.message
+          : 'Unknown error during card generation'
+      return fallback('AI generation failed', {
+        warnings: [warning],
+      })
     }
   }
 }

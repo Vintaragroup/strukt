@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
-import { 
+import {
   Maximize2,
   GripVertical,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import {
   Popover,
@@ -13,7 +15,19 @@ import {
   PopoverTrigger,
 } from "./ui/popover";
 
-export type CardType = "text" | "todo";
+export type CardType =
+  | "text"
+  | "todo"
+  | "markdown"
+  | "checklist"
+  | "brief"
+  | "spec";
+
+export interface CardSection {
+  id: string;
+  title: string;
+  body: string;
+}
 
 export interface TodoItem {
   id: string;
@@ -27,6 +41,27 @@ export interface EditableCardData {
   type: CardType;
   content?: string;
   todos?: TodoItem[];
+  sections?: CardSection[];
+  metadata?: {
+    templateId?: string;
+    templateName?: string;
+    generatedAt?: string;
+    generatedBy?: "ai" | "template" | "user";
+    tags?: string[];
+    suggestedPrdTemplates?: string[];
+    reason?: string;
+    description?: string;
+    prdTemplateId?: string;
+    warnings?: string[];
+    accuracy?: {
+      score: number;
+      status: "fresh" | "fallback" | "stale";
+      factors?: string[];
+      lastGeneratedAt?: string;
+      qualityConfidence?: number;
+      needsReview?: boolean;
+    };
+  };
 }
 
 interface EditableCardProps {
@@ -36,9 +71,20 @@ interface EditableCardProps {
   onExpand: () => void;
   color?: string;
   onEditingChange?: (isEditing: boolean) => void;
+  onGenerateContent?: () => void;
+  isGenerating?: boolean;
 }
 
-export function EditableCard({ data, onUpdate, onDelete, onExpand, color = "teal", onEditingChange }: EditableCardProps) {
+export function EditableCard({
+  data,
+  onUpdate,
+  onDelete,
+  onExpand,
+  color = "teal",
+  onEditingChange,
+  onGenerateContent,
+  isGenerating,
+}: EditableCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showToolbar, setShowToolbar] = useState(false);
 
@@ -84,6 +130,20 @@ export function EditableCard({ data, onUpdate, onDelete, onExpand, color = "teal
     });
   };
 
+  const handleSectionTitleChange = (sectionId: string, title: string) => {
+    const updatedSections = (data.sections || []).map((section) =>
+      section.id === sectionId ? { ...section, title } : section
+    );
+    onUpdate({ ...data, sections: updatedSections });
+  };
+
+  const handleSectionBodyChange = (sectionId: string, body: string) => {
+    const updatedSections = (data.sections || []).map((section) =>
+      section.id === sectionId ? { ...section, body } : section
+    );
+    onUpdate({ ...data, sections: updatedSections });
+  };
+
   return (
     <div
       className={`rounded-xl border-2 ${colorClasses} transition-all group relative`}
@@ -91,15 +151,58 @@ export function EditableCard({ data, onUpdate, onDelete, onExpand, color = "teal
       onMouseLeave={() => setShowToolbar(false)}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-current/10">
-        <GripVertical className="w-3.5 h-3.5 text-gray-400 cursor-move" />
-        <input
-          type="text"
-          value={data.title}
-          onChange={(e) => onUpdate({ ...data, title: e.target.value })}
-          className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 placeholder:text-gray-400"
-          placeholder="Card title..."
-        />
+      <div className="flex items-start gap-2 px-3 py-2 border-b border-current/10">
+        <GripVertical className="w-3.5 h-3.5 text-gray-400 cursor-move mt-1" />
+        <div className="flex-1 min-w-0">
+          <input
+            type="text"
+            value={data.title}
+            onChange={(e) => onUpdate({ ...data, title: e.target.value })}
+            className="w-full bg-transparent border-none outline-none text-sm text-gray-900 placeholder:text-gray-400"
+            placeholder="Card title..."
+          />
+          {(data.metadata?.accuracy || onGenerateContent) && (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {data.metadata?.accuracy && (
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-medium ${
+                    data.metadata.accuracy.status === "fallback"
+                      ? "bg-amber-100 text-amber-700"
+                      : data.metadata.accuracy.status === "stale"
+                      ? "bg-slate-200 text-slate-700"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}
+                  title={
+                    data.metadata.accuracy.factors
+                      ? data.metadata.accuracy.factors.join(" • ")
+                      : undefined
+                  }
+                >
+                  {data.metadata.accuracy.score}% accuracy
+                  {data.metadata.accuracy.status === "stale" ? " (refresh suggested)" : ""}
+                </span>
+              )}
+              {onGenerateContent &&
+                data.metadata?.templateId &&
+                (data.type === "markdown" || data.type === "brief" || data.type === "spec") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onGenerateContent}
+                    disabled={isGenerating}
+                    className="h-7 px-2 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    <span className="ml-1.5">Generate</span>
+                  </Button>
+                )}
+            </div>
+          )}
+        </div>
         
         {showToolbar && (
           <div className="flex items-center gap-1">
@@ -142,16 +245,7 @@ export function EditableCard({ data, onUpdate, onDelete, onExpand, color = "teal
 
       {/* Content */}
       <div className="p-3">
-        {data.type === "text" ? (
-          <textarea
-            value={data.content || ""}
-            onChange={(e) => onUpdate({ ...data, content: e.target.value })}
-            onFocus={() => handleEditingChange(true)}
-            onBlur={() => handleEditingChange(false)}
-            className="w-full min-h-[80px] bg-transparent border-none outline-none text-sm text-gray-700 resize-none placeholder:text-gray-400"
-            placeholder="Start typing..."
-          />
-        ) : (
+        {data.type === "todo" || data.type === "checklist" ? (
           <div className="space-y-2">
             {data.todos?.map((todo) => (
               <div key={todo.id} className="flex items-start gap-2 group/todo">
@@ -178,6 +272,37 @@ export function EditableCard({ data, onUpdate, onDelete, onExpand, color = "teal
               + Add item
             </button>
           </div>
+        ) : data.sections && data.sections.length > 0 ? (
+          <div className="space-y-3">
+            {data.sections.map((section) => (
+              <div key={section.id} className="space-y-1.5">
+                <input
+                  type="text"
+                  value={section.title}
+                  onChange={(e) => handleSectionTitleChange(section.id, e.target.value)}
+                  className="w-full bg-transparent border-none outline-none text-sm font-semibold text-gray-800 placeholder:text-gray-400"
+                  placeholder="Section title"
+                />
+                <textarea
+                  value={section.body}
+                  onChange={(e) => handleSectionBodyChange(section.id, e.target.value)}
+                  onFocus={() => handleEditingChange(true)}
+                  onBlur={() => handleEditingChange(false)}
+                  className="w-full min-h-[80px] bg-transparent border-none outline-none text-sm text-gray-700 resize-none placeholder:text-gray-400"
+                  placeholder="Add details..."
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <textarea
+            value={data.content || ""}
+            onChange={(e) => onUpdate({ ...data, content: e.target.value })}
+            onFocus={() => handleEditingChange(true)}
+            onBlur={() => handleEditingChange(false)}
+            className="w-full min-h-[80px] bg-transparent border-none outline-none text-sm text-gray-700 resize-none placeholder:text-gray-400"
+            placeholder="Start typing..."
+          />
         )}
       </div>
     </div>

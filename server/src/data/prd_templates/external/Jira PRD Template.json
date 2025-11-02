@@ -1,0 +1,53 @@
+{
+  "template_id": "jira_prd_template",
+  "name": "Jira PRD Template",
+  "version": "1.0.0",
+  "tags": [
+    "jira",
+    "prd",
+    "template",
+    "product"
+  ],
+  "category": "Product",
+  "description": "Template generated from Jira PRD Template",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Product/Feature Name",
+      "key": "product_feature_name",
+      "content": "| **Target release** | Type // to add a target release date |\r\n| --- | --- |\r\n| **Epic** | Type /Jira to add Jira epics and issues |\r\n| **Document status** | **DRAFT** |\r\n| **Document owner** | @ mention owner |\r\n| **Designer** | @ designer |\r\n| **Tech lead** | @ lead |\r\n| **Technical writers** | @ writers |\r\n| **QA** |  |"
+    },
+    {
+      "title": "**Success metrics**",
+      "key": "success_metrics",
+      "content": "| **Goal** | **Metric** |\r\n| --- | --- |\r\n|  |  |\r\n|  |  |"
+    },
+    {
+      "title": "**Requirements**",
+      "key": "requirements",
+      "content": "| **Requirement** | **User Story** | **Importance** | **Jira Issue** | **Notes** |\r\n| --- | --- | --- | --- | --- |\r\n|  |  | **HIGH** |  |  |\r\n|  |  |  |  |  |"
+    },
+    {
+      "title": "**Open Questions**",
+      "key": "open_questions",
+      "content": "| **Question** | **Answer** | **Date Answered** |\r\n| --- | --- | --- |\r\n|  |  |  |"
+    },
+    {
+      "title": "**Out of Scope**",
+      "key": "out_of_scope",
+      "content": "-"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "medium",
+  "estimated_effort_hours": 80,
+  "team_size": 3,
+  "knowledge_graph_tags": [
+    "product",
+    "jira",
+    "prd",
+    "template"
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "template_id": "product_hunt_prd_template",
+  "name": "Product Hunt PRD Template",
+  "version": "1.0.0",
+  "tags": [
+    "product",
+    "hunt",
+    "prd",
+    "template",
+    "one",
+    "dine",
+    "description",
+    "for"
+  ],
+  "category": "Product",
+  "description": "**One-Dine Description:** *“for people who love products”* Our goal is to make Product Hunt the destination to share and discover new, innovative products and services, from mobile apps to hardware products.  Others in this space focus on editorial curation, following more of a blog-like model.  Product Hunt is a community, a place to geek out about products with other enthusiastic people.",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "**Glossary**",
+      "key": "glossary",
+      "content": "1. **Post** - new product hunt submissions\r\n2. **Comments** comments on a post\r\n3. **Replies** replies to comments\r\n4. **Vote** votes for a post\r\n5. **Index View** - homepage of Product Hunt (all users can view this)\r\n6. **Detailed View** permalink page for each post\r\n7. **Profile View** - user profile page"
+    },
+    {
+      "title": "**User Types**",
+      "key": "user_types",
+      "content": "1. **Non-Registered Users** - people that have no yet registered\r\n2. **Registered Viewers** people that have registered and can vote on posts but cannot post or comment.\r\n3. **Contributors** - registered users that can post, comment, and upvote (ie, “Hunters”?)\r\n4. Admins"
+    },
+    {
+      "title": "**Index View**",
+      "key": "index_view",
+      "content": "The Index View (ie, homepage) displays the list of posts chronologically, segmented by day (a la linkydink).\r\n\r\nWhen not signed in, a CTA must be presented to signup.  When signed up, a CTA to post must be present.\r\n\r\nThe “Hunters” (ie, contributors) must also be listed, highlighting the community of product people curating the content."
+    },
+    {
+      "title": "**Detailed View**",
+      "key": "detailed_view",
+      "content": "The Detailed View (ie, permalink page) displays information about the post (same as noted below) but with comments expanded.\r\n\r\nAdditionally, this page should include “who’s here,” showing profile pics of the people engaging in the conversation and/or voted"
+    },
+    {
+      "title": "**Posts**",
+      "key": "posts",
+      "content": "Each post must contain:\r\n\r\n1. **Name** - name of the product or service\r\n2. **Tagline** - short (<60 character?) description of the product or service\r\n3. **URL duh**\r\n4. **Submitted By** person that submitted the post with their profile picture and/or name\r\n5. **Votes** number of votes for that post w/ profile pics of each user that voted\r\n6. **Comments** number of comments for that post (maybe with profile pics of those that commented)\r\n\r\nAfter submitting a post, the user should be instructed to say something interesting, adding the first comment to spark conversation."
+    },
+    {
+      "title": "**Comments**",
+      "key": "comments",
+      "content": "Every post has a comment feed, algorithmically ranked like HN to surface the top comments.  Each comment includes:\r\n\r\n1. **Comment Text** CTA should frame the conversation (e.g. “say something interesting about Coin”)\r\n2. **Submitted By** - user that commented\r\n3. **Votes** - users can vote up comments\r\n4. **Replies** - replies are chronologic, one-layer deep (ie, no threaded replies)"
+    },
+    {
+      "title": "**Following**",
+      "key": "following",
+      "content": "Users can follow other users.  This does not change the Index View (the feed of posts) but will be used to re-engage users when people they follow take actions like post, upvote, or comment."
+    },
+    {
+      "title": "**Email Notifications**",
+      "key": "email_notifications",
+      "content": "Users receive the following email notifications:\r\n\r\n1. **Daily Product Hunt digest** - list of all posts for the day (later could be top 10 products and could be changed to weekly digest if the user prefers)\r\n2. **Social Re-engagement**\r\n    1. Follows\r\n    2. Votes on Their Posts\r\n    3. Comments on Their Posts\r\n    4. Comments on Posts They Voted On\r\n    5. Replies to Comments They Made"
+    },
+    {
+      "title": "**Registration**",
+      "key": "registration",
+      "content": "Every user must register with Twitter, pulling in the following information:\r\n\r\n1. Name\r\n2. Profile Pic\r\n3. Twitter URL\r\n4. Twitter Username (for tagging/mentions in the future maybe)\r\n\r\nAdditionally, they must also provide:\r\n\r\n1. Email Address\r\n2. Title and Company Name\r\n\r\n# **Brainstormed Ideas**\r\n\r\n1. **Guide and Structure Comments** - preface comments with structure (e.g. “this product is similar to…”, “this product is awesome because…”) a la Facebook’s “I’m watching…”, “I’m eating…”\r\n2. **Related Links** press, blog posts, etc\r\n3. **Algorithmic (HN-like) Ranking**\r\n4. **Editors Picks** - “starring” editorial picks\r\n5. **Product Hunt Groups** people can create groups, similar to subreddits\r\n\r\n# **Competitors & Product Inspiration**\r\n\r\n1. [Beta List](http://betali.st/) - paid promotion (and maybe some editorial) of early, often in beta, startups\r\n2. [StartupList](http://startupli.st/) - editorial curation of new startups\r\n3. [TastemakerX](http://www.tastemakerx.com/) - music discovery community\r\n\r\n# **Seeding Users & Content**\r\n\r\nInitial contributors will be hand-picked to create exclusivity and reduce potential spam.  Ideal contributors will be recognizable product people (e.g. Nir Eyal, Semil Shah, Hiten Shah) and investors (e.g. Josh Elman, Nick Chirls) in the startup space but may also include lesser known, early tech adopters.\r\n\r\nTo capture higher profile startup personalities like Hunter Walk we may submit product finds on his behalf with permission (e.g. based on something he’s tweeted).\r\n\r\n**Mockups**\r\n\r\n**Index View**\r\n\r\n\r\n# **Tech Notes**\r\n\r\n**Models**\r\n\r\n- User\r\n    - twitter_uid\r\n    - name\r\n    - username\r\n    - image\r\n    - headline\r\n    - daily_email?\r\n- Post\r\n    - user_id\r\n    - name\r\n    - tagline\r\n    - clicks\r\n    - url\r\n- PostVote\r\n    - user_id\r\n    - post_id\r\n- Comment\r\n    - user_id\r\n    - body\r\n- CommentVote\r\n    - user_id\r\n    - comment_id\r\n- Reply\r\n    - comment_id\r\n    - user_id\r\n    - body\r\n\r\n# **Go to Market**\r\n\r\n1. **Engage/Recruit Influencers - make them feel part of the product’s success and design**\r\n    1. Ask for direct product feedback\r\n    2. Feedback on blog post/press release\r\n2. **Invite Contributors Before Public Launch - ensure content is populated**\r\n3. **Blog Post - “30 Minute MVP”**\r\n    1. **Post on PandoDaily or Andrew Chen’s blog?**\r\n    2. Submit to Hacker News, GrowthHackers.com, Designer News, Quibb\r\n4. **Press Release**\r\n    1. Reach out to press contacts (PandoDaily, FastCo)\r\n    2. Mass distro other press (see http://customerdevlabs.com/2013/09/24/google-news-api-mturk-press/)\r\n5. **Startup Edition and Ryan’s Personal Email List** ~4k subscribers\r\n6. **Email Existing Linkydink Users**"
+    },
+    {
+      "title": "**Post-Launch Marketing**",
+      "key": "post_launch_marketing",
+      "content": "1. **Product Deconstructions Blog Posts**\r\n\r\n\r\n**View Original Template:** [Product Hunt’s PRD Template](https://docs.google.com/document/d/1yrU5F6Gxhkfma91wf_IbZfexw8_fahbGQLW3EvwdfQI/edit)"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "hunt",
+    "prd",
+    "template",
+    "one",
+    "dine",
+    "description",
+    "for"
+  ]
+}

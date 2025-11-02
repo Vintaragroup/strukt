@@ -1,0 +1,98 @@
+{
+  "template_id": "kevin_yien_prd_template",
+  "name": "Kevin Yien's PRD Template",
+  "version": "1.0.0",
+  "tags": [
+    "kevin",
+    "yien",
+    "prd",
+    "template",
+    "one",
+    "line",
+    "description",
+    "team",
+    "product"
+  ],
+  "category": "Product",
+  "description": "**[one-line description]** Team: [Awesome]",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "**High Level Approach**",
+      "key": "high_level_approach",
+      "content": "Describe the rough shape of how we might tackle the problem. I should be able to squint my eyes and see the same shape. For example, if the problem was “discoverability of new features”, then this might be “a notification center for relevant features”.\r\n\r\n---"
+    },
+    {
+      "title": "**Narrative**",
+      "key": "narrative",
+      "content": "Optional: Share (hypothetical) stories to paint a picture of what life looks like for customers today. Describe common and edgy use cases to consider when designing the solution.\r\n\r\n---"
+    },
+    {
+      "title": "**Goals**",
+      "key": "goals",
+      "content": "1. *Describe high-level goals, ideally in priority order and not too many.*\r\n2. *Include measurable (metrics) and immeasurable (feelings) goals*\r\n3. *Keep it short and sweet*"
+    },
+    {
+      "title": "**Non-goals**",
+      "key": "non_goals",
+      "content": "1. *List explicit areas we do not plan to address*\r\n2. *Explain why they are not goals*\r\n3. *These are as important and clarifying as the goals*\r\n\r\n🛑  Do not continue if all contributors are not aligned on the problem.\r\n\r\n🟢  Complete the following table with “signatures” from all reviewers to move on.\r\n\r\n---\r\n\r\n| **REVIEWER** | **TEAM/ROLE** | **STATUS** |\r\n| --- | --- | --- |\r\n|  |  |  |\r\n|  |  |  |\r\n\r\n# **Solution Alignment**\r\n\r\n| ✅  *Draw the perimeter* | 🚫  *Do not force others to identify scope* |\r\n| --- | --- |\r\n|  |  |"
+    },
+    {
+      "title": "**Key Features**",
+      "key": "key_features",
+      "content": "Plan of record\r\n\r\n1. *List the features that shape the solution*\r\n2. *Ideally in priority order*\r\n3. *Think of this like drawing the perimeter of the solution space*\r\n4. *Draw the boundaries so the team can focus on how to fill it in*\r\n5. *Link out to sub-docs for more detail for particularly large projects*\r\n6. *Challenge the size to see if a smaller component can be shipped independently*\r\n\r\nFuture considerations\r\n\r\n1. *Optionally list features you are saving for later*\r\n2. *These might inform how you build now*"
+    },
+    {
+      "title": "**Key Flows**",
+      "key": "key_flows",
+      "content": "Show what the end-to-end experience will be for customers. This could be written prose, a flow diagram, screenshots, or design explorations. It will vary by project and team. Do not try to do this in isolation. Work with design and engineering to complete.\r\n\r\nIt is natural for this section to become more specific over time. It might start as a few annotated screenshots or stories. It might become highly detailed requirements with acceptance criteria. Adjust to the way your team operates. If you have a strong designer who enjoys going into every edge case, lean on them. If you have detailed engineers who prefer to have each scenario documented, go deep on acceptance criteria.\r\n\r\nThis will naturally change over time — that’s okay. When changes occur, document them in the Changelog and notify all contributors.\r\n\r\n---"
+    },
+    {
+      "title": "**Key Logic**",
+      "key": "key_logic",
+      "content": "1. *List rules to guide design and development*\r\n2. *Address common scenarios and edge cases*\r\n3. *It is often easier to write these out than rely on design to show every permutation*\r\n\r\n🛑  Do not continue if all contributors are not aligned on the problem.\r\n\r\n🟢  Complete the following table with “signatures” from all reviewers to move on.\r\n\r\n---\r\n\r\n| **REVIEWER** | **TEAM/ROLE** | **STATUS** |\r\n| --- | --- | --- |\r\n|  |  |  |\r\n|  |  |  |\r\n\r\n# **Launch Plan**\r\n\r\nDefine the various phases that will get this product to market, the purpose of each phase, and the criteria you must meet to move on to the next one. Highlight risks and dependencies that can throw a wrench in timelines or progress (and ideally contingency plans). There is a table of example phases below.\r\n\r\n---"
+    },
+    {
+      "title": "**Key Milestones**",
+      "key": "key_milestones",
+      "content": "| **TARGET DATE** | **MILESTONE** | **DESCRIPTION** | **EXIT CRITERIA** |\r\n| --- | --- | --- | --- |\r\n| YYYY-MM-DD | ✅ Pilot | Internal testing with employees only | No P0 or P1 bugs on a rolling 7-day basis |\r\n| YYYY-MM-DD | 🛑 Beta | Early cohort of 20 customers | At least 10 customers would be disappointed if we took it away |\r\n| YYYY-MM-DD | 🛑 Early Access | Invite-only customers from sales | At least 1 win from every major competitor |\r\n| YYYY-MM-DD | 🛑 Launch | All customers in current markets | Measure and monitor |"
+    },
+    {
+      "title": "**Operational Checklist**",
+      "key": "operational_checklist",
+      "content": "| **TEAM** | **PROMPT** | **Y/N** | **ACTION (if yes)** |\r\n| --- | --- | --- | --- |\r\n| Analytics | Do you need additional tracking? |  | Work with [person] on logging |\r\n| Sales | Do you need sales enablement materials? |  | Work with [person] |\r\n| Marketing | Does this impact shared KPI? |  | Work with [person] on goal adjustment |\r\n| Customer Success | Do you need to update support content or training? |  | Work with [person] on updates |\r\n| Product Marketing | Do you need a GTM plan? (e.g. pricing, packaging, positioning, |  | Work with [person] with at least [x] weeks notice to kickoff workstreams |\r\n| Partners | Will this impact any external partners? |  | Work with [person] on communication plan |\r\n| Globalization | Are you launching in multiple countries? |  | Work with [person] |\r\n| Risk | Does this expose a risk vector? |  | Work with [person] |\r\n| Legal | Are there potential legal ramifications? |  | Work with [person] |\r\n\r\n# **Appendix**"
+    },
+    {
+      "title": "**Changelog**",
+      "key": "changelog",
+      "content": "*List key decisions or updates you make for future reference. Include who was involved and link to notes doc, if relevant. Recommend moving this up top once approved so changes are more visible.*\r\n\r\n| **DATE** | **DESCRIPTION** |\r\n| --- | --- |\r\n|  |  |\r\n|  |  |"
+    },
+    {
+      "title": "**Open Questions**",
+      "key": "open_questions",
+      "content": "Track open questions and answers here."
+    },
+    {
+      "title": "**FAQs**",
+      "key": "faqs",
+      "content": "Optional: Include an FAQ when helpful to answer high level questions so it is easier for people to grasp the point of the project without getting lost in the details of product definition.\r\n\r\nImpact Checklist\r\n\r\n- Permissions\r\n- Reporting\r\n- Pricing\r\n- API\r\n- Global\r\n\r\n\r\n**View Original Template:** [Kevin Yien’s PRD templat (PM at Square)](https://docs.google.com/document/d/1mEMDcHmtQ6twzNlpvF-9maNlAcezpWDtCnyIqWkODZs/edit)"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "kevin",
+    "yien",
+    "prd",
+    "template",
+    "one",
+    "line",
+    "description",
+    "team"
+  ]
+}

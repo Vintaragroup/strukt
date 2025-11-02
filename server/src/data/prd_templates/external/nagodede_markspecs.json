@@ -1,0 +1,88 @@
+{
+  "template_id": "nagodede_markspecs",
+  "name": "MarkSpecs",
+  "version": "1.0.0",
+  "tags": [
+    "markspecs",
+    "markdown",
+    "framework",
+    "write",
+    "software",
+    "requirements",
+    "specifications",
+    "when",
+    "product"
+  ],
+  "category": "Product",
+  "description": "MarkSpecs is a Markdown framework to write Software Requirements Specifications. When you write Software Requirements, you need to provide diagrams, schematics, tables, datagrams, and many other kinds of data and provide a solution to generate a document from multiple Markdown files. MarkSpecs provides an environment where users can express their needs by using one or several ASCII files.",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Supported diagrams",
+      "key": "supported_diagrams",
+      "content": "|Diagram Type|Description|Sources|Notes\n|---|---|---|--|\n|Mocodo|Merise Database schematics|https://github.com/laowantong/mocodo|\n|PlantUml|Multiple diagrams, mostly UML|https://plantuml.com/ | Request to launch MarkSpecs PlantUml server|\n|NwDiag|Network Diagrams|http://blockdiag.com/en/nwdiag/introduction.html#setup| Also included in PlantUml|\n|PackDiag|Packet header diagram images|http://blockdiag.com/en/nwdiag/index.html| Provided by NwDiag|\n|RackDiag|Rack-structure diagram images|http://blockdiag.com/en/nwdiag/index.html| Provided by NwDiag|\n|Railroad-Diagram|Railroad diagram (visual illustration of the grammar used for programming languages)https://github.com/tabatkins/railroad-diagrams|\n|Vega|Declarative language for interactive visualization designs|https://vega.github.io/vega/|\n|VegaLite|Data visualizations |https://vega.github.io/vega-lite/|\n|WaveDrom|Digital Timing Diagram|https://wavedrom.com/|PlantUml also supports timing diagram|\n|Mermaid| Multiple diagrams, mostly UML | https://mermaid-js.github.io/mermaid/#/| Generated thanks Javascript references in the header of the final file|\n|nomnoml|UML diagrams |https://github.com/skanaar/nomnoml| Generated thanks Javascript references in the header of the final file|\n|GoJS|FaultTree generator| https://github.com/NorthwoodsSoftware/GoJS| Not Free Licence. Javascript generated.\n|Schemdraw|Electrical Circuit|https://schemdraw.readthedocs.io/en/latest/index.html|"
+    },
+    {
+      "title": "About PlantUml",
+      "key": "about_plantuml",
+      "content": "PlantUml can provide several kinds of diagrams. If you want to generate charts by PlantUml in MarkSpecs, you have to launch PlantUml FTP servers by running the command   \n```\nmarkspecs.exe plantumlserver\n```\nbefore.  \nThe command will launch several instances of the PlantUml servers (number of instances is defined in the application config file, or by the command line interface). Using several instances of PlantUml can save generation time, especially if you have multiple diagrams defined in several markdown files. Numerous instances give room for parallelization, and generation time can be, under some conditions, divided by two or more."
+    },
+    {
+      "title": "About Mermaid and nomnoml",
+      "key": "about_mermaid_and_nomnoml",
+      "content": "Mermaid and nomnoml diagrams are generated thanks Javascript libraries defined in an HTML header file provided to MarkSpecs by the <-h|--header> parameter.\n\n# More information about the modules"
+    },
+    {
+      "title": "Mocodo",
+      "key": "mocodo",
+      "content": "### Aim\nMocodo supports the Meurise methodology to design relational database. Mocodo is a Python tool available on https://github.com/laowantong/mocodo.  \nHelp and documentation files are available on https://rawgit.com/laowantong/mocodo/master/doc/fr_refman.html, while an online version is available on http://www.mocodo.net/.\n### Installation and Configuration\nDownload Mocodo project and unzip in Vendors/mocodo. Update the application settings if necessary.\n### Syntax\nRefer to the [Mocodo documentation](https://rawgit.com/laowantong/mocodo/master/doc/fr_refman.html).\n### Licence\n[MIT Licence](https://mit-license.org/)\nCopyright (c) 2017 Aristide Grange\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+    },
+    {
+      "title": "Plantuml syntax",
+      "key": "plantuml_syntax",
+      "content": "### Aim\n### Installation and Configuration\n### Syntax\n### Licence"
+    },
+    {
+      "title": "NwDiag syntax",
+      "key": "nwdiag_syntax",
+      "content": "### Aim\n### Installation and Configuration\n### Syntax\n### Licence"
+    },
+    {
+      "title": "PackDiag syntax",
+      "key": "packdiag_syntax",
+      "content": "### Aim\n### Installation and Configuration\n### Syntax\n### Licence"
+    },
+    {
+      "title": "RackDiag syntax",
+      "key": "rackdiag_syntax",
+      "content": "### Aim\n### Installation and Configuration\n### Syntax\n### Licence"
+    },
+    {
+      "title": "Railroad-Diagram",
+      "key": "railroad_diagram",
+      "content": "### Generalities\nRailRoad-Diagram is used to generate RailRoad Diagrams\n<img src=\"https://github.com/tabatkins/railroad-diagrams/raw/gh-pages/images/rr-title.svg?sanitize=true\" width=\"2000\" style=\"max-width:100%;\">\nRailroad diagrams are mostly used to define software language grammar, as you can see on https://www.json.org/json-en.html.But they may be used for other purpose.  \nThe diagrams are generated in SVG format by a Python script created from scracth by Markspecs. The script will refer to the Railroad-diagram Python library (available https://github.com/tabatkins/railroad-diagrams). The path to the library is set in the configuration file.\n### Prerequisite\nPython > 3.8 (tested configuration, should be OK with any version > 3.1).\n### Installation and Configuration\nBy default, MarkSpecs is provided with the RailRoad-diagrams library provided in the vendor/railroad directory. \nTo update the RailRoad-Diagrams library, your are free to replace the content of the directory by a new version of the library, or you can set the new version in a directory of your choice and update the MarkSpecs configuration file.\n### Syntax\nRefer to https://github.com/tabatkins/railroad-diagrams to know the syntax.  \nIn the markdown file, you don't have to provide the Diagram object. You only need to provide the list of diagam items, as in the exemple below:\n<pre>\n  ```railroad\n   Optional('+', 'skip'),\n  Choice(0,\n    NonTerminal('name-start char'),\n    NonTerminal('escape')),\n  ZeroOrMore(\n    Choice(0,\n      NonTerminal('name char'),\n      NonTerminal('escape')))\n  ```\n</pre>\nThis exemple will lead MarkSpecs to generate the Python Script\n```python\nimport sys\nimport importlib.util\nspec = importlib.util.spec_from_file_location(\"railroad\", \"C:/Temp/railroad-diagrams-gh-pages/railroad.py\")\nmodule = importlib.util.module_from_spec(spec)\nsys.modules[spec.name] = module \nspec.loader.exec_module(module)\n        \nfrom railroad import *\nd = Diagram(\n  Optional('+', 'skip'),\n  Choice(0,\n    NonTerminal('name-start char'),\n    NonTerminal('escape')),\n  ZeroOrMore(\n    Choice(0,\n      NonTerminal('name char'),\n      NonTerminal('escape'))))\nd.writeSvg(sys.stdout.write)\n```\n### Licence\n[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)  \nThis document and all associated files in the github project https://github.com/tabatkins/railroad-diagrams are licensed under CC0. This means you can reuse, remix, or otherwise appropriate RailRoad-Diagrams project for your own use without restriction.\n### SVG data generation\nThe SVG data are generated through a Python script created on the flag by MarkSpecs. One of the difficulties is to refer to the RailRoad-Diagrams library by providing an absolute path (Python management of the libraries, modules,... has some specificities). Maybe a more efficient solution exists...\n\nA typical python file created on the flag, may look:\n```python\nimport sys\nimport importlib.util\nspec = importlib.util.spec_from_file_location(\"railroad\", \"C:/Specific_Path/.../railroad/railroad.py\")\nmodule = importlib.util.module_from_spec(spec)\nsys.modules[spec.name] = module \nspec.loader.exec_module(module)\n        \nfrom railroad import *\nd = Diagram(\n  Optional('+', 'skip'),\n  Choice(0,\n    NonTerminal('name-start char'),\n    NonTerminal('escape')),\n  ZeroOrMore(\n    Choice(0,\n      NonTerminal('name char'),\n      NonTerminal('escape'))))\nd.writeSvg(sys.stdout.write)\n```"
+    },
+    {
+      "title": "Schemdraw",
+      "key": "schemdraw",
+      "content": "### Aim\nSchemDraw is a python package for producing high-quality electrical circuit schematic diagrams.\n### Installation and Configuration\nRequires Python >3.7, numpy and matplotlib\n```\npip install numpy\npip install matplotlib\n```\nSources are available on bitbucket https://bitbucket.org/cdelker/schemdraw/downloads/ but for the project, I add the sources as subtree \n```git\ngit subtree add --prefix=vendors/schemdraw/ git@bitbucket.org:cdelker/schemdraw.git master\n```\nWhen building the project, I zip the subfolder _schemdraw_ and copy it to the vendors output directory. Thanks the zip, it becomes easy to import the Python project by using _zipimport_.  By this way, it's very easy to keep the Markspecs and Schemdraw up to date.  \nFor information, the content of the zipfile follows the schem:\n<pre>\nschemdraw.zip\n  |\n  +-schemdraw (directory)\n    |\n    + __init__.py\n    + schemdraw.py\n    + ...\n    + backends (directory)\n    + dsp (directory)\n    + elements (directory)\n    + (other directoris)\n</pre>\nThis is an intersting approach to provide a way to update easily Schemdraw without impact on MarkSpecs. But you have to remember that Schemdraw request Matplotlib and Numpy.   \nUnfortunately, it also means you have to install the Matplotlib and Numpy libraries on your Python environment to run Schemdraw through Markspecs.  \nI am not a Python expert, so instead of a fight with Python and its libraries (or do other solutions, like making an exe...), I provide the sources of the tools and the user is free to change the way to import the libraries by an update of the _schemdraw-header.txt_ file.  \nThe _schemdraw-header.txt_ file contains the definition of the imports. So, if you want to change the way to import the libraries, your are free to go.  \nThe current definition of the header file is:\n```python\n#Start of header\nimport sys\nimport zipimport\nimporter = zipimport.zipimporter(\"${schemdraw_path_zip}\") \nmod=importer.load_module('schemdraw')\n#End of header\n```\nThe _${schemdraw_path_zip}_ will be replaced by MarkSpecs by the definition provided in the Application configuration file. If you want to change the header file but also want to keep the way to insert the path to the schemdraw zip file, you have to use _${schemdraw_path_zip}_ keyword.\n\n### Syntax\nMarkSpecs simplifies the syntax in regard of the original Schemdraw qyntax. There is no need to refer to the Drawing.Add() to build a schematic.  \nThe MarkSpecs syntax becomes more easy and straighforaward than the original Schemdraw commands as MarkSpecs will complete the description to get the Python commands.\n```\nResistor(d='right', label='1$\\Omega$')\nCapacitor(d='down', label='10$\\mu$F')\nLine(d='left')\nSourceSin(d='up', label='10V')\n```\nIs equivalent to the Python commands\n```python\nd = schemdraw.Drawing()\nd.add(elm.Resistor(d='right', label='1$\\Omega$'))\nd.add(elm.Capacitor(d='down', label='10$\\mu$F'))\nd.add(elm.Line(d='left'))\nd.add(elm.SourceSin(d='up', label='10V'))\n```\nFor general syntax, refer to https://schemdraw.readthedocs.io/en/latest/index.html.\n### SVG data generation\nTypicall exemple of use:\n<pre>\n```schemdraw\nResistor(d='right', label='1$\\Omega$')\nCapacitor(d='down', label='10$\\mu$F')\nLine(d='left')\nSourceSin(d='up', label='10V')\n```\n</pre>\nWill lead to the temporary Python file:\n```python\n#Start of header\nimport sys\nimport zipimport\nimporter = zipimport.zipimporter(\"c:/Markspecs/vendors/schemdraw.zip\") \nmod=importer.load_module('schemdraw')\n#End of header\nimport schemdraw\nimport schemdraw.elements as elm\nd = schemdraw.Drawing()\nd.add(elm.Resistor(d='right', label='1$\\Omega$'))\nd.add(elm.Capacitor(d='down', label='10$\\mu$F'))\nd.add(elm.Line(d='left'))\nd.add(elm.SourceSin(d='up', label='10V'))\nd.save(\"c:/Temp/temp.svg\")\n```\n### Licence\n[MIT Licence](https://mit-license.org/)\nCopyright (c) 2014-2020 Collin J. Delker\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:  \nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "markspecs",
+    "markdown",
+    "framework",
+    "write",
+    "software",
+    "requirements",
+    "specifications",
+    "when"
+  ]
+}

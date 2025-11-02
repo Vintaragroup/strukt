@@ -1,0 +1,116 @@
+[
+  {
+    "id": "priankr_prd_templates",
+    "url": "https://raw.githubusercontent.com/priankr/prd-templates/main/templates/prd-template.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "bflorat_architecture_doc",
+    "url": "https://raw.githubusercontent.com/bflorat/architecture-document-template/master/architecture_document.adoc",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "microsoft_mlopstemplate",
+    "url": "https://raw.githubusercontent.com/microsoft/MLOpsTemplate/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "nagodede_markspecs",
+    "url": "https://raw.githubusercontent.com/NagoDede/MarkSpecs/master/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "bhnmrz_markdown_software_engineering",
+    "url": "https://raw.githubusercontent.com/bhnm-rz/MarkdownSoftwareEngineering/master/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "morganmarshall_prd",
+    "url": "https://raw.githubusercontent.com/MorganMarshall/PRD/master/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "opulo_prd_template",
+    "url": "https://raw.githubusercontent.com/opulo-inc/prd-template/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "imayobrown_design_docs",
+    "url": "https://raw.githubusercontent.com/imayobrown/DesignDocumentTemplates/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "adr_madr",
+    "url": "https://raw.githubusercontent.com/adr/madr/master/docs/adr-template.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "gabriel_pink_project_blueprint",
+    "url": "https://raw.githubusercontent.com/Gabriel-Pink/project-blueprint-template/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "bravo19er_md_tools_mobile",
+    "url": "https://raw.githubusercontent.com/Bravo19er/md-tools-mobile/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "markdown_templates_repo",
+    "url": "https://raw.githubusercontent.com/markdown-templates/technical-architecture/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "thoughtworks_mlop_platforms",
+    "url": "https://raw.githubusercontent.com/thoughtworks/mlops-platforms/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "pengqun_awesome_documentation",
+    "url": "https://raw.githubusercontent.com/pengqun/awesome-documentation/master/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "darkisildur_ai_prd_creation",
+    "url": "https://raw.githubusercontent.com/darkisildur/ai-prd-creation/main/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "driesventer_doc_templates",
+    "url": "https://docs.driesventer.com/markdown_document_templates/index.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "jam01_srs_template",
+    "url": "https://raw.githubusercontent.com/jam01/SRS-Template/master/srs-template.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "cwe1ss_microservices_template",
+    "url": "https://raw.githubusercontent.com/cwe1ss/microservices-template/master/README.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  },
+  {
+    "id": "t851029v2_prd_gist",
+    "url": "https://gist.githubusercontent.com/t851029v2/baffbfe732be90b631222380e12506ae/raw/prd-template.md",
+    "format": "markdown",
+    "output_dir": "server/src/data/prd_templates"
+  }
+]

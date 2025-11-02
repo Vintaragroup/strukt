@@ -1,0 +1,131 @@
+{
+  "template_id": "seatgeek_prd_template",
+  "name": "SeatGeek PRD Template",
+  "version": "1.0.0",
+  "tags": [
+    "seatgeek",
+    "prd",
+    "template",
+    "direct",
+    "questions",
+    "product",
+    "owner",
+    "project"
+  ],
+  "category": "Product",
+  "description": "Direct questions to: [product owner] or [#project-slack-channel] Last updated: [MMM DD YYYY]",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "**What**",
+      "key": "what",
+      "content": "Describe the initiative. Keep it high level and use plain language."
+    },
+    {
+      "title": "**Why**",
+      "key": "why",
+      "content": "Why should we work on this? Include how it aligns with business and user goals."
+    },
+    {
+      "title": "**Success Criteria**",
+      "key": "success_criteria",
+      "content": "What does success look like? Include quant and qual metrics as appropriate.\r\n\r\n| **Metric** | **Baseline (Date)** | **Target (Date)** | **Latest (Updated On)** |\r\n| --- | --- | --- | --- |\r\n|  |  |  |  |"
+    },
+    {
+      "title": "**[Optional] Overview**",
+      "key": "optional_overview",
+      "content": "| **🌱 Problem Space** |  | **🛠 Solution Space** |  | 📊 **Observing** | 📂 **Archived** |\r\n| --- | --- | --- | --- | --- | --- |\r\n| **Discover** | **Define** | **Explore** | **Deliver** | **Learn** | **Move On** |\r\n| 📍We are here |  |  |  |  |  |\r\n| [1 Pager](https://docs.google.com/document/d/1G6Uodj-7p3YbqNa1MgzCI-A0OT7TOLLgWJJShqPGgv8/edit#bookmark=kix.f76n1qhnwqb5) | Product Spec | Design Exploration | Epic / Issues | XP Template | N/A |\r\n| Research Brief |  | Technical RFC |  | Looker Dash |  |"
+    },
+    {
+      "title": "**Team**",
+      "key": "team",
+      "content": "Product Management: TBD\r\n\r\nProduct Design: TBD\r\n\r\nUser Research: TBD\r\n\r\nAnalytics: TBD\r\n\r\niOS: TBD\r\n\r\nAndroid: TBD\r\n\r\nWeb: TBD\r\n\r\nBackend: TBD\r\n\r\nKeep Informed: TBD\r\n\r\nStakeholder X: TBD\r\n\r\nStakeholder Y: TBD"
+    },
+    {
+      "title": "**Related Links**",
+      "key": "related_links",
+      "content": "OKRs\r\n\r\nFAQs\r\n\r\nInternal Documentation\r\n\r\nPress Release\r\n\r\nLoom Demo"
+    },
+    {
+      "title": "**[Optional] Upcoming Milestones**",
+      "key": "optional_upcoming_milestones",
+      "content": "| Milestone | Owner | Due Date | Completion Date |\r\n| --- | --- | --- | --- |\r\n|  |  |  |  |"
+    },
+    {
+      "title": "**[Optional] Decision Journal**",
+      "key": "optional_decision_journal",
+      "content": "| **Question/Topic** | **Current Path Forward** |\r\n| --- | --- |\r\n| [Add question/topic here] | **[Decider Name], [Decision Date]** - [Decision Description] |"
+    },
+    {
+      "title": "**[Optional] Meeting Notes**",
+      "key": "optional_meeting_notes",
+      "content": "### [Date] - [Description]\r\n\r\n- *Add agenda, notes, action item*\r\n\r\n# **Product Spec**\r\n\r\n*This section gives us a consistent way of making sure we’re working on the right problems before diving into solutions.*"
+    },
+    {
+      "title": "**Alignment**",
+      "key": "alignment",
+      "content": "How does this initiative tie to broader team or company goals and strategies?"
+    },
+    {
+      "title": "**Key Insights and Inspiration**",
+      "key": "key_insights_and_inspiration",
+      "content": "What key insights (quant or qual) and inspiration (including competitive research) should be considered when refining the problem and exploring solutions? Please add any related links or dashboards."
+    },
+    {
+      "title": "**Problem Statement**",
+      "key": "problem_statement",
+      "content": "What’s the underlying problem we’ve observed? How do we know this is true?"
+    },
+    {
+      "title": "**Hypothesis & Impact**",
+      "key": "hypothesis_impact",
+      "content": "We believe [capability], will lead to [outcome], which will result in [metric change] by [date]. Include guesses for the size of the win."
+    },
+    {
+      "title": "**Constraints**",
+      "key": "constraints",
+      "content": "What are the key constraints, deadlines, or hard requirements to consider?"
+    },
+    {
+      "title": "**Non-Goals**",
+      "key": "non_goals",
+      "content": "Are there any related problems that we want to explicitly ignore for now?\r\n\r\n# **Design Exploration**\r\n\r\n*This section helps us ensure a collaborative and divergent design process. It also helps us document previously considered directions and rationales for large design decisions.*\r\n\r\n🔗 Figma Link"
+    },
+    {
+      "title": "**Initial Ideas**",
+      "key": "initial_ideas",
+      "content": "Document any initial ideas or user stories that should be considered when exploring solutions.\r\n\r\n| **Ideas** | **Description** |\r\n| --- | --- |\r\n| [Idea Name] | [Add brief description and any supporting links] |\r\n\r\n| **User Stories** | **Importance** |\r\n| --- | --- |\r\n| As a [persona], I [want to], [so that] | **Must have  Nice to have  Optional** |"
+    },
+    {
+      "title": "**Explored Directions**",
+      "key": "explored_directions",
+      "content": "Document the main directions being considered, along with links to the design artifacts.\r\n\r\n| **Name** | **Details** |\r\n| --- | --- |\r\n| [Direction Name] | [Short description w/ link to details] |"
+    },
+    {
+      "title": "**Key Decisions**",
+      "key": "key_decisions",
+      "content": "Document any key decisions that were made."
+    },
+    {
+      "title": "**Decided Direction**",
+      "key": "decided_direction",
+      "content": "Describe which direction was chosen to move forward with and why it was chosen.\r\n\r\n\r\n**View Original Template:** [Adam Waxman (SeatGeek) PRD template](https://docs.google.com/document/d/1xc9TZX-7NMfOykzFKR0o0jzTUygoAFzWadxDVR7sNvs/edit?usp=sharing)"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "product",
+    "seatgeek",
+    "prd",
+    "template",
+    "direct",
+    "questions",
+    "owner",
+    "project"
+  ]
+}

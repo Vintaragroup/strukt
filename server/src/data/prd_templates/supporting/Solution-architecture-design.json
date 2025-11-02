@@ -1,0 +1,94 @@
+{
+  "template_id": "solution_architecture_design",
+  "name": "`<Insert Title For Solution Architecture Design>`",
+  "version": "1.0.0",
+  "tags": [
+    "insert",
+    "title",
+    "for",
+    "solution",
+    "architecture",
+    "design",
+    "frontend"
+  ],
+  "category": "Frontend",
+  "description": "Template generated from Solution-architecture-design",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Table of Contents",
+      "key": "table_of_contents",
+      "content": "[[_TOC_]]\n\n---"
+    },
+    {
+      "title": "Introduction",
+      "key": "introduction",
+      "content": "Provide an overview of the document, its purpose, and the intended audience.\n\n---"
+    },
+    {
+      "title": "Executive Summary",
+      "key": "executive_summary",
+      "content": "Summarize the key points of the solution, including the problem statement, proposed solution, and expected benefits.\n\n---"
+    },
+    {
+      "title": "Business Context",
+      "key": "business_context",
+      "content": "Describe the business problem or opportunity that the solution addresses. Include relevant background information and context.\n\n---"
+    },
+    {
+      "title": "Solution Overview",
+      "key": "solution_overview",
+      "content": "Provide a high-level description of the solution, including its main components and how they interact.\n\n---"
+    },
+    {
+      "title": "Architecture Components",
+      "key": "architecture_components",
+      "content": "### Component 1: [Component Name]\n\n- **Description**: Describe the component and its role in the solution.\n- **Responsibilities**: List the responsibilities of the component.\n- **Interfaces**: Describe the interfaces and interactions with other components.\n\n### Component 2: [Component Name]\n\n- **Description**: Describe the component and its role in the solution.\n- **Responsibilities**: List the responsibilities of the component.\n- **Interfaces**: Describe the interfaces and interactions with other components.\n\n---"
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional_requirements",
+      "content": "List and describe the non-functional requirements, such as performance, scalability, availability, and maintainability.\n\n---"
+    },
+    {
+      "title": "Security Considerations",
+      "key": "security_considerations",
+      "content": "Describe the security requirements and how they are addressed in the solution. Include information on data protection, access control, and compliance.\n\n---"
+    },
+    {
+      "title": "Integration",
+      "key": "integration",
+      "content": "Describe how the solution integrates with existing systems and services. Include information on data flows, APIs, and protocols.\n\n---"
+    },
+    {
+      "title": "Deployment",
+      "key": "deployment",
+      "content": "Describe the deployment strategy, including environments, deployment processes, and tools.\n\n---"
+    },
+    {
+      "title": "Operational Considerations",
+      "key": "operational_considerations",
+      "content": "Describe the operational aspects of the solution, including monitoring, logging, and support.\n\n---"
+    },
+    {
+      "title": "Appendices",
+      "key": "appendices",
+      "content": "Include any additional information, such as diagrams, detailed specifications, and references.\n\n---"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "frontend",
+    "insert",
+    "title",
+    "for",
+    "solution",
+    "architecture",
+    "design"
+  ]
+}

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { memo, useState, useRef, useEffect, useLayoutEffect } from "react";
+import { memo, useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { Handle, Position, NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
 import { Layers, Layout, Server, FileText, BookOpen, Plus, MoreVertical, Copy, Trash2, Download, FileJson, FileCode2, ClipboardCopy, GitBranch, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -9,7 +9,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "./ui/popover";
-import { EditableCard, EditableCardData } from "./EditableCard";
+import { EditableCard, EditableCardData, CardType } from "./EditableCard";
+import { CARD_TEMPLATES, NODE_CARD_MATRIX, type NodeCardTemplateId } from "../config/nodeCardRegistry";
+import type { DomainType } from "../types";
 
 export interface CustomNodeData {
   label: string;
@@ -21,7 +23,7 @@ export interface CustomNodeData {
   isConnecting?: boolean;
   collapsed?: boolean;
   cards?: EditableCardData[];
-  onAddCard?: (type: "text" | "todo") => void;
+  onAddCard?: (type: CardType, templateId?: NodeCardTemplateId) => void;
   onUpdateCard?: (cardId: string, data: EditableCardData) => void;
   onDeleteCard?: (cardId: string) => void;
   onExpandCard?: (cardId: string) => void;
@@ -45,6 +47,17 @@ export interface CustomNodeData {
   isConnectSource?: boolean;
   connectStartHandleId?: string | null;
   maxNodeHeight?: number;
+  onGenerateCardContent?: (cardId: string) => void;
+  generatingCardId?: string | null;
+  documentationAccuracy?: {
+    score: number;
+    status: "fresh" | "fallback" | "stale";
+    lastGeneratedAt?: string;
+    factors?: string[];
+    qualityConfidence?: number;
+    needsReview?: boolean;
+    warnings?: string[];
+  };
 }
 
 const BASE_NODE_WIDTH = 280;
@@ -186,6 +199,41 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   const maxNodeHeight = data.maxNodeHeight ?? DEFAULT_MAX_NODE_HEIGHT;
   const bodyAvailable = Math.max(0, maxNodeHeight - headerHeight - footerHeight);
   const cardWidth = isRoot ? ROOT_NODE_WIDTH : BASE_NODE_WIDTH;
+  const domainTypeMap: Record<string, DomainType> = {
+    business: "Business",
+    product: "Product",
+    tech: "Tech",
+    "data-ai": "DataAI",
+    operations: "Ops",
+  };
+  const normalizedDomain = data.domain ? domainTypeMap[data.domain] : undefined;
+  const documentationAccuracy = data.documentationAccuracy;
+  const accuracyBadgeClass = documentationAccuracy
+    ? documentationAccuracy.status === "fallback"
+      ? "bg-amber-100/90 text-amber-700 border border-amber-200"
+      : documentationAccuracy.status === "stale"
+      ? "bg-slate-100/90 text-slate-700 border border-slate-200"
+      : documentationAccuracy.score >= 85
+      ? "bg-emerald-100/90 text-emerald-700 border border-emerald-200"
+      : documentationAccuracy.score >= 65
+      ? "bg-blue-100/90 text-blue-700 border border-blue-200"
+      : documentationAccuracy.score >= 45
+      ? "bg-amber-100/90 text-amber-700 border border-amber-200"
+      : "bg-rose-100/90 text-rose-700 border border-rose-200"
+    : "";
+  const recommendedCards = useMemo(() => {
+    const matches = NODE_CARD_MATRIX.filter((entry) => {
+      const nodeMatch = entry.nodeTypes ? entry.nodeTypes.includes(data.type) : true;
+      const domainMatch = entry.domains
+        ? normalizedDomain
+          ? entry.domains.includes(normalizedDomain)
+          : false
+        : true;
+      return nodeMatch && domainMatch;
+    });
+    const uniqueIds = Array.from(new Set(matches.flatMap((entry) => entry.recommendedCards)));
+    return uniqueIds.map((templateId) => CARD_TEMPLATES[templateId]).filter(Boolean);
+  }, [data.type, normalizedDomain]);
   
   // Ref to store cleanup functions - MUST be declared before sync effect
   const eventCleanupRef = useRef<(() => void) | null>(null);
@@ -537,6 +585,30 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
               <h3 className="text-white leading-snug break-words">
                 {data.label}
               </h3>
+              {documentationAccuracy && (
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium backdrop-blur-sm ${accuracyBadgeClass}`}
+                    title={
+                      documentationAccuracy.factors
+                        ? documentationAccuracy.factors.join(" • ")
+                        : undefined
+                    }
+                  >
+                    {documentationAccuracy.score}% accuracy
+                    {documentationAccuracy.status === "stale"
+                      ? " (refresh suggested)"
+                      : documentationAccuracy.status === "fallback"
+                      ? " (review recommended)"
+                      : ""}
+                  </span>
+                  {documentationAccuracy.needsReview && (
+                    <span className="text-[11px] text-white/80">
+                      Double-check generated content
+                    </span>
+                  )}
+                </div>
+              )}
               {data.enrichmentCount && data.enrichmentCount > 0 && (
                 <div 
                   className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white/90 flex items-center justify-center shadow-md animate-pulse"
@@ -698,6 +770,10 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
                     onExpand={() => data.onExpandCard?.(card.id)}
                     color={config.cardColor}
                     onEditingChange={data.onEditingChange}
+                    onGenerateContent={
+                      data.onGenerateCardContent ? () => data.onGenerateCardContent(card.id) : undefined
+                    }
+                    isGenerating={data.generatingCardId === card.id}
                   />
                 ))}
               </div>
@@ -728,6 +804,25 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
             </PopoverTrigger>
             <PopoverContent className="w-48 p-2" align="center">
               <div className="space-y-1">
+                {recommendedCards.length > 0 && (
+                  <>
+                    <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-slate-400">
+                      Suggested
+                    </p>
+                    {recommendedCards.map((template) => (
+                      <Button
+                        key={template.id}
+                        variant="ghost"
+                        className="w-full justify-start gap-2 h-9 text-sm"
+                        onClick={() => data.onAddCard?.(template.cardType, template.id)}
+                      >
+                        <Sparkles className="w-4 h-4 text-emerald-500" />
+                        {template.label}
+                      </Button>
+                    ))}
+                    <div className="border-t border-slate-100 my-2" />
+                  </>
+                )}
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-2 h-9 text-sm"

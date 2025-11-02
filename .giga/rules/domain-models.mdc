@@ -1,60 +1,52 @@
 ---
-description: Defines core data models, relationships, and validation rules for nodes, workspaces, templates and domain organization
+description: Documents core data models, relationships, and validation rules for nodes, workspaces, and templates in the architecture visualization system
 ---
 
 
 # domain-models
 
-Core Data Models:
+## Core Node Model
+- Type-specific node validation rules enforcing domain constraints
+- Relationship mapping between node types (frontend, backend, requirements, etc.)
+- Template application rules based on node domain and type
+- Node lifecycle management with state transitions
 
-1. Node Types
-- Root nodes: Single allowed per workspace, defines project context
-- Frontend nodes: UI/UX components and interactions
-- Backend nodes: Services, APIs, data models
-- Requirements nodes: Business rules and acceptance criteria
-- Documentation nodes: Specifications and technical docs
+## Workspace Model
+- Multi-domain workspace support with ring-based organization
+- Node/edge relationship validation specific to domain boundaries
+- Version control with domain-aware diffing
+- Snapshot management preserving domain context
+- Template application at workspace level
 
-2. Domain Organization
-- Business domain: Strategic and process nodes
-- Product domain: Features and user stories
-- Technical domain: Architecture and implementation
-- Data/AI domain: Analytics and ML components
-- Operations domain: DevOps and infrastructure
+## Template Models
+- Domain-specific templates for different architecture types
+- Business validation rules for template matching
+- Template inheritance and override patterns
+- Version control for template evolution
 
-3. Relationship Types
-- depends-on: Technical dependencies
-- implements: Feature implementation links
-- documents: Documentation connections
-- blocks: Blocker relationships
-- tests: Test coverage mapping
+## Domain Ring Structure
+- Concentric ring organization (Business, Product, Tech, Data-AI, Operations)
+- Node positioning rules within domain rings
+- Cross-domain relationship validation
+- Domain boundary enforcement
 
-4. Workspace Structure
-- Single root node requirement
-- Strict hierarchy enforcement
-- No circular dependencies allowed
-- Domain-based node grouping
-- Version history tracking
+## Validation Rules
+- Node type compatibility matrix for relationships
+- Domain-specific node content validation
+- Template matching criteria by domain
+- Workspace structure validation
 
-5. Template Models
-- Project type templates (SaaS, Mobile, API, etc)
-- Domain-specific node suggestions
-- Relationship recommendations
-- Default validation rules
+## Key Relationships
+- Node-to-node dependencies with domain context
+- Template-to-node application rules
+- Workspace version linkage
+- Node domain membership validation
 
-Validation Rules:
-- Root node uniqueness per workspace
-- Valid parent-child relationships
-- Domain boundary constraints
-- Required fields by node type
-- Relationship type compatibility
-
-Key Files:
-- server/src/models/Workspace.ts
-- server/src/models/PRDTemplate.ts
-- server/src/utils/relationships.ts
-- client/src/utils/validation.ts
-
-Importance Score: 95/100
+## State Management
+- Node lifecycle states with domain context
+- Workspace versioning with domain preservation
+- Template evolution tracking
+- Relationship state validation
 
 $END$
 

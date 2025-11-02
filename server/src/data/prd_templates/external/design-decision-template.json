@@ -1,0 +1,66 @@
+{
+  "template_id": "design_decision_template",
+  "name": "`<Insert Title For Design Decision>`",
+  "version": "1.0.0",
+  "tags": [
+    "insert",
+    "title",
+    "for",
+    "design",
+    "decision",
+    "item",
+    "description",
+    "frontend"
+  ],
+  "category": "Frontend",
+  "description": "| Item      | Description                                   | | ---       | ---                                           |",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Problem Statement",
+      "key": "problem_statement",
+      "content": "Add a brief description of the problem or opportunity the team is addressing and why it is important."
+    },
+    {
+      "title": "Research Insights",
+      "key": "research_insights",
+      "content": "Summarise the research insights that led to the decision."
+    },
+    {
+      "title": "Solution Hypothesis",
+      "key": "solution_hypothesis",
+      "content": "Add a brief description of the solution hypothesis and why the team believes it will solve the problem."
+    },
+    {
+      "title": "Design Options",
+      "key": "design_options",
+      "content": "|           | Option 1  | Option 2  |\n| ---       | ---       | ---       |\n| Overview  |           |           |\n| Benefits  |           |           |\n| Risks     |           |           |"
+    },
+    {
+      "title": "Follow up",
+      "key": "follow_up",
+      "content": "Keep track of your design decision and follow up on any questions or concerns.\n\n| Decision  | Status    | Next Steps    |\n| ---       | ---       | ---           |\n|           |           |               |"
+    },
+    {
+      "title": "Source Files",
+      "key": "source_files",
+      "content": "Type/link to add links to design files\n\n---"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "medium",
+  "estimated_effort_hours": 80,
+  "team_size": 3,
+  "knowledge_graph_tags": [
+    "frontend",
+    "insert",
+    "title",
+    "for",
+    "design",
+    "decision",
+    "item",
+    "description"
+  ]
+}

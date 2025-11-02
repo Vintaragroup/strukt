@@ -1,58 +1,59 @@
 ---
-description: Defines core graph algorithms for domain-driven node layout, relationship management, cycle detection, and auto-organization of architectural components
+description: Technical specification for core graph algorithms implementation including domain layouts, relationships, cycle detection and auto-layout systems
 ---
 
 
 # graph-algorithms
 
-Core Graph Algorithm Components:
+### Domain Layout System
+**Importance: 95/100**
+File: `client/src/utils/domainLayout.ts`
 
-1. Domain-Based Layout Engine (85/100)
-`client/src/utils/domainLayout.ts`
-- Radial layout system organizing nodes into business domain sectors
-- Dynamic angle calculations for optimal sector spacing
-- Node placement optimization within domain boundaries
-- Automated radius adjustment based on node density
-- Parent-child relationship preservation during layout
+- Radial layout algorithm organizes nodes into domain-specific sectors
+- Dynamically calculates sector angles based on node density
+- Smart node distribution within department boundaries (Tech, Product, Business, Data/AI, Operations)
+- Automatic overlap detection and resolution between domains
+- Domain hierarchy preservation during layout adjustments
 
-2. Relationship Management System (90/100) 
-`client/src/utils/relationships.ts`
-- Bidirectional relationship tracking between nodes
-- Cycle detection for preventing circular dependencies
-- Domain-aware edge routing with collision avoidance
-- Relationship type validation and enforcement
-- Hierarchical relationship preservation
+### Relationship Management Engine 
+**Importance: 90/100**
+File: `client/src/utils/relationships.ts`
 
-3. Auto-Layout Algorithm (80/100)
-`client/src/utils/autoLayout.ts`
-- Force-directed layout specialized for domain structures
-- Custom node repulsion based on relationship types
-- Domain boundary constraints during force simulation
-- Incremental layout updates for performance
-- Edge crossing minimization for clarity
+- Domain-specific relationship types (depends-on, blocks, implements, documents, tests)
+- Critical path analysis for project dependencies
+- Circular dependency detection with domain context preservation
+- Intelligent relationship suggestion based on node types and proximity
+- Relationship validation against domain-specific rules
 
-4. Domain Ring System (75/100)
-`client/src/components/DomainRings.tsx`
-- Visual domain separation with configurable rings
-- Dynamic ring sizing based on contained nodes
-- Drag constraints within domain boundaries
-- Domain transition animations
-- Hierarchical domain nesting support
+### Edge Routing System
+**Importance: 85/100**
+File: `client/src/utils/edgeRouting.ts`
 
-5. Graph Operations Engine (70/100)
-`client/src/utils/graphOps.ts`
-- Domain-specific node grouping operations
-- Relationship batch processing system
-- Graph state validation rules
-- Node type compatibility checking
-- Domain membership management
+- Smart edge routing around domain boundaries
+- Dynamic path recalculation based on node movement
+- Bundling of related edges to reduce visual clutter
+- Priority-based routing for critical relationships
+- Domain-aware collision avoidance
 
-Key Business Rules:
-- Nodes must belong to exactly one domain
-- Circular dependencies are prevented across all relationship types
-- Domain boundaries cannot overlap
-- Parent-child relationships must preserve domain hierarchy
-- Cross-domain relationships require explicit validation
+### Auto-Layout Engine
+**Importance: 85/100**
+File: `client/src/utils/autoLayout.ts`
+
+- Force-directed layout with domain constraints
+- Hierarchical positioning based on relationship types
+- Domain clustering with configurable attraction/repulsion
+- Automatic spacing optimization between related nodes
+- Layout preservation during incremental updates
+
+### Graph Operations
+**Importance: 80/100**
+File: `client/src/utils/graphOps.ts`
+
+- Domain-aware node grouping and ungrouping
+- Relationship inheritance during node operations
+- Smart node insertion with relationship preservation
+- Domain boundary recalculation during graph modifications
+- Hierarchical node deletion with relationship cleanup
 
 $END$
 

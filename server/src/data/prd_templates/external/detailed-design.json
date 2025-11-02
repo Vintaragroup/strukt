@@ -1,0 +1,84 @@
+{
+  "template_id": "detailed_design",
+  "name": "`<Insert Title for Detailed Design Document>`",
+  "version": "1.0.0",
+  "tags": [
+    "insert",
+    "title",
+    "for",
+    "detailed",
+    "design",
+    "document",
+    "frontend"
+  ],
+  "category": "Frontend",
+  "description": "Template generated from detailed-design",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Table of Contents",
+      "key": "table_of_contents",
+      "content": "[[_TOC_]]\n\n---"
+    },
+    {
+      "title": "Introduction",
+      "key": "introduction",
+      "content": "### Document Purpose\n\nProvide a brief overview of the purpose of this document. Explain how it fits into the overall project and what it aims to achieve.\n\n### Document Scope\n\nDefine the scope of the detailed design. Specify what is included and excluded in this document.\n\n### Document Audience\n\nIdentify the intended audience for this document, such as architects, engineers, developers, or stakeholders.\n\n---"
+    },
+    {
+      "title": "System Overview",
+      "key": "system_overview",
+      "content": "### High-Level Architecture\n\nProvide a high-level overview of the system architecture. Include a diagram if applicable.\n\n### Key Components\n\nList and describe the key components of the system, such as services, modules, or subsystems.\n\n---"
+    },
+    {
+      "title": "Functional Design",
+      "key": "functional_design",
+      "content": "### Functional Requirements\n\nDetail the functional requirements that the design addresses. Reference any relevant requirements documents.\n\n### Use Cases\n\nDescribe the primary use cases for the system. Include diagrams or workflows where applicable.\n\n### Data Flow\n\nExplain how data flows through the system. Include data flow diagrams or sequence diagrams.\n\n---"
+    },
+    {
+      "title": "Technical Design",
+      "key": "technical_design",
+      "content": "### Component Design\n\nProvide detailed descriptions of each component in the system. Include the following for each component:\n\n- Purpose\n- Inputs and Outputs\n- Dependencies\n- Key Design Decisions\n\n### Integration Points\n\nDescribe how the system integrates with external systems or services. Include details of APIs, protocols, or data formats.\n\n### Data Model\n\nDefine the data model for the system. Include entity-relationship diagrams or schema definitions.\n\n---"
+    },
+    {
+      "title": "Non-Functional Requirements",
+      "key": "non_functional_requirements",
+      "content": "### Performance\n\nSpecify performance requirements, such as response times, throughput, or latency.\n\n### Scalability\n\nDescribe how the system will scale to handle increased load or data volume.\n\n### Availability\n\nDefine availability requirements, such as uptime or failover mechanisms.\n\n### Security\n\nDetail security considerations, such as authentication, authorization, encryption, or compliance requirements.\n\n---"
+    },
+    {
+      "title": "Deployment",
+      "key": "deployment",
+      "content": "### Deployment Architecture\n\nDescribe the deployment architecture, including environments, regions, and infrastructure components.\n\n### Deployment Process\n\nExplain the deployment process, including tools, pipelines, and automation.\n\n---"
+    },
+    {
+      "title": "Operational Considerations",
+      "key": "operational_considerations",
+      "content": "### Monitoring and Alerting\n\nDescribe how the system will be monitored and what alerts will be configured.\n\n### Backup and Recovery\n\nDetail backup and recovery strategies, including frequency, retention, and testing.\n\n### Maintenance\n\nExplain maintenance procedures, such as patching or scaling.\n\n---"
+    },
+    {
+      "title": "Risks and Mitigations",
+      "key": "risks_and_mitigations",
+      "content": "### Identified Risks\n\nList potential risks associated with the design.\n\n### Mitigation Strategies\n\nDescribe strategies to mitigate the identified risks.\n\n---"
+    },
+    {
+      "title": "Appendices",
+      "key": "appendices",
+      "content": "### Glossary\n\nDefine any terms or acronyms used in the document.\n\n### References\n\nList any documents, links, or resources referenced in this document.\n\n---"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "high",
+  "estimated_effort_hours": 120,
+  "team_size": 4,
+  "knowledge_graph_tags": [
+    "frontend",
+    "insert",
+    "title",
+    "for",
+    "detailed",
+    "design",
+    "document"
+  ]
+}

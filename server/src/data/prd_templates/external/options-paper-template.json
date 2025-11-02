@@ -1,0 +1,56 @@
+{
+  "template_id": "options_paper_template",
+  "name": "`<Insert Title For Options Paper>`",
+  "version": "1.0.0",
+  "tags": [
+    "insert",
+    "title",
+    "for",
+    "options",
+    "paper",
+    "item",
+    "description",
+    "product"
+  ],
+  "category": "Product",
+  "description": "| Item | Description | | --- | --- |",
+  "created_at": "2025-10-31",
+  "updated_at": "2025-10-31",
+  "sections": [
+    {
+      "title": "Relevant Data",
+      "key": "relevant_data",
+      "content": "Add any data or feedback the team should consider when making a decision."
+    },
+    {
+      "title": "Background",
+      "key": "background",
+      "content": "Provide context on the decision the team needs to make and include information about the constraints and challenges."
+    },
+    {
+      "title": "Options Considered",
+      "key": "options_considered",
+      "content": "| | Option 1 | Option 2 |\n| --- | --- | --- |\n| Description | | |\n| Pros | | |\n| Cons | | |\n| Impact | | |\n| Estimated Effort | | |\n| Estimated Cost | | |"
+    },
+    {
+      "title": "Action Items",
+      "key": "action_items",
+      "content": "Add action items to close the loop on open questions or concerns\n\n- [ ] Type your task here and mention who the task is assigned to add any task number or link to the task.\n\n---"
+    }
+  ],
+  "suggested_technologies": [],
+  "api_guidance": [],
+  "complexity": "medium",
+  "estimated_effort_hours": 80,
+  "team_size": 3,
+  "knowledge_graph_tags": [
+    "product",
+    "insert",
+    "title",
+    "for",
+    "options",
+    "paper",
+    "item",
+    "description"
+  ]
+}
