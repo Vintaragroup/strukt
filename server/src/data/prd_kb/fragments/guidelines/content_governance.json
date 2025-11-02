@@ -1,0 +1,11 @@
+{
+  "id": "guidelines_content_governance_v1",
+  "type": "guideline",
+  "for": ["Marketing", "Product"],
+  "content": [
+    "Editorial board and approvals",
+    "Style guide adherence",
+    "Accessibility and localization policies",
+    "Refresh cadence and ownership"
+  ]
+}

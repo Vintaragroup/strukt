@@ -1,0 +1,11 @@
+{
+  "id": "ac_case_study_published_v1",
+  "type": "acceptance_criteria",
+  "for": ["Marketing", "Product"],
+  "content": [
+    "Customer approvals (legal/privacy) captured",
+    "Case study live on website with assets",
+    "Localization complete for priority regions",
+    "Performance tracking dashboard available"
+  ]
+}

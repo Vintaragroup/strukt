@@ -1,0 +1,18 @@
+{
+  "id": "case_studies_production_pipeline_v1",
+  "name": "Case Studies Production Pipeline PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define end-to-end pipeline for case studies: sourcing, approvals, production, and publishing." },
+    { "title": "Sourcing & Qualification", "key": "sourcing", "content": "Nomination criteria, customer approvals, legal/privacy, and incentives." },
+    { "title": "Production Workflow", "key": "production", "content": "Outline, interview, draft, SME review, design, localization, and final approvals." },
+    { "title": "Publishing & Distribution", "key": "publishing", "content": "Website templates, assets, syndication, PR/AR, and promotion plan." },
+    { "title": "Measurement & Maintenance", "key": "measurement", "content": "Performance tracking, refresh cadence, and asset governance." }
+  ],
+  "stack_keywords": ["case_study", "content", "production"],
+  "risk_profile": ["legal_risk", "low_quality", "delays"],
+  "kpi_examples": ["Case studies published/quarter", "Influence on pipeline"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

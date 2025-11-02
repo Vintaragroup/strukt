@@ -1,0 +1,18 @@
+{
+  "id": "customer_research_insights_program_v1",
+  "name": "Customer Research & Insights Program PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Establish a recurring research program (qual + quant) with an insights repository and governance." },
+    { "title": "Methods & Sampling", "key": "methods", "content": "Interviews, usability tests, surveys, telemetry; sampling strategy and consent." },
+    { "title": "Repository & Tagging", "key": "repository", "content": "Centralized repository, taxonomy/tagging, de-duplication, and traceability to decisions." },
+    { "title": "Cadence & Governance", "key": "cadence", "content": "Quarterly research roadmap, request intake, approvals, and stakeholder updates." },
+    { "title": "Synthesis & Influence", "key": "synthesis", "content": "Synthesis templates, opportunity trees, and feedback loops into roadmap and GTM." }
+  ],
+  "stack_keywords": ["research", "insights", "repository"],
+  "risk_profile": ["bias", "shelfware", "privacy"],
+  "kpi_examples": ["Study throughput", "Insight adoption", "Time-to-decision"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

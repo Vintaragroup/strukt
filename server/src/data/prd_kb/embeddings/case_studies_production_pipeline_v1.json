@@ -1,0 +1,12 @@
+{
+  "id": "case_studies_production_pipeline_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "sourcing", "vector": []},
+    {"key": "production", "vector": []},
+    {"key": "publishing", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

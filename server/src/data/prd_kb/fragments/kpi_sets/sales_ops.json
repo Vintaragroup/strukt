@@ -1,0 +1,12 @@
+{
+  "id": "kpis_sales_ops_v1",
+  "type": "kpi_set",
+  "for": ["Business", "Marketing", "Analytics"],
+  "content": [
+    "MQL→SQL conversion",
+    "Stage velocity (days) per stage",
+    "Pipeline coverage (x quota)",
+    "Forecast accuracy",
+    "Data completeness %"
+  ]
+}

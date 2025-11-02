@@ -467,5 +467,61 @@
       "embedding": "embeddings/website_information_architecture_v1.json",
       "raw": "raw/website_information_architecture_v1.md"
     }
+    ,
+    {
+      "id": "sales_ops_pipeline_hygiene_v1",
+      "name": "Sales Operations & Pipeline Hygiene PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product", "Analytics"],
+      "tags": ["sales_ops", "pipeline", "sla"],
+      "path": "prds/sales_ops_pipeline_hygiene_v1.json",
+      "embedding": "embeddings/sales_ops_pipeline_hygiene_v1.json",
+      "raw": "raw/sales_ops_pipeline_hygiene_v1.md"
+    },
+    {
+      "id": "customer_research_insights_program_v1",
+      "name": "Customer Research & Insights Program PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product", "Analytics"],
+      "tags": ["research", "insights", "repository"],
+      "path": "prds/customer_research_insights_program_v1.json",
+      "embedding": "embeddings/customer_research_insights_program_v1.json",
+      "raw": "raw/customer_research_insights_program_v1.md"
+    },
+    {
+      "id": "case_studies_production_pipeline_v1",
+      "name": "Case Studies Production Pipeline PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["case_study", "content", "production"],
+      "path": "prds/case_studies_production_pipeline_v1.json",
+      "embedding": "embeddings/case_studies_production_pipeline_v1.json",
+      "raw": "raw/case_studies_production_pipeline_v1.md"
+    },
+    {
+      "id": "content_operations_workflow_v1",
+      "name": "Content Operations & Workflow PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["content_ops", "workflow", "governance"],
+      "path": "prds/content_operations_workflow_v1.json",
+      "embedding": "embeddings/content_operations_workflow_v1.json",
+      "raw": "raw/content_operations_workflow_v1.md"
+    },
+    {
+      "id": "account_based_marketing_abm_program_v1",
+      "name": "Account-Based Marketing (ABM) Program PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product", "Analytics"],
+      "tags": ["abm", "account_tiering", "orchestration"],
+      "path": "prds/account_based_marketing_abm_program_v1.json",
+      "embedding": "embeddings/account_based_marketing_abm_program_v1.json",
+      "raw": "raw/account_based_marketing_abm_program_v1.md"
+    }
   ]
 }

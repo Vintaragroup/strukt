@@ -1,0 +1,18 @@
+{
+  "id": "sales_ops_pipeline_hygiene_v1",
+  "name": "Sales Operations & Pipeline Hygiene PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define pipeline stages, entry/exit criteria, SLA-to-stage times, and data quality standards." },
+    { "title": "Stages & Definitions", "key": "stages", "content": "Standardize stages (lead, MQL, SQL, opportunity stages) with entry/exit definitions." },
+    { "title": "SLAs & Ownership", "key": "slas", "content": "Response time targets, handoffs between SDR/AE/CSM, routing rules, and calendar SLAs." },
+    { "title": "Data Quality & Enrichment", "key": "data_quality", "content": "Required fields, validation, dedupe, enrichment (firmographics/technographics), and audits." },
+    { "title": "Reporting & KPIs", "key": "reporting", "content": "Funnel conversion, stage velocity, aging, forecast accuracy, and hygiene scorecards." }
+  ],
+  "stack_keywords": ["sales_ops", "pipeline", "sla"],
+  "risk_profile": ["dirty_data", "stage_creep", "slow_handoffs"],
+  "kpi_examples": ["MQL→SQL conversion", "Stage velocity targets", "Forecast accuracy"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

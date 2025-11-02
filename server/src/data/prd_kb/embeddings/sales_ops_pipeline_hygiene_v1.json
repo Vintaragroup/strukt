@@ -1,0 +1,12 @@
+{
+  "id": "sales_ops_pipeline_hygiene_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "stages", "vector": []},
+    {"key": "slas", "vector": []},
+    {"key": "data_quality", "vector": []},
+    {"key": "reporting", "vector": []}
+  ]
+}

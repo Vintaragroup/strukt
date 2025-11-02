@@ -1,0 +1,11 @@
+{
+  "id": "rm_research_bias_v1",
+  "type": "risk_mitigation",
+  "for": ["Marketing", "Product", "Analytics"],
+  "content": [
+    "Guardrails: avoid leading questions",
+    "Use mixed methods and triangulation",
+    "Diverse sampling and representation",
+    "Document assumptions and limitations"
+  ]
+}

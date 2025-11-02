@@ -1,0 +1,18 @@
+{
+  "id": "account_based_marketing_abm_program_v1",
+  "name": "Account-Based Marketing (ABM) Program PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define ABM program: account tiering, plays, orchestration across channels, and measurement." },
+    { "title": "Account Tiering & ICP", "key": "tiering", "content": "Tier definitions, selection criteria, and buying committee mapping." },
+    { "title": "Plays & Orchestration", "key": "plays", "content": "1:1, 1:few, 1:many plays; orchestration across ads, email, SDR, events, and web personalization." },
+    { "title": "Data & Signals", "key": "signals", "content": "Intent data, engagement scoring, activity signals, and readiness thresholds." },
+    { "title": "Measurement & Attribution", "key": "measurement", "content": "Account progression, coverage, reach, engagement, and pipeline impact." }
+  ],
+  "stack_keywords": ["abm", "account_tiering", "orchestration"],
+  "risk_profile": ["low_coverage", "misaligned_tiers", "overpersonalization"],
+  "kpi_examples": ["Account coverage", "Engagement score lift", "ABM-sourced pipeline"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

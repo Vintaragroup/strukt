@@ -1,0 +1,12 @@
+{
+  "id": "customer_research_insights_program_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "methods", "vector": []},
+    {"key": "repository", "vector": []},
+    {"key": "cadence", "vector": []},
+    {"key": "synthesis", "vector": []}
+  ]
+}

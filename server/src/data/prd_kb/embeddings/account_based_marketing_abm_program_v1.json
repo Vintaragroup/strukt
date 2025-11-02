@@ -1,0 +1,12 @@
+{
+  "id": "account_based_marketing_abm_program_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "tiering", "vector": []},
+    {"key": "plays", "vector": []},
+    {"key": "signals", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

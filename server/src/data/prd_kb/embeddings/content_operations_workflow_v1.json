@@ -1,0 +1,12 @@
+{
+  "id": "content_operations_workflow_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "intake", "vector": []},
+    {"key": "workflow", "vector": []},
+    {"key": "governance", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

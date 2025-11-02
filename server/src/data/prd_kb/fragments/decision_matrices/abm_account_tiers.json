@@ -1,0 +1,11 @@
+{
+  "id": "dm_abm_account_tiers_v1",
+  "type": "decision_matrix",
+  "for": ["Business", "Marketing", "Analytics"],
+  "content": [
+    "Tier definitions (1:1, 1:few, 1:many)",
+    "Selection criteria (fit + intent)",
+    "Buying committee mapping",
+    "Play eligibility and budgets"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "content_operations_workflow_v1",
+  "name": "Content Operations & Workflow PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define content ops: intake, prioritization, workflow, governance, and localization." },
+    { "title": "Intake & Prioritization", "key": "intake", "content": "Requests, SLAs, editorial board, and prioritization framework." },
+    { "title": "Workflow & Tooling", "key": "workflow", "content": "Briefs, drafting, review, approvals, versioning, and CMS/publishing tooling." },
+    { "title": "Governance & Quality", "key": "governance", "content": "Style guides, brand alignment, accessibility, and translation/localization policies." },
+    { "title": "Measurement & Continuous Improvement", "key": "measurement", "content": "Content KPIs, audits, refresh cadence, and backlog hygiene." }
+  ],
+  "stack_keywords": ["content_ops", "workflow", "governance"],
+  "risk_profile": ["bottlenecks", "quality_drift", "tool_sprawl"],
+  "kpi_examples": ["Cycle time", "On-time rate", "Refresh coverage"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}
