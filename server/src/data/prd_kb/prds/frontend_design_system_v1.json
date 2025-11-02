@@ -1,0 +1,17 @@
+{
+  "id": "frontend_design_system_v1",
+  "name": "Frontend Design System PRD",
+  "version": "1.0.0",
+  "node_types": ["frontend"],
+  "domains": ["Product", "Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Design tokens, components, and guidelines to drive consistent UI/UX across apps."},
+    {"title": "Design Tokens", "key": "design_tokens", "content": "Color, spacing, typography, shadows; theming and dark mode; token governance and release."},
+    {"title": "Component Library", "key": "component_library", "content": "Core components (Button, Input, Modal, Table, Charts) with accessibility and interaction specs."},
+    {"title": "Docs & Governance", "key": "docs_governance", "content": "Storybook docs, contribution workflow, versioning, changelogs, deprecation policy."}
+  ],
+  "stack_keywords": ["design-system", "storybook", "tokens"],
+  "risk_profile": ["inconsistency", "a11y_gaps"],
+  "kpi_examples": ["Adoption ≥ 80%", "A11y violations ≤ 1%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

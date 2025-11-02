@@ -1,0 +1,15 @@
+{
+  "id": "onboarding_user_lifecycle_v1",
+  "type": "onboarding_flow",
+  "for": ["frontend", "backend", "requirement"],
+  "content": [
+    "Invite/Registration",
+    "Email/Phone Verification",
+    "Progressive Profiling",
+    "Welcome Checklist",
+    "First Value Task",
+    "Activation",
+    "Upgrade & Retention Nudges",
+    "Offboarding (Export/Delete)"
+  ]
+}

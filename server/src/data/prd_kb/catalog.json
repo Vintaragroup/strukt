@@ -144,6 +144,94 @@
       "path": "prds/data_pipeline_streaming_v1.json",
       "embedding": "embeddings/data_pipeline_streaming_v1.json",
       "raw": "raw/data_pipeline_streaming_v1.md"
+    },
+    {
+      "id": "cloud_provider_selection_v1",
+      "name": "Cloud Provider Selection PRD (AWS vs Firebase vs Others)",
+      "version": "1.0.0",
+      "node_types": ["domain", "backend", "frontend"],
+      "domains": ["Tech", "Ops"],
+      "tags": ["aws", "firebase", "gcp"],
+      "path": "prds/cloud_provider_selection_v1.json",
+      "embedding": "embeddings/cloud_provider_selection_v1.json",
+      "raw": "raw/cloud_provider_selection_v1.md"
+    },
+    {
+      "id": "user_identity_onboarding_v1",
+      "name": "User Identity, Onboarding, and Management PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "backend", "frontend"],
+      "domains": ["Product", "Tech"],
+      "tags": ["auth", "onboarding", "rbac"],
+      "path": "prds/user_identity_onboarding_v1.json",
+      "embedding": "embeddings/user_identity_onboarding_v1.json",
+      "raw": "raw/user_identity_onboarding_v1.md"
+    },
+    {
+      "id": "payments_stripe_v1",
+      "name": "Stripe Payments Integration PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "frontend"],
+      "domains": ["Tech", "Billing"],
+      "tags": ["stripe", "billing"],
+      "path": "prds/payments_stripe_v1.json",
+      "embedding": "embeddings/payments_stripe_v1.json",
+      "raw": "raw/payments_stripe_v1.md"
+    },
+    {
+      "id": "payments_lemonsqueezy_v1",
+      "name": "Lemon Squeezy Payments Integration PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "frontend"],
+      "domains": ["Tech", "Billing"],
+      "tags": ["lemon-squeezy", "billing"],
+      "path": "prds/payments_lemonsqueezy_v1.json",
+      "embedding": "embeddings/payments_lemonsqueezy_v1.json",
+      "raw": "raw/payments_lemonsqueezy_v1.md"
+    },
+    {
+      "id": "security_compliance_foundation_v1",
+      "name": "Security and Compliance Foundation PRD",
+      "version": "1.0.0",
+      "node_types": ["domain"],
+      "domains": ["Tech", "Ops"],
+      "tags": ["security", "compliance"],
+      "path": "prds/security_compliance_foundation_v1.json",
+      "embedding": "embeddings/security_compliance_foundation_v1.json",
+      "raw": "raw/security_compliance_foundation_v1.md"
+    },
+    {
+      "id": "frontend_design_system_v1",
+      "name": "Frontend Design System PRD",
+      "version": "1.0.0",
+      "node_types": ["frontend"],
+      "domains": ["Product", "Tech"],
+      "tags": ["design-system", "tokens"],
+      "path": "prds/frontend_design_system_v1.json",
+      "embedding": "embeddings/frontend_design_system_v1.json",
+      "raw": "raw/frontend_design_system_v1.md"
+    },
+    {
+      "id": "frontend_performance_observability_v1",
+      "name": "Frontend Performance & Observability PRD",
+      "version": "1.0.0",
+      "node_types": ["frontend"],
+      "domains": ["Tech", "Analytics"],
+      "tags": ["web-vitals", "rum", "sentry"],
+      "path": "prds/frontend_performance_observability_v1.json",
+      "embedding": "embeddings/frontend_performance_observability_v1.json",
+      "raw": "raw/frontend_performance_observability_v1.md"
+    },
+    {
+      "id": "backend_event_sourcing_cqrs_v1",
+      "name": "Backend Event Sourcing & CQRS PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["event-sourcing", "cqrs"],
+      "path": "prds/backend_event_sourcing_cqrs_v1.json",
+      "embedding": "embeddings/backend_event_sourcing_cqrs_v1.json",
+      "raw": "raw/backend_event_sourcing_cqrs_v1.md"
     }
   ]
 }

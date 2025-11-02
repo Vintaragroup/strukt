@@ -1,0 +1,11 @@
+{
+  "id": "frontend_design_system_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "design_tokens", "vector": []},
+    {"key": "component_library", "vector": []},
+    {"key": "docs_governance", "vector": []}
+  ]
+}

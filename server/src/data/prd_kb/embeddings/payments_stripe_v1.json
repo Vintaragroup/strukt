@@ -1,0 +1,11 @@
+{
+  "id": "payments_stripe_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "checkout_billing", "vector": []},
+    {"key": "webhooks_events", "vector": []},
+    {"key": "dunning_invoices", "vector": []}
+  ]
+}

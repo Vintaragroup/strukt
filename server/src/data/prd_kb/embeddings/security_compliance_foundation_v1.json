@@ -1,0 +1,12 @@
+{
+  "id": "security_compliance_foundation_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "identity_access", "vector": []},
+    {"key": "data_protection", "vector": []},
+    {"key": "logging_monitoring", "vector": []},
+    {"key": "privacy_compliance", "vector": []}
+  ]
+}

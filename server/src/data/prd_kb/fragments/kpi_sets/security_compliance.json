@@ -1,0 +1,11 @@
+{
+  "id": "kpis_security_compliance_v1",
+  "type": "kpi_set",
+  "for": ["domain", "backend"],
+  "content": [
+    "Critical vuln remediation < 7 days",
+    "High vuln remediation < 14 days",
+    "DSR completion < 30 days",
+    "Security incident MTTR < 4h"
+  ]
+}

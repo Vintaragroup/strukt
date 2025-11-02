@@ -1,0 +1,10 @@
+{
+  "id": "pattern_webhook_verification_v1",
+  "type": "interface_pattern",
+  "for": ["backend"],
+  "content": {
+    "signature": "Verify via HMAC/signature headers; reject on mismatch; log with request ID",
+    "idempotency": "Deduplicate via event IDs and storage for 24-48h",
+    "retries": "Return non-2xx to trigger retry; implement exponential backoff"
+  }
+}

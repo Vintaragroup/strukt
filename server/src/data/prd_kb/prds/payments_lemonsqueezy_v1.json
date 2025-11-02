@@ -1,0 +1,17 @@
+{
+  "id": "payments_lemonsqueezy_v1",
+  "name": "Lemon Squeezy Payments Integration PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "frontend"],
+  "domains": ["Tech", "Billing"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Sell digital products/subscriptions using Lemon Squeezy; hosted checkouts and webhooks for events."},
+    {"title": "Checkout & Entitlements", "key": "checkout_entitlements", "content": "Hosted checkout links, license keys/access, receipts, VAT/tax handling."},
+    {"title": "Webhooks & Events", "key": "webhooks_events", "content": "Verify signatures; handle order_created, subscription_updated, license_key_created; idempotency."},
+    {"title": "Reporting & Ops", "key": "reporting_ops", "content": "Sales reporting, payouts, refunds; support workflows and reconciliation."}
+  ],
+  "stack_keywords": ["lemon-squeezy", "billing"],
+  "risk_profile": ["reporting_gaps", "webhook_failures"],
+  "kpi_examples": ["Payment success ≥ 98%", "Refund SLA < 24h"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

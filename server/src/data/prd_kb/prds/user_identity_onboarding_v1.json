@@ -1,0 +1,17 @@
+{
+  "id": "user_identity_onboarding_v1",
+  "name": "User Identity, Onboarding, and Management PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "backend", "frontend"],
+  "domains": ["Product", "Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "End-to-end identity and onboarding: registration, verification, login, session, profile, roles, and lifecycle events."},
+    {"title": "AuthN & AuthZ", "key": "authn_authz", "content": "OIDC/OAuth2 with PKCE; sessions vs JWT; role-based and attribute-based access control; MFA optional."},
+    {"title": "Onboarding Flow", "key": "onboarding_flow", "content": "Progressive profiling, email/phone verification, welcome checklist, product tour, first-value tasks."},
+    {"title": "User Management", "key": "user_management", "content": "Profile updates, password resets, device/session management, privacy controls, account deletion/export."}
+  ],
+  "stack_keywords": ["oidc", "oauth2", "rbac"],
+  "risk_profile": ["account_takeover", "privacy"],
+  "kpi_examples": ["Activation rate ≥ 60%", "Password reset success ≥ 95%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

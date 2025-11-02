@@ -1,0 +1,21 @@
+{
+  "id": "decision_cloud_provider_selection_v1",
+  "type": "decision_matrix",
+  "for": ["domain", "backend", "frontend"],
+  "content": {
+    "criteria": [
+      "latency", "scale", "data_residency", "compliance", "time_to_market", "managed_services_fit", "lock_in_risk", "team_expertise", "cost_model"
+    ],
+    "weights": {
+      "latency": 0.15,
+      "scale": 0.15,
+      "data_residency": 0.1,
+      "compliance": 0.1,
+      "time_to_market": 0.15,
+      "managed_services_fit": 0.1,
+      "lock_in_risk": 0.1,
+      "team_expertise": 0.1,
+      "cost_model": 0.05
+    }
+  }
+}

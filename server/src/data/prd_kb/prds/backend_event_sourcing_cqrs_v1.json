@@ -1,0 +1,17 @@
+{
+  "id": "backend_event_sourcing_cqrs_v1",
+  "name": "Backend Event Sourcing & CQRS PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Model state as an append-only event log; separate reads and writes for scalability and auditability."},
+    {"title": "Event Model", "key": "event_model", "content": "Event definitions, versioning, idempotency, schema evolution, and ordering guarantees."},
+    {"title": "Projections & Read Models", "key": "projections", "content": "Materialized views, rebuild strategies, consistency (eventual vs strong) by use case."},
+    {"title": "Operations & Recovery", "key": "operations_recovery", "content": "Snapshots, replay, migration, backfills, and incident response procedures."}
+  ],
+  "stack_keywords": ["event-sourcing", "cqrs"],
+  "risk_profile": ["complexity", "data_consistency"],
+  "kpi_examples": ["Rebuild time < 2h for 1B events", "Event processing lag < 1s"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

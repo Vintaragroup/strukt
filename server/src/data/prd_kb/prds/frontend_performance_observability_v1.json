@@ -1,0 +1,17 @@
+{
+  "id": "frontend_performance_observability_v1",
+  "name": "Frontend Performance & Observability PRD",
+  "version": "1.0.0",
+  "node_types": ["frontend"],
+  "domains": ["Tech", "Analytics"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Define Web Vitals targets, RUM, error tracking, and dashboards to maintain UX performance and reliability."},
+    {"title": "Web Vitals Targets", "key": "web_vitals_targets", "content": "LCP < 2.5s (p75), INP < 200ms (p75), CLS < 0.1; route-level budgets and guardrails."},
+    {"title": "RUM & Error Tracking", "key": "rum_error_tracking", "content": "Collect RUM metrics; client error tracking (Sentry); source maps; sampling and PII scrubbing."},
+    {"title": "Dashboards & Alerts", "key": "dashboards_alerts", "content": "Performance dashboards by route; alerting for regressions and error spikes; release health."}
+  ],
+  "stack_keywords": ["web-vitals", "rum", "sentry"],
+  "risk_profile": ["regressions", "blind_spots"],
+  "kpi_examples": ["LCP < 2.5s p75", "JS error rate < 0.2%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

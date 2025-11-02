@@ -1,0 +1,17 @@
+{
+  "id": "payments_stripe_v1",
+  "name": "Stripe Payments Integration PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "frontend"],
+  "domains": ["Tech", "Billing"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Subscription billing and one-time payments using Stripe with webhooks and dashboard reconciliation."},
+    {"title": "Checkout & Billing", "key": "checkout_billing", "content": "Stripe Checkout/Elements, tax rates, coupons, free trials, proration, refunds."},
+    {"title": "Webhooks & Events", "key": "webhooks_events", "content": "Handle invoice.payment_succeeded/failed, customer.subscription.updated; verify signatures; idempotency."},
+    {"title": "Dunning & Invoices", "key": "dunning_invoices", "content": "Retries, emails, grace periods, invoice PDFs; dashboard for support ops."}
+  ],
+  "stack_keywords": ["stripe", "billing"],
+  "risk_profile": ["revenue_leakage", "webhook_failures"],
+  "kpi_examples": ["Payment success rate ≥ 98%", "Dunning recovery ≥ 30%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

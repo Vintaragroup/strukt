@@ -1,0 +1,18 @@
+{
+  "id": "security_compliance_foundation_v1",
+  "name": "Security and Compliance Foundation PRD",
+  "version": "1.0.0",
+  "node_types": ["domain"],
+  "domains": ["Tech", "Ops"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Baseline policies and controls for security and compliance (SOC2, GDPR, HIPAA as applicable)."},
+    {"title": "Identity & Access", "key": "identity_access", "content": "SSO/MFA, least-privilege IAM, break-glass, secrets management, rotation policies."},
+    {"title": "Data Protection", "key": "data_protection", "content": "Encryption in transit/at rest, key management, data classification, retention and deletion."},
+    {"title": "Logging & Monitoring", "key": "logging_monitoring", "content": "Structured logs, SIEM, anomaly detection, incident response runbooks."},
+    {"title": "Privacy & Compliance", "key": "privacy_compliance", "content": "DSRs (export/delete), consent management, DPIA, vendor risk, audit trails."}
+  ],
+  "stack_keywords": ["soc2", "gdpr", "hipaa"],
+  "risk_profile": ["non_compliance", "data_breach"],
+  "kpi_examples": ["Critical vuln SLA < 7 days", "DSR completion < 30 days"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

@@ -1,0 +1,18 @@
+{
+  "id": "cloud_provider_selection_v1",
+  "name": "Cloud Provider Selection PRD (AWS vs Firebase vs Others)",
+  "version": "1.0.0",
+  "node_types": ["domain", "backend", "frontend"],
+  "domains": ["Tech", "Ops"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Decision framework to select a primary platform between AWS, Firebase, or alternatives based on product needs, team skills, and constraints."},
+    {"title": "Decision Criteria", "key": "decision_criteria", "content": "Latency, scale, data residency, compliance, time-to-market, managed services fit, lock-in risk, team expertise, cost model (CapEx/OpEx)."},
+    {"title": "AWS Profile", "key": "aws_profile", "content": "EC2/ECS/EKS for control and scale; RDS/Aurora; API Gateway + Lambda; IAM and Organizations; best for complex, scalable, multi-service backends."},
+    {"title": "Firebase Profile", "key": "firebase_profile", "content": "Auth, Firestore, Functions, Hosting; rapid prototyping and mobile/web apps; great for realtime and small teams; lock-in considerations."},
+    {"title": "Hybrid & Migration", "key": "hybrid_migration", "content": "Start on Firebase; migrate hot paths to AWS microservices over time; data export strategies; auth federation; cost control and observability."}
+  ],
+  "stack_keywords": ["aws", "firebase", "gcp"],
+  "risk_profile": ["lock_in", "compliance"],
+  "kpi_examples": ["Time-to-market < 4 weeks MVP", "Cost per active user within target"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

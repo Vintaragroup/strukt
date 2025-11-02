@@ -1,0 +1,11 @@
+{
+  "id": "frontend_performance_observability_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "web_vitals_targets", "vector": []},
+    {"key": "rum_error_tracking", "vector": []},
+    {"key": "dashboards_alerts", "vector": []}
+  ]
+}

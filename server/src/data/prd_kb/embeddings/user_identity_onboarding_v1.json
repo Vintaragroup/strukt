@@ -1,0 +1,11 @@
+{
+  "id": "user_identity_onboarding_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "authn_authz", "vector": []},
+    {"key": "onboarding_flow", "vector": []},
+    {"key": "user_management", "vector": []}
+  ]
+}

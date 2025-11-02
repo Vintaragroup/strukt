@@ -1,0 +1,12 @@
+{
+  "id": "cloud_provider_selection_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "decision_criteria", "vector": []},
+    {"key": "aws_profile", "vector": []},
+    {"key": "firebase_profile", "vector": []},
+    {"key": "hybrid_migration", "vector": []}
+  ]
+}
