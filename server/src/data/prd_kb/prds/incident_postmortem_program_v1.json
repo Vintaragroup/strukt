@@ -1,0 +1,17 @@
+{
+  "id": "incident_postmortem_program_v1",
+  "name": "Incident Postmortem Program PRD",
+  "version": "1.0.0",
+  "node_types": ["doc"],
+  "domains": ["Ops", "Tech"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define postmortem workflow, blameless culture, and timelines." },
+    { "title": "Template", "key": "template", "content": "Incident summary, impact, timeline, root cause, contributing factors, actions.", "card_templates": ["runbook"], "tags": ["postmortem", "rca"] },
+    { "title": "Workflow & Review", "key": "workflow", "content": "Draft → Tech review → Stakeholder review → Publish; follow-up tracking." },
+    { "title": "Measurement", "key": "measurement", "content": "Time-to-postmortem, action item completion, recurrence rate.", "card_templates": ["okrCard"] }
+  ],
+  "stack_keywords": ["postmortem", "rca", "runbook"],
+  "risk_profile": ["no_followup", "blame_culture"],
+  "kpi_examples": ["Action completion", "Recurrence rate", "Time-to-postmortem"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "kpis_docs_analytics_v1",
+  "type": "kpi_set",
+  "for": ["doc"],
+  "content": [
+    "Search success rate (queries with clicks)",
+    "Time to first success (TTFS)",
+    "Bounce rate and scroll depth",
+    "Task completion rate (from quickstarts)",
+    "404s and broken anchor rate",
+    "Article helpfulness score (CSAT)"
+  ]
+}

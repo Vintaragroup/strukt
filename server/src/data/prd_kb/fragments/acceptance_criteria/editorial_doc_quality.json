@@ -1,0 +1,14 @@
+{
+  "id": "acceptance_editorial_doc_quality_v1",
+  "type": "acceptance_criteria",
+  "for": ["doc"],
+  "content": [
+    "Titles follow style guide; H1 matches nav label",
+    "Front-matter includes owner, last-reviewed date, and tags",
+    "All links resolve (no 404s); anchors verified",
+    "Code samples compile/run or are tested via CI snippets",
+    "Images have alt text; tables are accessible",
+    "Reading level and clarity pass automated lint checks",
+    "Page has clear next steps and related links"
+  ]
+}

@@ -13,60 +13,60 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Core Business Logic Components:
+## Core Architecture Generation System
+The system orchestrates AI-driven architecture generation through multiple specialized services:
 
-1. Domain-Specific AI Enrichment Pipeline
-- Intelligent template matching system for software architecture documentation
-- Multi-stage content generation with domain awareness
-- Custom validation rules for architectural components
-- Specialized prompt engineering for technical documentation
-Importance Score: 90
+### Generation Pipeline (server/src/services/GenerationService.ts)
+- Manages workspace generation using specialized GPT models
+- Implements domain-specific template matching
+- Handles multi-stage generation with fallback mechanisms
+- Importance Score: 95
 
-2. Domain Layout & Organization System
-- Radial layout engine for business domain visualization 
-- Custom domain ring calculations for department separation
-- Business relationship type management
-- Critical path analysis for dependencies
-File Path: client/src/utils/domainLayout.ts
-Importance Score: 85
+### Context Management (server/src/services/ContextInjector.ts) 
+- Builds AI prompts through workspace analysis
+- Detects and classifies workspace archetypes
+- Assembles hierarchical context for enhanced generation
+- Importance Score: 90
 
-3. Graph-Based Relationship Analysis
-- Circular dependency detection
-- Business relationship suggestion engine
-- Domain-specific validation rules
-- Relationship metadata management
-File Path: server/src/services/relationships.ts
-Importance Score: 85
+### Knowledge Base Integration (server/src/services/KBService.ts)
+- Manages PRD template scoring and matching
+- Implements fragment prioritization for different domains
+- Composes PRD sections based on node types
+- Importance Score: 85
 
-4. AI-Driven Project Scaffolding
-- Context-aware project template selection
-- Intelligent naming and categorization
-- Theme detection with domain rules
-- Multi-step wizard with adaptive suggestions
-File Path: server/src/services/ai/wizard.ts
-Importance Score: 80
+## Visualization and Organization
 
-5. Vector Search for Documentation
-- Custom relevance scoring for templates
-- Multi-factor template ranking
-- Semantic matching with confidence scoring
-- Intelligent template recommendations
-File Path: server/src/services/PRDRetrievalService.ts
-Importance Score: 75
+### Domain Layout System (client/src/utils/domainLayout.ts)
+- Implements radial layout for business domains
+- Manages department hierarchies and positioning
+- Handles smart node distribution
+- Importance Score: 90
 
-Key Integration Points:
-- Domain-specific template matching
-- AI content generation pipeline
-- Relationship management system
-- Graph-based architecture analysis
-- Context-aware suggestion engine
+### Relationship Management (client/src/utils/relationships.ts)
+- Defines domain-specific relationship types
+- Analyzes critical paths in dependency chains
+- Suggests relationships between node types
+- Importance Score: 85
 
-The system implements a sophisticated approach to software architecture documentation with AI assistance, focusing on:
-- Domain-driven organization
-- Intelligent relationship management
-- Context-aware content generation
-- Template-based documentation
-- Business relationship analysis
+### Node Enhancement (client/src/components/AIEnrichmentModal.tsx)
+- Manages AI-driven content enrichment
+- Handles template-based question generation
+- Processes structured outputs for cards and metadata
+- Importance Score: 80
+
+## Integration Components
+
+### Suggestion Engine (client/src/services/aiSuggestions.ts)
+- Provides AI-driven node suggestions
+- Implements fallback to heuristic suggestions
+- Manages feedback collection for improvement
+- Importance Score: 85
+
+### API Context Processing (client/src/services/specIntegrations.ts)
+- Processes OpenAPI/Postman specifications
+- Generates summaries for integration points
+- Manages API context for suggestions
+- Importance Score: 80
 
 $END$
 

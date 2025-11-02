@@ -1,0 +1,15 @@
+{
+  "id": "template_postmortem_report_v1",
+  "type": "template",
+  "for": ["Ops", "Tech"],
+  "content": [
+    "Summary: what happened, when, and impact",
+    "Timeline: key events with timestamps",
+    "Detection: how it was discovered and alerting efficacy",
+    "Root cause and contributing factors",
+    "Customer impact and communications",
+    "What went well / what didn't",
+    "Actions: remediation, prevention, and owners with due dates",
+    "Follow-up: verification plan and review cadence"
+  ]
+}

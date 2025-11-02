@@ -1,0 +1,18 @@
+{
+  "id": "security_compliance_hardening_program_v1",
+  "name": "Security & Compliance Hardening Program PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "domain"],
+  "domains": ["Tech", "Ops"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define hardening roadmap across auth, secrets, data-at-rest/in-transit, and SDLC controls." },
+    { "title": "Access & Identity", "key": "identity", "content": "RBAC/ABAC, SSO/SAML/OIDC, service accounts, key rotation.", "card_templates": ["businessCase"], "tags": ["rbac", "oidc", "secrets"] },
+    { "title": "Data Protection", "key": "data", "content": "Encryption, KMS, tokenization, PII handling, audit trails.", "tags": ["encryption", "kms", "pii"] },
+    { "title": "SDLC Controls", "key": "sdlc", "content": "Static/dynamic scanning, dependency policies, supply chain security.", "tags": ["sast", "dast", "supply_chain"] },
+    { "title": "Compliance", "key": "compliance", "content": "SOC2 baseline, ISO27001 mapping, incident reporting workflows.", "card_templates": ["okrCard"] }
+  ],
+  "stack_keywords": ["rbac", "oidc", "kms", "sast", "dast", "supply_chain"],
+  "risk_profile": ["secret_leak", "data_breach"],
+  "kpi_examples": ["Vuln MTTR", "Secrets rotation compliance", "Audit pass rate"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

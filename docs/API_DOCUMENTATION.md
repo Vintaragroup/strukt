@@ -1,7 +1,7 @@
 # Complete API Reference - Strukt Phase 3
 
 **Version**: 1.0.0  
-**Last Updated**: October 23, 2025  
+**Last Updated**: November 2, 2025  
 **Status**: ✅ Complete  
 
 ---
@@ -625,6 +625,32 @@ const result = await fetch(`/api/generation/queue/${queueResult.jobId}/result`)
 - **KB Health**: /api/kb/health
 - **Issues**: Check error messages and circuit breaker state
 - **Monitoring**: Queue stats at /api/generation/queue/stats
+
+---
+
+## Knowledge Base (KB)
+
+The Knowledge Base is a file-backed collection of PRDs and fragments used for deterministic composition and suggestions.
+
+Endpoints:
+
+- GET /api/kb/health
+  - Returns KB availability, version, and basic counts.
+
+- GET /api/kb/catalog
+  - Returns the catalog index of PRDs with paths to normalized JSON, raw markdown, and embedding stubs.
+
+- POST /api/kb/compose
+  - Request Body example:
+    {
+      "filters": { "domains": ["Marketing", "Product"], "tags": ["seo"] }
+    }
+  - Returns a deterministic composition: selected PRDs and prioritized fragments.
+
+Notes:
+
+- In-memory TTL cache (configurable via KB_CACHE_TTL_MS, default 60s) reduces filesystem reads.
+- Validation script `npm --prefix server run kb:validate` ensures catalog integrity and fragment schema compliance.
 
 ---
 

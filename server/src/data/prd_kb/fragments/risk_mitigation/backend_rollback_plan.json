@@ -1,0 +1,11 @@
+{
+  "id": "risk_mitigation_backend_rollback_plan_v1",
+  "type": "risk_mitigation",
+  "for": ["backend", "domain"],
+  "content": [
+    {"risk": "Failed deployment", "mitigation": "Blue/green or canary with automated rollback on health checks"},
+    {"risk": "Data migration issue", "mitigation": "Write reversible migrations and pre-flight checks; backup/restore runbook"},
+    {"risk": "Config drift", "mitigation": "Immutable builds, IaC, and config validation in CI"},
+    {"risk": "Broken dependency", "mitigation": "Pin versions with SLO-based monitors and circuit breakers"}
+  ]
+}

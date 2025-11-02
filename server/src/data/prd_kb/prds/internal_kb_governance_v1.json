@@ -1,0 +1,18 @@
+{
+  "id": "internal_kb_governance_v1",
+  "name": "Internal Knowledge Base Governance PRD",
+  "version": "1.0.0",
+  "node_types": ["doc"],
+  "domains": ["Ops", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define governance, ownership, and lifecycle for internal knowledge bases." },
+    { "title": "Structure & Taxonomy", "key": "taxonomy", "content": "Spaces, categories, tagging standards; content model and templates.", "card_templates": ["kbArticle"], "tags": ["taxonomy", "templates"] },
+    { "title": "Workflow & SLAs", "key": "workflow", "content": "Draft → Review → Approve → Publish; freshness SLAs and review cadence.", "tags": ["workflow", "sla"] },
+    { "title": "Quality & Style", "key": "style", "content": "Voice/tone, inclusive language, accessibility; linting and broken-link checks.", "card_templates": ["styleGuide"] },
+    { "title": "Measurement", "key": "measurement", "content": "Search success, bounce, time on page; content gap analysis.", "card_templates": ["okrCard"] }
+  ],
+  "stack_keywords": ["confluence", "notion", "wiki", "taxonomy", "linting"],
+  "risk_profile": ["stale_content", "search_failure"],
+  "kpi_examples": ["Freshness compliance", "Search success", "Resolution time"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "pattern_websocket_handshake_v1",
+  "type": "interface_pattern",
+  "for": ["backend"],
+  "content": {
+    "protocol": "Sec-WebSocket-Protocol negotiation with versioning",
+    "auth": "JWT or session token passed during upgrade; periodic reauth",
+    "heartbeat": "Ping/pong interval and disconnect policy",
+    "errors": "Close codes and retry/backoff guidance"
+  }
+}

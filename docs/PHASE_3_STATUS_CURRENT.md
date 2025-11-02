@@ -1,5 +1,22 @@
 # ✅ Phase 3 Status Report - 50% Complete
 
+> Update: November 2, 2025
+
+Recent additions and confirmations:
+
+- Knowledge Base (KB)
+   - Added 6 PRDs: forecasting, editorial SEO refresh, localization workflow, UTM taxonomy, competitive replacement, dev marketing tutorial standards.
+   - Added 6 supporting fragments: UTM guidelines, editorial refresh checklist, translation-ready ACs, forecasting methodologies decision matrix, vendor replacement risk mitigation, dev marketing KPIs.
+   - Catalog updated; validator PASS; annotated restore tag created.
+
+- KB API and performance
+   - /api/kb/health documented and available; in-memory TTL cache added to reduce FS reads.
+   - API docs updated with a Knowledge Base section and Last Updated set to Nov 2, 2025.
+
+- Next up for generation testing
+   - Ensure OPENAI_API_KEY present (verified in server/.env) and seed PRD templates to Mongo for ContextInjector.
+   - Use /api/generation/health to confirm availability, then run /api/generation/generate on a test workspace.
+
 **Date**: October 23, 2025  
 **Phase**: Phase 3 - PRD-Powered Generation  
 **Overall Status**: 🟢 ON SCHEDULE (50% complete, 5 of 10 tasks)  

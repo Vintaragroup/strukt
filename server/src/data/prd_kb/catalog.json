@@ -590,5 +590,72 @@
       "embedding": "embeddings/developer_marketing_tutorials_sdk_standards_v1.json",
       "raw": "raw/developer_marketing_tutorials_sdk_standards_v1.md"
     }
+    ,
+    {
+      "id": "api_documentation_program_v1",
+      "name": "API Documentation Program PRD",
+      "version": "1.0.0",
+      "node_types": ["doc"],
+      "domains": ["Tech", "Product", "Ops"],
+      "tags": ["docs", "openapi", "sdk"],
+      "path": "prds/api_documentation_program_v1.json",
+      "embedding": "embeddings/api_documentation_program_v1.json",
+      "raw": "raw/api_documentation_program_v1.md"
+    },
+    {
+      "id": "internal_kb_governance_v1",
+      "name": "Internal Knowledge Base Governance PRD",
+      "version": "1.0.0",
+      "node_types": ["doc"],
+      "domains": ["Ops", "Product"],
+      "tags": ["docs", "governance", "taxonomy"],
+      "path": "prds/internal_kb_governance_v1.json",
+      "embedding": "embeddings/internal_kb_governance_v1.json",
+      "raw": "raw/internal_kb_governance_v1.md"
+    },
+    {
+      "id": "release_notes_workflow_v1",
+      "name": "Release Notes Workflow PRD",
+      "version": "1.0.0",
+      "node_types": ["doc"],
+      "domains": ["Product", "Ops", "Marketing"],
+      "tags": ["release_notes", "changelog", "docs"],
+      "path": "prds/release_notes_workflow_v1.json",
+      "embedding": "embeddings/release_notes_workflow_v1.json",
+      "raw": "raw/release_notes_workflow_v1.md"
+    },
+    {
+      "id": "support_kb_maintenance_v1",
+      "name": "Support Knowledge Base Maintenance PRD",
+      "version": "1.0.0",
+      "node_types": ["doc"],
+      "domains": ["Ops", "Product"],
+      "tags": ["support_kb", "docs", "sla"],
+      "path": "prds/support_kb_maintenance_v1.json",
+      "embedding": "embeddings/support_kb_maintenance_v1.json",
+      "raw": "raw/support_kb_maintenance_v1.md"
+    },
+    {
+      "id": "incident_postmortem_program_v1",
+      "name": "Incident Postmortem Program PRD",
+      "version": "1.0.0",
+      "node_types": ["doc"],
+      "domains": ["Ops", "Tech"],
+      "tags": ["postmortem", "rca", "runbook"],
+      "path": "prds/incident_postmortem_program_v1.json",
+      "embedding": "embeddings/incident_postmortem_program_v1.json",
+      "raw": "raw/incident_postmortem_program_v1.md"
+    },
+    {
+      "id": "security_compliance_hardening_program_v1",
+      "name": "Security & Compliance Hardening Program PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "domain"],
+      "domains": ["Tech", "Ops"],
+      "tags": ["security", "compliance", "hardening"],
+      "path": "prds/security_compliance_hardening_program_v1.json",
+      "embedding": "embeddings/security_compliance_hardening_program_v1.json",
+      "raw": "raw/security_compliance_hardening_program_v1.md"
+    }
   ]
 }

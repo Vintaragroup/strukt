@@ -1,53 +1,60 @@
 ---
-description: Implementation specifications for graph-based domain layout, relationship management, and auto-layout algorithms
+description: Core implementation of graph algorithms for domain layout, relationship management, cycle detection, and automated layout optimization
 ---
 
 
 # graph-algorithms
 
-### Core Domain Layout System
+## Domain Layout Engine
+- Implements domain-driven radial layout for organizing nodes by business domains
+- Handles smart sector allocation and boundary management for domains
+- Dynamic angle calculation based on domain relationships
+- Custom collision avoidance for nodes within domains
+Importance Score: 95
+
+## Relationship Management System
+- Domain-specific relationship type management and validation
+- Cycle detection for technical dependencies
+- Critical path analysis for relationship chains
+- Smart relationship suggestion based on node types and domains
 Importance Score: 90
-File: `client/src/utils/domainLayout.ts`
 
-Specialized radial layout algorithm for organizing nodes into business domains:
-- Dynamic ring radius calculation based on node density
-- Domain-specific angle allocation for different business units
-- Smart node distribution within domain sectors
-- Collision detection and avoidance between nodes
-- Domain boundary enforcement with padding
-
-### Relationship Management 
+## Auto-Layout Optimization
+- Multi-stage layout optimization with domain constraints
+- Force-directed layout with business domain gravity
+- Custom node distribution algorithms for domain balance
+- Edge crossing minimization with domain awareness
 Importance Score: 85
-File: `client/src/utils/relationships.ts`
 
-Custom graph traversal and validation system:
-- Relationship type enforcement based on node domains
-- Bi-directional relationship validation
-- Cycle detection in dependency chains
-- Critical path analysis for project dependencies
-- Relationship suggestion engine using domain context
-
-### Auto-Layout Engine
+## Graph Operations
+- Domain-aware node grouping and clustering
+- Relationship path optimization between domains
+- Smart edge routing with domain boundary respect
+- Hierarchical layout management within domains
 Importance Score: 80
-File: `client/src/utils/autoLayout.ts`
 
-Domain-aware force-directed layout algorithm:
-- Node positioning based on relationship strength
-- Domain boundary constraints
-- Hierarchical layout within domains
-- Edge crossing minimization
-- Node cluster detection and spacing
+## Domain Ring System
+- Implements concentric ring layout for domain visualization
+- Dynamic sector sizing based on node density
+- Custom collision detection for domain boundaries
+- Automatic domain expansion/contraction based on content
+Importance Score: 85
 
-### Edge Routing System
+## Edge Routing Engine
+- Smart path finding between domains
+- Custom routing around domain boundaries
+- Relationship type-specific routing strategies
+- Dynamic bend point calculation for clarity
 Importance Score: 75
-File: `client/src/utils/edgeRouting.ts`
 
-Smart edge routing algorithm for domain-based layouts:
-- Domain-aware path finding
-- Obstacle avoidance with domain rings
-- Bundle edge routing for parallel relationships
-- Smart anchor point selection based on node types
-- Dynamic path recalculation on node movement
+## Graph Validation System
+- Domain relationship constraint validation
+- Cycle detection in cross-domain relationships
+- Path validity checking across domain boundaries
+- Relationship type compatibility verification
+Importance Score: 80
+
+The system uniquely combines domain-driven layout algorithms with business relationship management to create an intelligent graph visualization system that respects organizational and technical boundaries while optimizing for clarity and usability.
 
 $END$
 

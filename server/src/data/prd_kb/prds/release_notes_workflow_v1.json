@@ -1,0 +1,18 @@
+{
+  "id": "release_notes_workflow_v1",
+  "name": "Release Notes Workflow PRD",
+  "version": "1.0.0",
+  "node_types": ["doc"],
+  "domains": ["Product", "Ops", "Marketing"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define release notes process, audience segmentation, and publishing channels." },
+    { "title": "Changelog Intake", "key": "intake", "content": "Sources: PR titles, labels, commit messages; standard labels and templates.", "card_templates": ["releaseNotes"] },
+    { "title": "Editing & QA", "key": "editing", "content": "Style guide, clarity checks, screenshots, links, and accessibility.", "card_templates": ["styleGuide"], "tags": ["style", "accessibility"] },
+    { "title": "Publishing", "key": "publishing", "content": "Website, in-app, email; localization/translation flow; versioning and archives." },
+    { "title": "Measurement", "key": "measurement", "content": "Open rate, click-through, feature adoption, and support deflection.", "card_templates": ["okrCard"] }
+  ],
+  "stack_keywords": ["changelog", "release_notes", "localization"],
+  "risk_profile": ["low_visibility", "incorrect_scoping"],
+  "kpi_examples": ["Open rate", "Feature adoption", "Support deflection"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,73 +1,65 @@
 ---
-description: Handles the circular visualization and organization of domain-based node structures in a radial layout system
+description: Technical specification for domain-based radial visualization system with sector calculations and node hierarchy management
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements specialized domain-based node organization using a radial layout approach:
-
-### Core Domain Ring Logic
-- Calculates sector angles based on domain importance and node density
-- Assigns nodes to appropriate rings based on hierarchy level and domain type
-- Manages domain-specific color schemes and visual indicators
-- Handles collisions between nodes within and across rings
+### Core Domain Organization System
+- Implements specialized radial layout algorithm for organizing nodes into domain sectors
+- Dynamic sector size calculation based on node density and importance 
+- Five primary domains: Product, Technology, Business, Data/AI, Operations
+- Automatic node distribution within sectors based on relationships
 Importance Score: 95
 
-Implementation in `client/src/components/DomainRings.tsx`:
-```typescript
-interface DomainRing {
-  radius: number
-  sectors: DomainSector[]
-  nodes: NodeData[]
-}
+### Domain Ring Manager
+`client/src/components/DomainRings.tsx`
+- Controls domain ring visualization and interaction
+- Handles sector boundary calculations and transitions
+- Manages node placement within sectors using polar coordinates
+- Implements collision detection between nodes in same sector
+Importance Score: 90
 
-// Custom domain sector calculation
-calculateSectorAngles(domains: Domain[]): number[] {
-  // Domain-specific angle allocation based on importance weights
-  // Returns array of angles for each domain sector
-}
-```
-
-### Domain Layout Engine
-- Positions nodes using polar coordinates within their assigned sectors
-- Maintains minimum spacing between related nodes
-- Optimizes node distribution to minimize edge crossings
-- Handles dynamic resizing of rings based on content
+### Layout Engine 
+`client/src/utils/domainLayout.ts`
+- Calculates optimal node positions within domain sectors
+- Implements force-directed layout within sector constraints
+- Handles sector resize and reflow operations
+- Maintains hierarchical relationships during layout
 Importance Score: 85
 
-Implementation in `client/src/utils/domainLayout.ts`:
-```typescript
-class DomainLayoutEngine {
-  assignNodesToDomains(nodes: Node[]): DomainAssignment
-  calculateRingRadii(assignments: DomainAssignment): number[]
-  optimizeNodePositions(rings: DomainRing[]): NodePosition[]
-}
-```
-
-### Domain-Aware Node Management  
-- Tracks node domain membership and relationships
-- Handles domain transitions when nodes are moved
-- Maintains parent-child relationships across domain boundaries
-- Updates domain statistics and metrics
+### Key Features:
+1. Sector Management
+- Dynamic sector angle calculation based on domain importance
+- Smart sector resizing based on node density
+- Smooth transitions during sector changes
 Importance Score: 80
 
-Implementation in `client/src/components/CustomNode.tsx`:
-```typescript
-interface DomainNode {
-  domain: string
-  level: number
-  parentDomain?: string
-  childDomains: string[]
-}
-```
+2. Node Positioning
+- Hierarchical node placement within sectors
+- Distance-based positioning from sector center
+- Smart overlap avoidance within sectors
+Importance Score: 85
 
-The domain ring system serves as the core organizational structure, implementing specialized business rules for:
-- Domain hierarchy management
-- Cross-domain relationships
-- Visual domain separation
-- Node positioning optimization
-- Domain-based filtering and grouping
+3. Domain Relationships
+- Visual connection handling between domains
+- Cross-domain relationship visualization
+- Relationship strength indicators
+Importance Score: 80
+
+4. Hierarchy Management
+- Parent-child relationship visualization
+- Sub-domain organization within main domains
+- Hierarchical collapse/expand functionality
+Importance Score: 85
+
+5. Domain-specific Rules
+- Custom layout rules per domain type
+- Domain-specific node spacing algorithms
+- Visual differentiation between domains
+Importance Score: 75
+
+The domain ring system implements a unique approach to organizing and visualizing software architecture components using a radial layout with domain-specific sectors. Each sector represents a key business domain with its own layout rules and relationship handling.
 
 $END$
 

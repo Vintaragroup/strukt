@@ -1,0 +1,19 @@
+{
+  "id": "api_documentation_program_v1",
+  "name": "API Documentation Program PRD",
+  "version": "1.0.0",
+  "node_types": ["doc"],
+  "domains": ["Tech", "Product", "Ops"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define goals, scope, ownership, and success metrics for an API documentation program." },
+    { "title": "Information Architecture", "key": "ia", "content": "Structure: getting started, guides, tutorials, reference, cookbooks; navigation and discoverability.", "card_templates": ["docPage"] },
+    { "title": "Reference Standards", "key": "reference", "content": "OpenAPI-first workflow, examples-first, error catalog, pagination, rate limits, auth, and webhooks.", "card_templates": ["docPage"], "tags": ["openapi", "sdk", "examples"] },
+    { "title": "Tutorials & Guides", "key": "tutorials", "content": "Quickstarts, end-to-end guides, language coverage policy (TS, Python, Go, Java, Kotlin, Swift, Rust).", "card_templates": ["docPage", "personaSnapshot"], "tags": ["tutorials", "guides"] },
+    { "title": "Tooling & Publishing", "key": "tooling", "content": "Doc build pipeline, versioning, preview URLs, link checking, broken anchor detection, and search indexing.", "tags": ["docusaurus", "redoc", "mkdocs"] },
+    { "title": "Quality & Governance", "key": "quality", "content": "Style guide, editorial checklist, code sample testing, freshness SLAs, ownership map.", "card_templates": ["okrCard"], "tags": ["style", "checklist"] }
+  ],
+  "stack_keywords": ["openapi", "sdk", "docusaurus", "redoc", "mkdocs", "typescript", "python", "go", "java", "kotlin", "swift", "rust"],
+  "risk_profile": ["stale_docs", "broken_links", "inconsistent_examples"],
+  "kpi_examples": ["Doc search success", "Time to first success", "404/anchor error rate"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

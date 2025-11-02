@@ -1,59 +1,77 @@
 ---
-description: Documents core data models, relationships, and validation rules for nodes, workspaces, and templates in a domain-driven architecture
+description: Defines core data models, relationships and validation rules for the domain-driven architecture generation system
 ---
 
 
 # domain-models
 
+## Core Domain Models
+
+### Workspace Model
+**Importance Score: 95**
+- Represents the root container for architecture designs
+- Implements versioning system with snapshots and history tracking
+- Supports collaborative editing with change conflict resolution
+- Contains metadata about workspace type, domains and context
+- File: `server/src/models/Workspace.ts`
+
 ### Node Types
-- Core domain entities representing different architectural components
-- Strong validation rules ensure nodes maintain domain integrity
-- Custom metadata fields for domain-specific attributes
-- Strict type hierarchy with inheritance rules
-- Domain-specific validation per node type
+**Importance Score: 90**
+- Defines domain-specific node categories:
+  - Technical (Frontend, Backend, Data, Infrastructure)
+  - Business (Requirements, Use Cases, Workflows)
+  - Product (Features, Epics, User Stories)
+  - Operations (SLAs, Runbooks, Monitoring)
+  - Documentation (Architecture, APIs, Testing)
+- Implements validation rules for node relationships
+- File: `server/src/models/WorkspaceVersion.ts`
 
-File: `server/src/models/Workspace.ts`
-Importance: 95
+### Relationship Types 
+**Importance Score: 85**
+- Manages semantic connections between nodes:
+  - Dependencies (requires, extends, implements)
+  - Flows (data flow, process flow)
+  - Organization (groups, contains)
+  - Documentation (describes, specifies)
+- Enforces domain-specific validation rules
+- File: `server/src/types/ai.ts`
 
-### Relationships
-- Strictly typed connections between domain nodes 
-- Built-in cycle detection and validation
-- Domain-specific relationship types (depends-on, implements, documents)
-- Custom metadata for relationship context
-- Bidirectional relationship validation
+### Generation History
+**Importance Score: 80**
+- Tracks AI generation attempts and outcomes
+- Records feedback and improvements
+- Maintains suggestion quality metrics
+- Files: `server/src/models/GenerationHistory.ts`, `server/src/models/GenerationRequest.ts`
 
-File: `server/src/models/WorkspaceVersion.ts`
-Importance: 90
+### Template Models
+**Importance Score: 85** 
+- PRD templates with domain-specific sections
+- Architecture patterns and best practices
+- Node type templates with default metadata
+- Files: `server/src/models/PRDTemplate.ts`
 
-### Workspaces
-- Container model for domain nodes and relationships
-- Version control with immutable history
-- Workspace-level validation rules
-- Context tracking for workspace state
-- Template application rules
+### Feedback Collection
+**Importance Score: 75**
+- Captures user feedback on generated content
+- Maps feedback to specific node/relationship types
+- Aggregates feedback for model improvements
+- File: `server/src/models/Feedback.ts`
 
-File: `server/src/models/GenerationHistory.ts`
-Importance: 85
+### Audit Trail
+**Importance Score: 70**
+- Records workspace modifications
+- Tracks template usage patterns
+- Monitors generation metrics
+- File: `server/src/models/AuditLog.ts`
 
-### Templates
-- Domain-specific templates for different node types
-- Template inheritance and composition rules
-- Validation rules for template compatibility
-- Custom metadata for template context
-- Template version control
+### Workspace Suggestions
+**Importance Score: 85**
+- AI-driven suggestions for workspace improvements
+- Contextual recommendations based on workspace type
+- Template matching algorithms
+- Files: `server/src/models/Suggestion.ts`, `server/src/models/WizardSession.ts`
 
-File: `server/src/models/PRDTemplate.ts` 
-Importance: 80
-
-### Validation Rules
-- Cross-entity validation between nodes
-- Domain-specific rule sets per node type
-- Relationship constraint validation
-- Template compatibility checking
-- Workspace state validation
-
-File: `server/src/utils/validation.ts`
-Importance: 85
+The domain models form an interconnected system focused on architecture generation, with strong emphasis on versioning, relationships, and AI-driven improvements. The models support both technical and business aspects of software architecture while maintaining clear separation of concerns.
 
 $END$
 

@@ -1,0 +1,18 @@
+{
+  "id": "support_kb_maintenance_v1",
+  "name": "Support Knowledge Base Maintenance PRD",
+  "version": "1.0.0",
+  "node_types": ["doc"],
+  "domains": ["Ops", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define support KB ownership, freshness SLAs, and intake process." },
+    { "title": "Structure & Templates", "key": "structure", "content": "Article types (how-to, troubleshooting, FAQ), templates, and tagging.", "card_templates": ["kbArticle"] },
+    { "title": "Intake & Review", "key": "intake", "content": "Issue to article flow, support → docs handoff, review loops, and approvals." },
+    { "title": "Localization & Accessibility", "key": "l10n_a11y", "content": "Translation workflow and accessibility checks." },
+    { "title": "Measurement", "key": "measurement", "content": "Search success, deflection rate, and article helpfulness." }
+  ],
+  "stack_keywords": ["support", "kb", "taxonomy", "l10n", "a11y"],
+  "risk_profile": ["stale_articles", "poor_search"],
+  "kpi_examples": ["Deflection rate", "Article helpfulness", "Search success"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

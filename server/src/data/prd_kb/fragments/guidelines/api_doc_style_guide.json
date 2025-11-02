@@ -1,0 +1,14 @@
+{
+  "id": "guidelines_api_doc_style_v1",
+  "type": "guideline",
+  "for": ["doc", "Tech", "Product"],
+  "content": [
+    "Use active voice, present tense; keep sentences short",
+    "Consistent terminology; define acronyms on first use",
+    "Show request and response with minimal, realistic examples",
+    "Always include auth, rate limits, errors, and pagination sections",
+    "Prefer curl + language tabs (TS, Python, Go, Java, Kotlin, Swift, Rust)",
+    "Use lowercase kebab-case for REST paths; nouns for resources",
+    "Cross-link related guides and concepts; avoid dead ends"
+  ]
+}
