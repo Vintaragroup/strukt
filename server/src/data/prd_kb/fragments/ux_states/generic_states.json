@@ -1,0 +1,11 @@
+{
+  "id": "ux_states_generic_v1",
+  "type": "ux_states",
+  "for": ["frontend"],
+  "content": {
+    "empty": "Explain value and next step; show create/import action",
+    "loading": "Use skeletons; avoid layout shifts",
+    "error": "Human-friendly copy; retry without losing input",
+    "success": "Clear confirmation and next actions"
+  }
+}

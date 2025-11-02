@@ -1,0 +1,13 @@
+{
+  "id": "ai_ml_feature_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "dataset_features", "vector": []},
+    {"key": "model_approach", "vector": []},
+    {"key": "evaluation", "vector": []},
+    {"key": "deployment_monitoring", "vector": []},
+    {"key": "risk_compliance", "vector": []}
+  ]
+}

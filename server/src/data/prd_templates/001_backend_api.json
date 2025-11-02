@@ -6,7 +6,7 @@
   "category": "Backend",
   "description": "Standard RESTful API service with CRUD operations, authentication, and database integration",
   "created_at": "2025-10-23",
-  "updated_at": "2025-10-23",
+  "updated_at": "2025-11-02",
   "sections": [
     {
       "title": "Overview",
@@ -32,8 +32,39 @@
       "title": "Technical Stack",
       "key": "tech_stack",
       "content": "Node.js 18+, Express, MongoDB/PostgreSQL, JWT, Zod validation, Swagger/OpenAPI"
+    },
+    {
+      "title": "Interfaces",
+      "key": "interfaces",
+      "content": "Endpoints: GET /v1/resources?page&limit, POST /v1/resources, GET /v1/resources/{id}, PATCH /v1/resources/{id}, DELETE /v1/resources/{id}. Include pagination (page, limit), idempotency keys for POST, 429 handling, and error model {code,message,details}."
+    },
+    {
+      "title": "Data Retention & Privacy",
+      "key": "data_retention_privacy",
+      "content": "PII minimization, encryption at rest (AES-256) and in transit (TLS 1.2+), data retention 13 months, documented DSRs (export/delete), audit log retention 90 days."
+    },
+    {
+      "title": "Observability & SRE",
+      "key": "observability",
+      "content": "Structured logs (JSON), tracing with OpenTelemetry, RED metrics (Rate, Errors, Duration), dashboards for p50/p95/p99 latency, alerting: warn p95>250ms 5m; critical p95>400ms 10m; error rate >0.5% 10m."
+    },
+    {
+      "title": "Failure Modes & Resilience",
+      "key": "resilience",
+      "content": "Timeouts (client 5s, upstream 2s), retries with exponential backoff (3 attempts), circuit breaker on upstream dependency, bulkhead threading for DB pool, graceful shutdown SIGTERM 15s."
+    },
+    {
+      "title": "Security",
+      "key": "security",
+      "content": "OIDC authentication, JWT validation with clock skew tolerance, RBAC for admin/user roles, input validation (Zod), output encoding, OWASP top 10 checks, secrets via environment or vault."
     }
   ],
+  "kpi_examples": [
+    "P95 latency < 250ms",
+    "Availability >= 99.9%",
+    "Error rate < 0.2%"
+  ],
+  "risk_profile": ["security", "data_integrity", "scaling"],
   "suggested_technologies": ["nodejs", "express", "mongodb", "postgresql", "jwt", "swagger"],
   "complexity": "medium",
   "estimated_effort_hours": 40,

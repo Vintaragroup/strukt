@@ -1,0 +1,19 @@
+{
+  "id": "ai_ml_feature_v1",
+  "name": "AI/ML Feature PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "requirement"],
+  "domains": ["Data & AI", "Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "ML feature delivering predictions or recommendations with clear business outcomes."},
+    {"title": "Dataset & Features", "key": "dataset_features", "content": "Sources, labeling, feature catalog, privacy, drift risks."},
+    {"title": "Model Approach", "key": "model_approach", "content": "Baselines and candidate models; hyperparameters; training pipeline."},
+    {"title": "Evaluation", "key": "evaluation", "content": "AUC/F1/MAE; segment fairness; thresholds; guardrails."},
+    {"title": "Deployment & Monitoring", "key": "deployment_monitoring", "content": "Shadow/canary; rollback; registry; drift monitors; retraining cadence."},
+    {"title": "Risk & Compliance", "key": "risk_compliance", "content": "PII, consent, data minimization, explainability, audit."}
+  ],
+  "stack_keywords": ["python", "tensorflow", "pytorch"],
+  "risk_profile": ["data_privacy", "model_risk"],
+  "kpi_examples": ["AUC ≥ 0.85", "FPR ≤ 2% in segment X"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

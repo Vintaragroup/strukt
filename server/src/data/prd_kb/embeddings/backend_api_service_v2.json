@@ -1,0 +1,14 @@
+{
+  "id": "backend_api_service_v2",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "architecture", "vector": []},
+    {"key": "interfaces", "vector": []},
+    {"key": "data_retention_privacy", "vector": []},
+    {"key": "observability", "vector": []},
+    {"key": "resilience", "vector": []},
+    {"key": "security", "vector": []}
+  ]
+}

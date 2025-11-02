@@ -1,0 +1,13 @@
+{
+  "id": "frontend_react_app_v2",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "ux_states", "vector": []},
+    {"key": "accessibility", "vector": []},
+    {"key": "performance_budgets", "vector": []},
+    {"key": "interfaces", "vector": []},
+    {"key": "component_architecture", "vector": []}
+  ]
+}

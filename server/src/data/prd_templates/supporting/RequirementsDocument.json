@@ -4,20 +4,37 @@
   "version": "1.0.0",
   "tags": [
     "requirements",
-    "document",
-    "provide",
-    "here",
-    "the",
-    "characteristics",
-    "typical",
-    "user",
-    "product"
+    "product",
+    "personas",
+    "kpis",
+    "acceptance-criteria"
   ],
   "category": "Product",
-  "description": "*Provide here the characteristics of a typical user of the system (target audience). List any technical background or expected prior experience.* *Provide here an overview of the system and what the overall intention of the system is.*",
+  "description": "Defines the problem, target users, measurable objectives, and acceptance criteria for a product or feature. Includes personas, KPIs, and risks with mitigations.",
   "created_at": "2025-10-31",
-  "updated_at": "2025-10-31",
-  "sections": [],
+  "updated_at": "2025-11-02",
+  "sections": [
+    {
+      "title": "Personas & Scenarios",
+      "key": "personas",
+      "content": "List 2–3 personas with goals, pain points, and key scenarios. Include accessibility and locale considerations."
+    },
+    {
+      "title": "Objectives & KPIs",
+      "key": "objectives_kpis",
+      "content": "Explicit, measurable outcomes (e.g., conversion +10%, P95 latency < 250ms). Include north-star metrics and guardrails."
+    },
+    {
+      "title": "Acceptance Criteria",
+      "key": "acceptance_criteria",
+      "content": "Checklist of observable behaviors and edge cases. Should be testable and unambiguous."
+    },
+    {
+      "title": "Dependencies & Risks",
+      "key": "dependencies_risks",
+      "content": "Integrations and blocking assumptions. Risks with mitigations (e.g., rate limits, data quality, compliance)."
+    }
+  ],
   "suggested_technologies": [],
   "api_guidance": [],
   "complexity": "simple",
@@ -26,12 +43,9 @@
   "knowledge_graph_tags": [
     "product",
     "requirements",
-    "document",
-    "provide",
-    "here",
-    "the",
-    "characteristics",
-    "typical",
-    "user"
+    "personas",
+    "kpis",
+    "acceptance-criteria",
+    "risks"
   ]
 }

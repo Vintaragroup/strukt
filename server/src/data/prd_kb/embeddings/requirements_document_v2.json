@@ -1,0 +1,11 @@
+{
+  "id": "requirements_document_v2",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "personas", "vector": []},
+    {"key": "objectives_kpis", "vector": []},
+    {"key": "acceptance_criteria", "vector": []},
+    {"key": "dependencies_risks", "vector": []}
+  ]
+}

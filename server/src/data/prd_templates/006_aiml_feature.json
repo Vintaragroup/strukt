@@ -1,10 +1,19 @@
 {
   "template_id": "aiml_006",
   "name": "AI/ML Feature PRD",
+  "version": "1.0.0",
   "tags": ["ai", "ml", "python", "tensorflow", "recommendations"],
   "category": "AI/ML",
-  "description": "Machine learning model for predictions, recommendations, or automation",
-  "sections": [{"title": "Overview", "key": "overview", "content": "ML model integration for predictive analytics"}],
+  "description": "Machine learning capability delivering predictions or recommendations integrated into product workflows.",
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Business goal, target users, key decisions influenced by model outputs, and success criteria."},
+    {"title": "Dataset & Features", "key": "dataset_features", "content": "Data sources, labeling approach, feature list with data types, privacy considerations, drift risks, and retention."},
+    {"title": "Model Approach", "key": "model_approach", "content": "Baseline, candidate architectures, hyperparameters, offline training pipeline, feature store usage."},
+    {"title": "Evaluation", "key": "evaluation", "content": "Metrics (AUC/F1/MAE), test/val splits, segment analysis, fairness metrics, target thresholds and guardrails."},
+    {"title": "Deployment & Monitoring", "key": "deployment_monitoring", "content": "Shadow/canary rollout, rollback criteria, model registry, drift/quality monitors, retraining cadence."},
+    {"title": "Risk & Compliance", "key": "risk_compliance", "content": "PII handling, consent, data minimization, explainability, audit logging."}
+  ],
+  "kpi_examples": ["AUC ≥ 0.85", "Segment FPR ≤ 2%", "Drift alert rate < 1/week"],
   "suggested_technologies": ["tensorflow", "pytorch", "fastapi", "python"],
   "complexity": "high",
   "estimated_effort_hours": 90

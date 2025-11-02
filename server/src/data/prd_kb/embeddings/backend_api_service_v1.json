@@ -1,0 +1,11 @@
+{
+  "id": "backend_api_service_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    { "key": "overview", "vector": [] },
+    { "key": "architecture", "vector": [] },
+    { "key": "data_model", "vector": [] },
+    { "key": "interfaces", "vector": [] }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "backend_api_service_v2",
+  "name": "Backend API Service PRD",
+  "version": "2.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Defines a stateless REST API with CRUD operations, auth, and integrations, optimized for reliability and latency."},
+    {"title": "Architecture", "key": "architecture", "content": "Node.js + Express, Postgres/Mongo, API gateway, OIDC, OTel tracing, horizontal scaling."},
+    {"title": "Interfaces", "key": "interfaces", "content": "GET /v1/resources?page&limit, POST /v1/resources (idempotent), GET /v1/resources/{id}, PATCH, DELETE; error model {code,message,details}."},
+    {"title": "Data Retention & Privacy", "key": "data_retention_privacy", "content": "PII minimization, encryption at rest/in transit, 13-month retention, DSRs supported, audit logs 90 days."},
+    {"title": "Observability & SRE", "key": "observability", "content": "Structured logs, OTel traces, RED metrics dashboards; alerts: p95>250ms warn, p95>400ms critical; error rate >0.5%."},
+    {"title": "Failure Modes & Resilience", "key": "resilience", "content": "Timeouts, retries with backoff, circuit breaker, bulkheads, graceful shutdown."},
+    {"title": "Security", "key": "security", "content": "OIDC, JWT validation, RBAC, input validation, OWASP checks, secret management."}
+  ],
+  "stack_keywords": ["nodejs", "express", "postgres", "mongodb"],
+  "risk_profile": ["security", "data_integrity", "scaling"],
+  "kpi_examples": ["P95 latency < 250ms", "Availability >= 99.9%", "Error rate < 0.2%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_v2_upgrade", "timestamp": "2025-11-02T00:00:00Z"}
+}

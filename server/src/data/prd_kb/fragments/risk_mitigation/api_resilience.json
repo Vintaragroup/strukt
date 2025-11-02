@@ -1,0 +1,10 @@
+{
+  "id": "risk_mitigation_api_resilience_v1",
+  "type": "risk_mitigation",
+  "for": ["backend"],
+  "content": [
+    {"risk": "Upstream timeouts", "mitigation": "Client-side timeouts, retries with backoff, circuit breaker"},
+    {"risk": "DB saturation", "mitigation": "Connection pooling, query optimization, backpressure on writes"},
+    {"risk": "Secrets exposure", "mitigation": "Vaulted secrets, strict env scoping, no logs of secrets"}
+  ]
+}

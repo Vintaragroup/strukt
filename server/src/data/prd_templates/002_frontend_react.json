@@ -6,7 +6,7 @@
   "category": "Frontend",
   "description": "Modern React web application with responsive design, state management, and API integration",
   "created_at": "2025-10-23",
-  "updated_at": "2025-10-23",
+  "updated_at": "2025-11-02",
   "sections": [
     {
       "title": "Overview",
@@ -27,7 +27,32 @@
       "title": "Technical Stack",
       "key": "tech_stack",
       "content": "React 18+, Vite 5+, React Router 6+, Zustand, Axios, TypeScript, Tailwind CSS"
+    },
+    {
+      "title": "UX States",
+      "key": "ux_states",
+      "content": "Define Empty, Loading, Error, Success states with consistent skeletons and motion; write friendly error copy; preserve user input on retry."
+    },
+    {
+      "title": "Accessibility",
+      "key": "accessibility",
+      "content": "Keyboard navigation, focus management, ARIA roles, color contrast AA+, form labels and descriptions; run Axe checks; screen-reader friendly announcements."
+    },
+    {
+      "title": "Performance Budgets",
+      "key": "performance_budgets",
+      "content": "Targets: LCP < 2.5s p75, CLS < 0.1, TTI < 3.5s; code-splitting by route, prefetch critical assets, image optimization, avoid unnecessary re-renders."
+    },
+    {
+      "title": "Component Architecture",
+      "key": "component_architecture",
+      "content": "State boundaries: global (Zustand) vs local; error boundaries; routing map; i18n strategy; theming; design tokens; form validation approach."
     }
+  ],
+  "kpi_examples": [
+    "LCP < 2.5s (p75)",
+    "Accessibility score >= 95",
+    "Route bundle < 300KB gzip"
   ],
   "suggested_technologies": ["react", "vite", "typescript", "tailwindcss", "axios", "zustand"],
   "complexity": "medium",

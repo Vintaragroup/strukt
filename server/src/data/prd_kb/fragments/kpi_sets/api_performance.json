@@ -1,0 +1,11 @@
+{
+  "id": "kpis_api_performance_v1",
+  "type": "kpi_set",
+  "for": ["backend"],
+  "content": [
+    "P95 latency < 250ms",
+    "Availability >= 99.9%",
+    "Error rate < 0.2%",
+    "Cold start < 400ms"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "acceptance_api_basics_v1",
+  "type": "acceptance_criteria",
+  "for": ["backend"],
+  "content": [
+    "CRUD endpoints validate input and return 4xx with structured errors",
+    "Pagination supports page & limit with sane defaults",
+    "Idempotency keys prevent duplicate POSTs",
+    "Rate limit responses include standard headers",
+    "OpenAPI docs include request/response examples"
+  ]
+}

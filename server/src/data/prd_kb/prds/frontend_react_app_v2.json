@@ -1,0 +1,19 @@
+{
+  "id": "frontend_react_app_v2",
+  "name": "React Frontend Application PRD",
+  "version": "2.0.0",
+  "node_types": ["frontend"],
+  "domains": ["Product", "Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "React SPA with strong UX, accessibility, and performance guarantees."},
+    {"title": "UX States", "key": "ux_states", "content": "Empty/Loading/Error/Success patterns with skeletons and motion; retry preserves input; friendly error copy."},
+    {"title": "Accessibility", "key": "accessibility", "content": "Keyboard focus, ARIA, contrast, labels; automated Axe checks; live region announcements."},
+    {"title": "Performance Budgets", "key": "performance_budgets", "content": "LCP < 2.5s p75, CLS < 0.1, route bundles < 300KB; route-based code splitting; image optimization."},
+    {"title": "Interfaces", "key": "interfaces", "content": "Typed API client, retries, cancellation; error boundaries for network failures; 401/403 handling UX."},
+    {"title": "Component Architecture", "key": "component_architecture", "content": "State layers (global vs local), routing map, i18n, theming, tokens, form validation."}
+  ],
+  "stack_keywords": ["react", "vite", "tailwind"],
+  "risk_profile": ["performance", "accessibility"],
+  "kpi_examples": ["LCP < 2.5s (p75)", "A11y score >= 95", "Route bundle < 300KB"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_v2_upgrade", "timestamp": "2025-11-02T00:00:00Z"}
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://strukt.dev/schemas/normalized_prd.schema.json",
+  "title": "Normalized PRD",
+  "type": "object",
+  "required": ["id", "name", "version", "node_types", "domains", "sections", "generated_by"],
+  "properties": {
+  "id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "node_types": { "type": "array", "items": { "type": "string" } },
+    "domains": { "type": "array", "items": { "type": "string" } },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "key", "content"],
+        "properties": {
+          "title": { "type": "string" },
+          "key": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+          "content": { "type": "string" },
+          "card_templates": { "type": "array", "items": { "type": "string" } },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "stack_keywords": { "type": "array", "items": { "type": "string" } },
+    "risk_profile": { "type": "array", "items": { "type": "string" } },
+    "kpi_examples": { "type": "array", "items": { "type": "string" } },
+    "generated_by": {
+      "type": "object",
+      "required": ["model", "prompt_template", "timestamp"],
+      "properties": {
+        "model": { "type": "string" },
+        "prompt_template": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

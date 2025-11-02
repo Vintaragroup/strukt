@@ -1,0 +1,83 @@
+{
+  "kb_version": "2025-11-02",
+  "generated_at": "2025-11-02T00:00:00Z",
+  "items": [
+    {
+      "id": "backend_api_service_v1",
+      "name": "Backend API Service PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["backend", "api", "microservices"],
+      "path": "prds/backend_api_service_v1.json",
+      "embedding": "embeddings/backend_api_service_v1.json",
+      "raw": "raw/backend_api_service_v1.md"
+    },
+    {
+      "id": "frontend_react_app_v1",
+      "name": "React Frontend Application PRD",
+      "version": "1.0.0",
+      "node_types": ["frontend"],
+      "domains": ["Product", "Tech"],
+      "tags": ["frontend", "react", "ui", "ux"],
+      "path": "prds/frontend_react_app_v1.json",
+      "embedding": "embeddings/frontend_react_app_v1.json",
+      "raw": "raw/frontend_react_app_v1.md"
+    },
+    {
+      "id": "backend_api_service_v2",
+      "name": "Backend API Service PRD",
+      "version": "2.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["backend", "api", "observability", "security"],
+      "path": "prds/backend_api_service_v2.json",
+      "embedding": "embeddings/backend_api_service_v2.json",
+      "raw": "raw/backend_api_service_v2.md"
+    },
+    {
+      "id": "frontend_react_app_v2",
+      "name": "React Frontend Application PRD",
+      "version": "2.0.0",
+      "node_types": ["frontend"],
+      "domains": ["Product", "Tech"],
+      "tags": ["frontend", "react", "ux", "accessibility", "performance"],
+      "path": "prds/frontend_react_app_v2.json",
+      "embedding": "embeddings/frontend_react_app_v2.json",
+      "raw": "raw/frontend_react_app_v2.md"
+    },
+    {
+      "id": "ai_ml_feature_v1",
+      "name": "AI/ML Feature PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "requirement"],
+      "domains": ["Data & AI", "Tech"],
+      "tags": ["ml", "model", "evaluation"],
+      "path": "prds/ai_ml_feature_v1.json",
+      "embedding": "embeddings/ai_ml_feature_v1.json",
+      "raw": "raw/ai_ml_feature_v1.md"
+    },
+    {
+      "id": "backend_fastapi_service_v1",
+      "name": "FastAPI Backend Service PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["python", "fastapi"],
+      "path": "prds/backend_fastapi_service_v1.json",
+      "embedding": "embeddings/backend_fastapi_service_v1.json",
+      "raw": "raw/backend_fastapi_service_v1.md"
+    },
+    {
+      "id": "requirements_document_v2",
+      "name": "Requirements Document",
+      "version": "2.0.0",
+      "node_types": ["requirement"],
+      "domains": ["Product"],
+      "tags": ["requirements", "personas", "kpis"],
+      "path": "prds/requirements_document_v2.json",
+      "embedding": "embeddings/requirements_document_v2.json",
+      "raw": "raw/requirements_document_v2.md"
+    }
+  ]
+}

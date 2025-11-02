@@ -1,0 +1,11 @@
+{
+  "id": "pattern_rest_pagination_v1",
+  "type": "interface_pattern",
+  "for": ["backend"],
+  "content": {
+    "params": ["page", "limit"],
+    "headers": ["X-Total-Count"],
+    "links": ["next", "prev"],
+    "notes": "Return total count header; bounds-check page & limit; stable sort keys"
+  }
+}

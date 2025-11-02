@@ -1,0 +1,17 @@
+{
+  "id": "requirements_document_v2",
+  "name": "Requirements Document",
+  "version": "2.0.0",
+  "node_types": ["requirement"],
+  "domains": ["Product"],
+  "sections": [
+    {"title": "Personas & Scenarios", "key": "personas", "content": "2–3 personas with goals, pain points, and scenarios; accessibility and locale needs."},
+    {"title": "Objectives & KPIs", "key": "objectives_kpis", "content": "Measurable outcomes with numeric targets and guardrails."},
+    {"title": "Acceptance Criteria", "key": "acceptance_criteria", "content": "Observable, testable criteria covering happy paths and edge cases."},
+    {"title": "Dependencies & Risks", "key": "dependencies_risks", "content": "Integrations and risks with mitigations and owners."}
+  ],
+  "stack_keywords": [],
+  "risk_profile": ["scope_creep", "ambiguous_requirements"],
+  "kpi_examples": ["Activation +10%", "Support tickets -20%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_v2_upgrade", "timestamp": "2025-11-02T00:00:00Z"}
+}

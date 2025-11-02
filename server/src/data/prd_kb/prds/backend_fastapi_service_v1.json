@@ -1,0 +1,18 @@
+{
+  "id": "backend_fastapi_service_v1",
+  "name": "FastAPI Backend Service PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Async FastAPI service exposing REST endpoints with OpenAPI and strong typing."},
+    {"title": "Data Model", "key": "data_model", "content": "User, Subscription, Invoice, WebhookEvent with relationships; Alembic migrations."},
+    {"title": "Example Endpoints", "key": "example_endpoints", "content": "POST /v1/subscriptions; GET /v1/invoices; POST /v1/webhooks/stripe. Include Pydantic models and examples."},
+    {"title": "SLOs & Alerts", "key": "slos_alerts", "content": "p95 < 150ms; uptime 99.9%; alerts for latency and DB error rates."},
+    {"title": "Security", "key": "security", "content": "JWT validation, RBAC, parameterized SQL, secret management, per-key rate limits."}
+  ],
+  "stack_keywords": ["python", "fastapi", "postgresql"],
+  "risk_profile": ["security", "scaling"],
+  "kpi_examples": ["p95 < 150ms", "99.9% uptime"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

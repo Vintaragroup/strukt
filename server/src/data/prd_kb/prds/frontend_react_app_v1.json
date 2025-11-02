@@ -1,0 +1,38 @@
+{
+  "id": "frontend_react_app_v1",
+  "name": "React Frontend Application PRD",
+  "version": "1.0.0",
+  "node_types": ["frontend"],
+  "domains": ["Product", "Tech"],
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "This PRD covers a React-based frontend application including UX goals, accessibility targets, and performance budgets.",
+      "card_templates": ["technicalSpec"],
+      "tags": ["goals", "ux", "a11y"]
+    },
+    {
+      "title": "UX States",
+      "key": "ux_states",
+      "content": "Document empty, loading, error, success states; provide skeletons and motion guidelines.",
+      "card_templates": ["technicalSpec"],
+      "tags": ["ux", "states"]
+    },
+    {
+      "title": "Interfaces",
+      "key": "interfaces",
+      "content": "Interfaces to backend APIs via typed client; error handling and retry policies.",
+      "card_templates": ["technicalSpec"],
+      "tags": ["api", "client"]
+    }
+  ],
+  "stack_keywords": ["react", "vite", "tailwind"],
+  "risk_profile": ["performance", "accessibility"],
+  "kpi_examples": ["LCP < 2.5s on 75th percentile", "Axe score >= 95"],
+  "generated_by": {
+    "model": "gpt-5",
+    "prompt_template": "frontend_general_v1",
+    "timestamp": "2025-11-02T00:00:00Z"
+  }
+}

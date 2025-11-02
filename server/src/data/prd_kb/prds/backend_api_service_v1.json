@@ -1,0 +1,45 @@
+{
+  "id": "backend_api_service_v1",
+  "name": "Backend API Service PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {
+      "title": "Overview",
+      "key": "overview",
+      "content": "This document defines a REST/GraphQL backend API service including goals, scope, stakeholders, constraints, and success metrics.",
+      "card_templates": ["technicalSpec"],
+      "tags": ["goals", "summary"]
+    },
+    {
+      "title": "Architecture",
+      "key": "architecture",
+      "content": "Service is stateless; uses Node.js, Express, and PostgreSQL. Includes API gateway, auth (OIDC), and observability (OTel).",
+      "card_templates": ["technicalSpec"],
+      "tags": ["architecture", "services"]
+    },
+    {
+      "title": "Data Model",
+      "key": "data_model",
+      "content": "Primary entities: User, Account, Session, Resource. Normalize to 3NF; include migration plan.",
+      "card_templates": ["technicalSpec"],
+      "tags": ["data", "schema"]
+    },
+    {
+      "title": "Interfaces",
+      "key": "interfaces",
+      "content": "REST endpoints with OpenAPI spec; GraphQL schema for complex querying; rate limits and pagination.",
+      "card_templates": ["technicalSpec"],
+      "tags": ["api", "openapi", "graphql"]
+    }
+  ],
+  "stack_keywords": ["nodejs", "express", "postgres"],
+  "risk_profile": ["scalability", "security"],
+  "kpi_examples": ["P95 latency < 250ms", "Error rate < 0.2%"],
+  "generated_by": {
+    "model": "gpt-5",
+    "prompt_template": "backend_general_v1",
+    "timestamp": "2025-11-02T00:00:00Z"
+  }
+}

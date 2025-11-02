@@ -25,6 +25,26 @@
       "title": "Technical Stack",
       "key": "tech_stack",
       "content": "Python 3.12+, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, PostgreSQL, uvicorn."
+    },
+    {
+      "title": "Data Model",
+      "key": "data_model",
+      "content": "Entities: User, Subscription, Invoice, WebhookEvent. Relationships: User-Subscription (1:N); Subscription-Invoice (1:N). Alembic migrations versioned per release."
+    },
+    {
+      "title": "Example Endpoints",
+      "key": "example_endpoints",
+      "content": "POST /v1/subscriptions {plan_id,user_id} → 201; GET /v1/invoices?user_id → 200 [..]; POST /v1/webhooks/stripe (signed) → 202. Include OpenAPI examples and Pydantic models."
+    },
+    {
+      "title": "SLOs & Alerts",
+      "key": "slos_alerts",
+      "content": "Targets: p95 < 150ms, uptime 99.9%. Alerts: warn p95 > 180ms 5m; crit p95 > 300ms 10m; DB error rate > 1% 5m."
+    },
+    {
+      "title": "Security",
+      "key": "security",
+      "content": "JWT validation, token revocation list, RBAC for routes, parameterized SQL to avoid injection, secrets from env/vault, rate limits per key."
     }
   ],
   "suggested_technologies": ["fastapi", "pydantic", "sqlalchemy", "postgresql", "uvicorn", "alembic"],
