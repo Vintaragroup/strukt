@@ -1,0 +1,25 @@
+name: KB Validate
+
+on:
+  pull_request:
+    branches: [ main, checkpoint/* ]
+  push:
+    branches: [ main, checkpoint/* ]
+
+jobs:
+  kb-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install server dependencies
+        run: npm --prefix server install
+
+      - name: Validate Knowledge Base
+        run: npm run kb:validate
