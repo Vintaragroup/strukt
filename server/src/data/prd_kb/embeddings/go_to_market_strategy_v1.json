@@ -1,0 +1,13 @@
+{
+  "id": "go_to_market_strategy_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "icp", "vector": []},
+    {"key": "messaging", "vector": []},
+    {"key": "channels", "vector": []},
+    {"key": "launch_plan", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

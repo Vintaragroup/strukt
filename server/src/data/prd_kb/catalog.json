@@ -310,5 +310,50 @@
       "embedding": "embeddings/search_indexing_v1.json",
       "raw": "raw/search_indexing_v1.md"
     }
+    ,
+    {
+      "id": "go_to_market_strategy_v1",
+      "name": "Go-To-Market Strategy PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["gtm", "launch", "channels", "positioning"],
+      "path": "prds/go_to_market_strategy_v1.json",
+      "embedding": "embeddings/go_to_market_strategy_v1.json",
+      "raw": "raw/go_to_market_strategy_v1.md"
+    },
+    {
+      "id": "pricing_packaging_v1",
+      "name": "Pricing & Packaging PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["pricing", "packaging", "billing", "taxes"],
+      "path": "prds/pricing_packaging_v1.json",
+      "embedding": "embeddings/pricing_packaging_v1.json",
+      "raw": "raw/pricing_packaging_v1.md"
+    },
+    {
+      "id": "growth_funnel_activation_retention_v1",
+      "name": "Growth Funnel: Acquisition → Activation → Retention PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product", "Analytics"],
+      "tags": ["growth", "activation", "retention", "referral"],
+      "path": "prds/growth_funnel_activation_retention_v1.json",
+      "embedding": "embeddings/growth_funnel_activation_retention_v1.json",
+      "raw": "raw/growth_funnel_activation_retention_v1.md"
+    },
+    {
+      "id": "content_seo_strategy_v1",
+      "name": "Content & SEO Strategy PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["seo", "content", "keywords", "cwv"],
+      "path": "prds/content_seo_strategy_v1.json",
+      "embedding": "embeddings/content_seo_strategy_v1.json",
+      "raw": "raw/content_seo_strategy_v1.md"
+    }
   ]
 }

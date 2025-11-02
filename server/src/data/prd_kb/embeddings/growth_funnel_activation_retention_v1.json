@@ -1,0 +1,13 @@
+{
+  "id": "growth_funnel_activation_retention_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "acquisition", "vector": []},
+    {"key": "activation", "vector": []},
+    {"key": "retention", "vector": []},
+    {"key": "referral", "vector": []},
+    {"key": "experimentation", "vector": []}
+  ]
+}

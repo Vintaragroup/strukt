@@ -1,0 +1,12 @@
+{
+  "id": "kpis_seo_v1",
+  "type": "kpi_set",
+  "for": ["domain", "requirement"],
+  "content": [
+    "Non-branded impressions",
+    "Average position for target terms",
+    "CTR on priority pages",
+    "Core Web Vitals pass rate",
+    "Organic→signup conversion"
+  ]
+}

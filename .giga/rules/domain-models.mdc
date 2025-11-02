@@ -1,52 +1,59 @@
 ---
-description: Documents core data models, relationships, and validation rules for nodes, workspaces, and templates in the architecture visualization system
+description: Documents core data models, relationships, and validation rules for nodes, workspaces, and templates in a domain-driven architecture
 ---
 
 
 # domain-models
 
-## Core Node Model
-- Type-specific node validation rules enforcing domain constraints
-- Relationship mapping between node types (frontend, backend, requirements, etc.)
-- Template application rules based on node domain and type
-- Node lifecycle management with state transitions
+### Node Types
+- Core domain entities representing different architectural components
+- Strong validation rules ensure nodes maintain domain integrity
+- Custom metadata fields for domain-specific attributes
+- Strict type hierarchy with inheritance rules
+- Domain-specific validation per node type
 
-## Workspace Model
-- Multi-domain workspace support with ring-based organization
-- Node/edge relationship validation specific to domain boundaries
-- Version control with domain-aware diffing
-- Snapshot management preserving domain context
-- Template application at workspace level
+File: `server/src/models/Workspace.ts`
+Importance: 95
 
-## Template Models
-- Domain-specific templates for different architecture types
-- Business validation rules for template matching
-- Template inheritance and override patterns
-- Version control for template evolution
+### Relationships
+- Strictly typed connections between domain nodes 
+- Built-in cycle detection and validation
+- Domain-specific relationship types (depends-on, implements, documents)
+- Custom metadata for relationship context
+- Bidirectional relationship validation
 
-## Domain Ring Structure
-- Concentric ring organization (Business, Product, Tech, Data-AI, Operations)
-- Node positioning rules within domain rings
-- Cross-domain relationship validation
-- Domain boundary enforcement
+File: `server/src/models/WorkspaceVersion.ts`
+Importance: 90
 
-## Validation Rules
-- Node type compatibility matrix for relationships
-- Domain-specific node content validation
-- Template matching criteria by domain
-- Workspace structure validation
+### Workspaces
+- Container model for domain nodes and relationships
+- Version control with immutable history
+- Workspace-level validation rules
+- Context tracking for workspace state
+- Template application rules
 
-## Key Relationships
-- Node-to-node dependencies with domain context
-- Template-to-node application rules
-- Workspace version linkage
-- Node domain membership validation
+File: `server/src/models/GenerationHistory.ts`
+Importance: 85
 
-## State Management
-- Node lifecycle states with domain context
-- Workspace versioning with domain preservation
-- Template evolution tracking
-- Relationship state validation
+### Templates
+- Domain-specific templates for different node types
+- Template inheritance and composition rules
+- Validation rules for template compatibility
+- Custom metadata for template context
+- Template version control
+
+File: `server/src/models/PRDTemplate.ts` 
+Importance: 80
+
+### Validation Rules
+- Cross-entity validation between nodes
+- Domain-specific rule sets per node type
+- Relationship constraint validation
+- Template compatibility checking
+- Workspace state validation
+
+File: `server/src/utils/validation.ts`
+Importance: 85
 
 $END$
 

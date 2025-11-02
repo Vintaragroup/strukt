@@ -1,51 +1,73 @@
 ---
-description: Technical documentation for domain-centric node organization and visualization system using concentric rings and sectors
+description: Handles the circular visualization and organization of domain-based node structures in a radial layout system
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements specialized business logic for organizing and visualizing nodes in a radial layout with domain-specific sectors:
+The domain ring system implements specialized domain-based node organization using a radial layout approach:
 
-### Core Ring Layout Engine
-- Calculates optimal ring positions based on node hierarchies and domain types
-- Maps business domains to specific ring sectors (Tech, Product, Business, Data/AI, Operations) 
-- Dynamically adjusts sector angles based on node density and importance
-- Importance Score: 95
+### Core Domain Ring Logic
+- Calculates sector angles based on domain importance and node density
+- Assigns nodes to appropriate rings based on hierarchy level and domain type
+- Manages domain-specific color schemes and visual indicators
+- Handles collisions between nodes within and across rings
+Importance Score: 95
 
-File: `client/src/components/DomainRings.tsx`
+Implementation in `client/src/components/DomainRings.tsx`:
+```typescript
+interface DomainRing {
+  radius: number
+  sectors: DomainSector[]
+  nodes: NodeData[]
+}
 
-### Domain-Specific Node Positioning
-- Places nodes within appropriate domain sectors based on type classification
-- Implements smart spacing algorithms to prevent node overlap while maintaining domain grouping
-- Handles node repositioning when domains are resized or reorganized
-- Importance Score: 90
+// Custom domain sector calculation
+calculateSectorAngles(domains: Domain[]): number[] {
+  // Domain-specific angle allocation based on importance weights
+  // Returns array of angles for each domain sector
+}
+```
 
-File: `client/src/utils/domainLayout.ts`
+### Domain Layout Engine
+- Positions nodes using polar coordinates within their assigned sectors
+- Maintains minimum spacing between related nodes
+- Optimizes node distribution to minimize edge crossings
+- Handles dynamic resizing of rings based on content
+Importance Score: 85
 
-### Sector Boundary Management
-- Maintains dynamic boundaries between domain sectors
-- Calculates sector angles based on weighted node distribution
-- Enforces minimum sector sizes to ensure readability
-- Importance Score: 85
+Implementation in `client/src/utils/domainLayout.ts`:
+```typescript
+class DomainLayoutEngine {
+  assignNodesToDomains(nodes: Node[]): DomainAssignment
+  calculateRingRadii(assignments: DomainAssignment): number[]
+  optimizeNodePositions(rings: DomainRing[]): NodePosition[]
+}
+```
 
-### Ring Hierarchy Rules
-- Inner rings contain higher-level architectural components
-- Outer rings contain implementation details and supporting elements
-- Automatic ring assignment based on node type and relationships
-- Importance Score: 80
+### Domain-Aware Node Management  
+- Tracks node domain membership and relationships
+- Handles domain transitions when nodes are moved
+- Maintains parent-child relationships across domain boundaries
+- Updates domain statistics and metrics
+Importance Score: 80
 
-### Domain Classification System
-- Categorizes nodes into domain types based on content and relationships
-- Supports custom domain definitions for specialized projects
-- Provides domain suggestion engine for new nodes
-- Importance Score: 85
+Implementation in `client/src/components/CustomNode.tsx`:
+```typescript
+interface DomainNode {
+  domain: string
+  level: number
+  parentDomain?: string
+  childDomains: string[]
+}
+```
 
-### Visual Domain Indicators
-- Color coding for different domain sectors
-- Dynamic sector labels that adjust with ring rotation
-- Visual hierarchy indicators showing domain relationships
-- Importance Score: 75
+The domain ring system serves as the core organizational structure, implementing specialized business rules for:
+- Domain hierarchy management
+- Cross-domain relationships
+- Visual domain separation
+- Node positioning optimization
+- Domain-based filtering and grouping
 
 $END$
 

@@ -1,0 +1,19 @@
+{
+  "id": "growth_funnel_activation_retention_v1",
+  "name": "Growth Funnel: Acquisition → Activation → Retention PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define the end-to-end growth system across acquisition, activation, retention, and referral, with an experimentation engine." },
+    { "title": "Acquisition", "key": "acquisition", "content": "Channels, targeting, CAC constraints, attribution, landing pages; lead qualification and handoff." },
+    { "title": "Activation", "key": "activation", "content": "Aha-moment definition, onboarding steps, time-to-first-value, friction removal, in-app guidance." },
+    { "title": "Retention", "key": "retention", "content": "Habit loops, engagement ladders, lifecycle messaging, churn prediction/mitigation." },
+    { "title": "Referral & Virality", "key": "referral", "content": "Referral loops, incentives, network effects, ambassador programs; anti-gaming policies." },
+    { "title": "Experimentation Framework", "key": "experimentation", "content": "Hypothesis template, guardrail metrics, sample sizing, instrumentation, and learning repository." }
+  ],
+  "stack_keywords": ["growth", "funnel", "activation", "retention", "referral"],
+  "risk_profile": ["attribution_bias", "p-hacking", "short_termism"],
+  "kpi_examples": ["WAU/MAU ratio", "Activation within 1 day", "D30 retention >= target"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "dm_pricing_tiers_v1",
+  "type": "decision_matrix",
+  "for": ["product", "billing", "business"],
+  "content": [
+    "Tier mapping: feature gates vs usage/seat",
+    "Value ladder: clear upgrade path",
+    "Metering source of truth",
+    "Discount guardrails and approval levels",
+    "Regional pricing and currency support"
+  ]
+}

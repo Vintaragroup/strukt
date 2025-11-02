@@ -1,0 +1,13 @@
+{
+  "id": "kpis_marketing_funnel_v1",
+  "type": "kpi_set",
+  "for": ["domain", "requirement"],
+  "content": [
+    "Visitor→signup conversion",
+    "Signup→activation conversion",
+    "Activation within 1 day",
+    "WAU/MAU ratio",
+    "D30 retention",
+    "Referral rate"
+  ]
+}

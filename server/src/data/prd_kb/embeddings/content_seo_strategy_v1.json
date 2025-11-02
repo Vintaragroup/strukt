@@ -1,0 +1,13 @@
+{
+  "id": "content_seo_strategy_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "keywords", "vector": []},
+    {"key": "calendar", "vector": []},
+    {"key": "technical_seo", "vector": []},
+    {"key": "distribution", "vector": []},
+    {"key": "analytics", "vector": []}
+  ]
+}

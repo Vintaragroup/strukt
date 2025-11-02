@@ -1,0 +1,19 @@
+{
+  "id": "go_to_market_strategy_v1",
+  "name": "Go-To-Market Strategy PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define the go-to-market approach to reach ICPs with clear positioning, prioritized channels, a coordinated launch plan, and measurable outcomes." },
+    { "title": "ICP & Segmentation", "key": "icp", "content": "Ideal customer profiles, segments, personas, use cases, pains, and buying triggers; account targeting criteria and prioritization." },
+    { "title": "Messaging & Positioning", "key": "messaging", "content": "Value propositions, positioning statement, proof points, competitive differentiation, objections handling, and core assets." },
+    { "title": "Channels & Tactics", "key": "channels", "content": "Owned/earned/paid channels across lifecycle; campaigns, budgets, and expected reach; sales motions and enablement." },
+    { "title": "Launch Plan & Readiness", "key": "launch_plan", "content": "Milestones, integrated timeline, owners, and cross-functional readiness (sales, support, docs, website, release notes)." },
+    { "title": "Measurement & KPIs", "key": "measurement", "content": "North-star and leading indicators, attribution model, reporting cadence, and post-launch review process." }
+  ],
+  "stack_keywords": ["gtm", "launch", "positioning", "channels"],
+  "risk_profile": ["misaligned_messaging", "channel_spread_thin", "attribution_blindspots"],
+  "kpi_examples": ["Activation rate >= target", "MQL→SQL conversion >= target", "CAC payback within N months"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

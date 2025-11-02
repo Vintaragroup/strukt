@@ -1,0 +1,19 @@
+{
+  "id": "pricing_packaging_v1",
+  "name": "Pricing & Packaging PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define pricing strategy, packaging, and monetization model with clear value ladders, guardrails, and billing operations." },
+    { "title": "Tiers & Packaging", "key": "tiers", "content": "Plan, Pro, Enterprise (example); feature gates, usage limits, seat vs usage pricing, add-ons; value communication." },
+    { "title": "Monetization & Billing", "key": "monetization", "content": "Billing cadence, metering sources of truth, proration, invoices/receipts, taxes/VAT, failures/dunning, currency support." },
+    { "title": "Discounting & Promotions", "key": "discounts", "content": "Eligibility rules, approval flows, promo codes, trials, coupons; guardrails to protect ARPU and margins." },
+    { "title": "Upgrades/Downgrades & Trials", "key": "lifecycle", "content": "Self-serve flows for plan changes and trials; data migrations; entitlements; contract and renewal terms." },
+    { "title": "Compliance & Taxes", "key": "taxes", "content": "Tax nexus, receipts, terms, PCI implications; auditability and revenue recognition notes." }
+  ],
+  "stack_keywords": ["pricing", "packaging", "billing", "taxes"],
+  "risk_profile": ["price_confusion", "revenue_leakage", "support_load"],
+  "kpi_examples": ["ARPU growth", "Plan mix targets", "Trial→paid conversion"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "rm_experimentation_guardrails_v1",
+  "type": "risk_mitigation",
+  "for": ["analytics", "product"],
+  "content": [
+    "Define guardrail metrics (e.g., error rate, latency, churn)",
+    "Enforce minimum sample size and duration",
+    "Pre-register hypotheses and success criteria",
+    "Avoid multiple concurrent conflicting experiments",
+    "Document learnings in shared repository"
+  ]
+}

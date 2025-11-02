@@ -1,0 +1,19 @@
+{
+  "id": "content_seo_strategy_v1",
+  "name": "Content & SEO Strategy PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define the content and SEO plan to grow qualified traffic and intent, aligned to product value and buyer journey." },
+    { "title": "Keyword Strategy", "key": "keywords", "content": "Topic clusters, primary/secondary keywords, search intent mapping, and content briefs." },
+    { "title": "Content Calendar & Formats", "key": "calendar", "content": "Editorial calendar, formats (blog, docs, video), production workflow, quality bar, and approvals." },
+    { "title": "Technical SEO", "key": "technical_seo", "content": "Site performance, schema markup, sitemaps, robots, internal linking, canonicalization, and CWV." },
+    { "title": "Distribution & Backlinks", "key": "distribution", "content": "Distribution channels, partnerships, outreach, and backlink strategy with white-hat policies." },
+    { "title": "Analytics & Reporting", "key": "analytics", "content": "Rank tracking, impressions/CTR, conversion tracking, and reporting cadence." }
+  ],
+  "stack_keywords": ["seo", "content", "keywords", "cwv"],
+  "risk_profile": ["thin_content", "black_hat_risks", "tracking_gaps"],
+  "kpi_examples": ["Non-branded organic growth", "Keyword ranking movement", "Organic→signup conversion"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

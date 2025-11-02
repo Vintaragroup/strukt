@@ -13,45 +13,60 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-The system implements a visual knowledge management platform with integrated AI capabilities, organized around three core business domains:
+Core Business Logic Components:
 
-### Node Management System (85/100)
-- Domain-specific node visualization with business contexts (frontend, backend, requirements, documentation)
-- Custom node relationship handling based on business domain rules
-- Specialized node expansion/collapse logic
-- Path: `client/src/components/CustomNode.tsx`
+1. Domain-Specific AI Enrichment Pipeline
+- Intelligent template matching system for software architecture documentation
+- Multi-stage content generation with domain awareness
+- Custom validation rules for architectural components
+- Specialized prompt engineering for technical documentation
+Importance Score: 90
 
-### AI Enrichment Pipeline (90/100)
-- Multi-stage content generation pipeline with domain context
-- Business-aware template matching and suggestion system
-- Integration with PRD template library
-- Path: `server/src/services/GenerationService.ts`
+2. Domain Layout & Organization System
+- Radial layout engine for business domain visualization 
+- Custom domain ring calculations for department separation
+- Business relationship type management
+- Critical path analysis for dependencies
+File Path: client/src/utils/domainLayout.ts
+Importance Score: 85
 
-### Domain Layout Engine (85/100)
-- Radial layout algorithm for business domain separation
-- Custom sector rendering for domain boundaries
-- Intelligent node positioning within business contexts
-- Path: `client/src/components/DomainRings.tsx`
-
-### PRD Template Management (80/100)
-- Intelligent template matching based on project context
-- Multi-factor scoring for template recommendations
+3. Graph-Based Relationship Analysis
+- Circular dependency detection
+- Business relationship suggestion engine
 - Domain-specific validation rules
-- Path: `server/src/services/PRDRetrievalService.ts`
+- Relationship metadata management
+File Path: server/src/services/relationships.ts
+Importance Score: 85
 
-### Workspace Version Control (75/100)
-- Architecture-specific versioning system
-- Custom diff generation for architectural changes
-- Business context preservation in snapshots
-- Path: `server/src/services/PersistenceService.ts`
+4. AI-Driven Project Scaffolding
+- Context-aware project template selection
+- Intelligent naming and categorization
+- Theme detection with domain rules
+- Multi-step wizard with adaptive suggestions
+File Path: server/src/services/ai/wizard.ts
+Importance Score: 80
 
-Core Integration Points:
-1. AI context building for architecture design
-2. Domain-specific relationship validation
-3. Template matching with business context
-4. Version control with architecture awareness
+5. Vector Search for Documentation
+- Custom relevance scoring for templates
+- Multi-factor template ranking
+- Semantic matching with confidence scoring
+- Intelligent template recommendations
+File Path: server/src/services/PRDRetrievalService.ts
+Importance Score: 75
 
-The system prioritizes domain separation and business context preservation throughout all operations, maintaining strict boundaries between different architectural components while enabling intelligent suggestions and automated content generation.
+Key Integration Points:
+- Domain-specific template matching
+- AI content generation pipeline
+- Relationship management system
+- Graph-based architecture analysis
+- Context-aware suggestion engine
+
+The system implements a sophisticated approach to software architecture documentation with AI assistance, focusing on:
+- Domain-driven organization
+- Intelligent relationship management
+- Context-aware content generation
+- Template-based documentation
+- Business relationship analysis
 
 $END$
 

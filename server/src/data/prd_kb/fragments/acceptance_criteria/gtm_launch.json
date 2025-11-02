@@ -1,0 +1,13 @@
+{
+  "id": "ac_gtm_launch_v1",
+  "type": "acceptance_criteria",
+  "for": ["domain", "product", "marketing"],
+  "content": [
+    "Positioning and messaging approved",
+    "Website and docs updated",
+    "Sales enablement assets published",
+    "Support and on-call prepared",
+    "Launch comms calendar executed",
+    "Post-launch review scheduled"
+  ]
+}
