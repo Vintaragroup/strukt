@@ -1,0 +1,18 @@
+{
+  "id": "translation_localization_workflow_v1",
+  "name": "Translation & Localization Workflow PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define localization workflow: languages, processes, tooling, QA, and governance." },
+    { "title": "Process & Tooling", "key": "process", "content": "TMS connectors, string extraction, context, glossaries, TM/MT/PE; handoffs and SLAs." },
+    { "title": "Quality & Review", "key": "quality", "content": "LQA standards, in-context review, linguistic QA checklists, and stakeholder sign-off." },
+    { "title": "Regions & Rollout", "key": "regions", "content": "Priority markets, phased rollouts, feature flags, and fallback strategy." },
+    { "title": "Governance & Compliance", "key": "governance", "content": "Ownership, versioning, accessibility, legal requirements, and audit logs." }
+  ],
+  "stack_keywords": ["localization", "translation", "tms"],
+  "risk_profile": ["low_quality", "delays", "inconsistency"],
+  "kpi_examples": ["LQA pass rate", "Turnaround time", "Coverage by locale"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "kpi_dev_marketing_v1",
+  "type": "kpi_set",
+  "for": ["Marketing", "Product"],
+  "content": [
+    "Time to first success (TTFS) for tutorials",
+    "Tutorial completion rate and drop-off points",
+    "Sample repo stars, forks, and issue rate",
+    "SDK adoption by language/runtime",
+    "API key activations from tutorials",
+    "Docs satisfaction (CSAT/NPS) for developers"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "dm_forecasting_methodologies_v1",
+  "type": "decision_matrix",
+  "for": ["Sales", "Finance", "Analytics"],
+  "content": [
+    "Stage-weighted vs pipeline coverage vs bottoms-up by rep vs top-down",
+    "Pros/cons: responsiveness, variance, data availability, bias",
+    "Inputs required: opportunity hygiene, seasonality, assumptions",
+    "Override policy and change control governance",
+    "Accuracy targets and variance tolerance by segment"
+  ]
+}

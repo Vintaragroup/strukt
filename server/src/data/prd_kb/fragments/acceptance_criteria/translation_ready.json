@@ -1,0 +1,13 @@
+{
+  "id": "ac_translation_ready_v1",
+  "type": "acceptance_criteria",
+  "for": ["Product", "Marketing"],
+  "content": [
+    "All strings externalized with context and screenshots",
+    "Glossary and style guide provided for target locales",
+    "No hard-coded dates, plurals, or RTL issues",
+    "Pseudo-localization passes; fallback strategy verified",
+    "TMS connector tested; handoff package validated",
+    "In-context review plan and LQA checklist prepared"
+  ]
+}

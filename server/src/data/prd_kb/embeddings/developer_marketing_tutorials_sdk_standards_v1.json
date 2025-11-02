@@ -1,0 +1,12 @@
+{
+  "id": "developer_marketing_tutorials_sdk_standards_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "formats", "vector": []},
+    {"key": "quality", "vector": []},
+    {"key": "samples", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

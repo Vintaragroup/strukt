@@ -1,0 +1,12 @@
+{
+  "id": "product_marketing_competitive_replacement_playbook_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "targeting", "vector": []},
+    {"key": "assets", "vector": []},
+    {"key": "execution", "vector": []},
+    {"key": "risks", "vector": []}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "sales_forecasting_governance_v1",
+  "name": "Sales Forecasting Governance PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define forecasting methodology, ownership, cadence, and accuracy targets across segments." },
+    { "title": "Methodologies", "key": "methodologies", "content": "Stage-weighted, pipeline-based, bottoms-up by rep, top-down; hybrid model rules and overrides." },
+    { "title": "Cadence & Ownership", "key": "cadence", "content": "Weekly/Monthly cadence, roles (sales ops, finance), lock dates, and change control." },
+    { "title": "Data & Assumptions", "key": "data", "content": "Inputs, exclusions, scenario planning, seasonality; documentation and audit trails." },
+    { "title": "Accuracy & Reporting", "key": "accuracy", "content": "Accuracy targets, variance analysis, trend dashboards, and feedback loops to pipeline hygiene." }
+  ],
+  "stack_keywords": ["forecasting", "pipeline", "accuracy"],
+  "risk_profile": ["overforecast", "underforecast", "model_drift"],
+  "kpi_examples": ["Forecast accuracy", "Variance within threshold", "Cycle adherence"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

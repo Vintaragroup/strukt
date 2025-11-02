@@ -1,0 +1,18 @@
+{
+  "id": "editorial_seo_refresh_playbook_v1",
+  "name": "Editorial SEO Refresh Playbook PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define SEO refresh workflow: audits, prioritization, briefs, execution, and QA." },
+    { "title": "Audit & Prioritization", "key": "audit", "content": "Identify underperforming pages, cannibalization, and gaps; prioritization criteria." },
+    { "title": "Briefs & Execution", "key": "briefs", "content": "Brief templates, keyword mapping, internal linking plans, and rewrite standards." },
+    { "title": "QA & Publishing", "key": "qa", "content": "Checklists for on-page elements, schema, accessibility, and CWV; change tracking." },
+    { "title": "Measurement & Iteration", "key": "measurement", "content": "Rank tracking, CTR, conversions, and 30/60/90-day review cadence." }
+  ],
+  "stack_keywords": ["seo", "editorial", "refresh"],
+  "risk_profile": ["keyword_cannibalization", "thin_content"],
+  "kpi_examples": ["Rank movement", "CTR improvement", "Organic conversions"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

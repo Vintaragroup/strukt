@@ -1,0 +1,18 @@
+{
+  "id": "marketing_ops_utm_taxonomy_v1",
+  "name": "Marketing Ops: UTM Taxonomy & Governance PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define UTM taxonomy, naming conventions, governance, and validation tooling." },
+    { "title": "Taxonomy & Conventions", "key": "taxonomy", "content": "Required params, allowed values, casing rules, shorteners, and examples." },
+    { "title": "Governance & Access", "key": "governance", "content": "Who can create links, review/approval workflow, and shared registry." },
+    { "title": "Tooling & Validation", "key": "tooling", "content": "Link builder, validation rules, linting, and integration with analytics." },
+    { "title": "Reporting & QA", "key": "reporting", "content": "Coverage, error rate, top offenders, and remediation workflow." }
+  ],
+  "stack_keywords": ["utm", "taxonomy", "governance"],
+  "risk_profile": ["tracking_gaps", "inconsistent_naming"],
+  "kpi_examples": ["UTM coverage", "Error rate", "Time to remediation"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

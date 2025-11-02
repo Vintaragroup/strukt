@@ -1,0 +1,14 @@
+{
+  "id": "template_editorial_refresh_checklist_v1",
+  "type": "template",
+  "for": ["Marketing", "Product"],
+  "content": [
+    "Baseline metrics and target deltas defined (rank, CTR, conversions)",
+    "Keyword and intent mapping updated; cannibalization review",
+    "Title/H1/meta/schema updated; internal links refreshed",
+    "Copy revised for clarity and completeness; visuals updated",
+    "Accessibility and CWV checks passed; mobile parity",
+    "QA and approvals completed; change log updated",
+    "Post-publish monitoring plan for 30/60/90 days"
+  ]
+}

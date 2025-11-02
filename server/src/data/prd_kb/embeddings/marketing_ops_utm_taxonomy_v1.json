@@ -1,0 +1,12 @@
+{
+  "id": "marketing_ops_utm_taxonomy_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "taxonomy", "vector": []},
+    {"key": "governance", "vector": []},
+    {"key": "tooling", "vector": []},
+    {"key": "reporting", "vector": []}
+  ]
+}

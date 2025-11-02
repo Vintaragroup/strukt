@@ -523,5 +523,72 @@
       "embedding": "embeddings/account_based_marketing_abm_program_v1.json",
       "raw": "raw/account_based_marketing_abm_program_v1.md"
     }
+    ,
+    {
+      "id": "sales_forecasting_governance_v1",
+      "name": "Sales Forecasting Governance PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product", "Analytics"],
+      "tags": ["forecasting", "pipeline", "accuracy"],
+      "path": "prds/sales_forecasting_governance_v1.json",
+      "embedding": "embeddings/sales_forecasting_governance_v1.json",
+      "raw": "raw/sales_forecasting_governance_v1.md"
+    },
+    {
+      "id": "editorial_seo_refresh_playbook_v1",
+      "name": "Editorial SEO Refresh Playbook PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["seo", "editorial", "refresh"],
+      "path": "prds/editorial_seo_refresh_playbook_v1.json",
+      "embedding": "embeddings/editorial_seo_refresh_playbook_v1.json",
+      "raw": "raw/editorial_seo_refresh_playbook_v1.md"
+    },
+    {
+      "id": "translation_localization_workflow_v1",
+      "name": "Translation & Localization Workflow PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["localization", "translation", "tms"],
+      "path": "prds/translation_localization_workflow_v1.json",
+      "embedding": "embeddings/translation_localization_workflow_v1.json",
+      "raw": "raw/translation_localization_workflow_v1.md"
+    },
+    {
+      "id": "marketing_ops_utm_taxonomy_v1",
+      "name": "Marketing Ops: UTM Taxonomy & Governance PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Analytics"],
+      "tags": ["utm", "taxonomy", "governance", "analytics"],
+      "path": "prds/marketing_ops_utm_taxonomy_v1.json",
+      "embedding": "embeddings/marketing_ops_utm_taxonomy_v1.json",
+      "raw": "raw/marketing_ops_utm_taxonomy_v1.md"
+    },
+    {
+      "id": "product_marketing_competitive_replacement_playbook_v1",
+      "name": "Product Marketing: Competitive Replacement Playbook PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["competitive", "replacement", "campaign"],
+      "path": "prds/product_marketing_competitive_replacement_playbook_v1.json",
+      "embedding": "embeddings/product_marketing_competitive_replacement_playbook_v1.json",
+      "raw": "raw/product_marketing_competitive_replacement_playbook_v1.md"
+    },
+    {
+      "id": "developer_marketing_tutorials_sdk_standards_v1",
+      "name": "Developer Marketing: Tutorials & SDK Standards PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["developer_docs", "tutorials", "sdk"],
+      "path": "prds/developer_marketing_tutorials_sdk_standards_v1.json",
+      "embedding": "embeddings/developer_marketing_tutorials_sdk_standards_v1.json",
+      "raw": "raw/developer_marketing_tutorials_sdk_standards_v1.md"
+    }
   ]
 }

@@ -1,0 +1,12 @@
+{
+  "id": "sales_forecasting_governance_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "methodologies", "vector": []},
+    {"key": "cadence", "vector": []},
+    {"key": "data", "vector": []},
+    {"key": "accuracy", "vector": []}
+  ]
+}

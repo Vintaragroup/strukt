@@ -1,0 +1,12 @@
+{
+  "id": "editorial_seo_refresh_playbook_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "audit", "vector": []},
+    {"key": "briefs", "vector": []},
+    {"key": "qa", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

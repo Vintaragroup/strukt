@@ -1,0 +1,12 @@
+{
+  "id": "translation_localization_workflow_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "process", "vector": []},
+    {"key": "quality", "vector": []},
+    {"key": "regions", "vector": []},
+    {"key": "governance", "vector": []}
+  ]
+}

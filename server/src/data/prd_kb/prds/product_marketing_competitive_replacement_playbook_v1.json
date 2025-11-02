@@ -1,0 +1,18 @@
+{
+  "id": "product_marketing_competitive_replacement_playbook_v1",
+  "name": "Product Marketing: Competitive Replacement Playbook PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define the competitive replacement campaign: targeting, messaging, assets, and measurement." },
+    { "title": "Targeting & Objections", "key": "targeting", "content": "Target install base, common objections, migration blockers, and incentives." },
+    { "title": "Assets & Offers", "key": "assets", "content": "Guides, calculators, migration tools, promos; social proof and references." },
+    { "title": "Execution Plan", "key": "execution", "content": "Channels, SDR/email plays, webinars/events, partner co-marketing." },
+    { "title": "Risks & Measurement", "key": "risks", "content": "Vendor response, legal, churn risk; KPIs and attribution." }
+  ],
+  "stack_keywords": ["competitive", "replacement", "campaign"],
+  "risk_profile": ["legal_risk", "price_wars", "churn"],
+  "kpi_examples": ["Replacements won", "Pipeline created", "Cost per replacement"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

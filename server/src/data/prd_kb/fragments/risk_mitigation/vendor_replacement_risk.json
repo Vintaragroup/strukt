@@ -1,0 +1,12 @@
+{
+  "id": "rm_vendor_replacement_risk_v1",
+  "type": "risk_mitigation",
+  "for": ["Marketing", "Legal", "Sales"],
+  "content": [
+    "Legal and trademark review for claims and comparisons",
+    "Migration blockers inventory and mitigations (data export, API gaps)",
+    "Proactive vendor response plan; escalation path",
+    "Customer churn risk assessment and safeguards",
+    "Offer eligibility guardrails and approval matrix"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "developer_marketing_tutorials_sdk_standards_v1",
+  "name": "Developer Marketing: Tutorials & SDK Standards PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define standards for tutorials and SDK samples to improve developer adoption and success." },
+    { "title": "Formats & Coverage", "key": "formats", "content": "Quickstarts, end-to-end tutorials, reference apps; language/runtime coverage policy." },
+    { "title": "Quality & Style", "key": "quality", "content": "Clarity, step-by-step, testability, CI, version pinning; error handling and logging." },
+    { "title": "Samples & Repos", "key": "samples", "content": "Repo structure, licensing, contribution guidelines, and maintenance schedule." },
+    { "title": "Measurement & Feedback", "key": "measurement", "content": "Tutorial completion, issue rate, time-to-first-success, and feedback loops." }
+  ],
+  "stack_keywords": ["developer_docs", "tutorials", "sdk"],
+  "risk_profile": ["stale_samples", "inconsistent_quality"],
+  "kpi_examples": ["TTFS", "Issue rate", "Stars/usage of samples"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

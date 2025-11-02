@@ -1,0 +1,14 @@
+{
+  "id": "guidelines_utm_taxonomy_v1",
+  "type": "guideline",
+  "for": ["Marketing", "Analytics"],
+  "content": [
+    "Mandatory params: utm_source, utm_medium, utm_campaign; optional: utm_term, utm_content",
+    "Allowed values registry with casing rules (lowercase, hyphen-separated)",
+    "Global shortcodes for common sources/mediums (e.g., em, soc, cpc)",
+    "Shared UTM builder with validation and linting",
+    "Approval workflow and audit logging for new campaigns",
+    "Prohibit PII in UTM values; length and character constraints",
+    "Documentation and examples for cross-team consistency"
+  ]
+}
