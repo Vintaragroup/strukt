@@ -18,6 +18,7 @@ import suggestionsRouter from './routes/suggestions.js'
 import feedbackRouter from './routes/feedback.js'
 import cardsRouter from './routes/cards.js'
 import integrationsRouter from './routes/integrations.js'
+import kbRouter from './routes/kb.js'
 
 const app: Express = express()
 
@@ -48,6 +49,7 @@ app.use('/api/suggestions', suggestionsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/cards', cardsRouter)
 app.use('/api/integrations', integrationsRouter)
+app.use('/api/kb', kbRouter)
 
 // 404 handler
 app.use((req: Request, res: Response) => {

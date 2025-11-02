@@ -13,7 +13,8 @@
     "seed:prd-templates:reset": "tsx src/scripts/seed-prd-templates.ts --reset",
     "generate:embeddings": "tsx src/scripts/generate-embeddings.ts",
     "convert:templates": "tsx src/scripts/convert-md-templates.ts",
-    "ingest:prd-sources": "tsx src/scripts/ingest-prd-sources.ts"
+    "ingest:prd-sources": "tsx src/scripts/ingest-prd-sources.ts",
+    "kb:validate": "tsx src/scripts/validate-kb.ts"
   },
   "dependencies": {
     "@types/compression": "^1.8.1",
