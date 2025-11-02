@@ -1,0 +1,11 @@
+{
+  "id": "ip_lifecycle_messaging_cadence_v1",
+  "type": "interface_pattern",
+  "for": ["Marketing", "Product", "Analytics"],
+  "content": [
+    "Cadence tiers by user segment",
+    "Quiet hours and time windows",
+    "Fail-safe frequency caps",
+    "Opt-out handling and preferences center"
+  ]
+}

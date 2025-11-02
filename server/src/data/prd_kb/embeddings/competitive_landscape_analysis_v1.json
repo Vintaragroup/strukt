@@ -1,0 +1,12 @@
+{
+  "id": "competitive_landscape_analysis_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "segmentation", "vector": []},
+    {"key": "feature_comparison", "vector": []},
+    {"key": "differentiation", "vector": []},
+    {"key": "plays", "vector": []}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "rm_channel_concentration_v1",
+  "type": "risk_mitigation",
+  "for": ["Business", "Marketing"],
+  "content": [
+    "Guardrail: no single channel >50% pipeline",
+    "Budget diversification thresholds",
+    "Early-warning signals and fallback playbooks",
+    "Quarterly channel review cadence"
+  ]
+}

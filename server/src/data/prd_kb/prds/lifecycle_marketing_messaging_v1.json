@@ -1,0 +1,18 @@
+{
+  "id": "lifecycle_marketing_messaging_v1",
+  "name": "Lifecycle Marketing & Messaging PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define lifecycle messaging across onboarding, education, activation, re-engagement, and expansion." },
+    { "title": "Segmentation & Triggers", "key": "segmentation", "content": "Segmentation model, events/triggers, behavior thresholds, and audience management." },
+    { "title": "Channel Mix & Cadence", "key": "channels", "content": "Email, in-app, push; guardrails for frequency, time windows, and opt-outs; templates and tone." },
+    { "title": "Journeys & Playbooks", "key": "journeys", "content": "Definition of key journeys (onboarding, activation, churn-save, upsell); testing plan and variations." },
+    { "title": "Measurement & Experimentation", "key": "measurement", "content": "Attribution, lift tests, p-values or CUPED, holdouts, and learning repository." }
+  ],
+  "stack_keywords": ["lifecycle", "messaging", "email", "journeys"],
+  "risk_profile": ["message_fatigue", "privacy", "attribution_bias"],
+  "kpi_examples": ["Activation rate", "Reactivation rate", "Expansion revenue"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

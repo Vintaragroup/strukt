@@ -1,0 +1,12 @@
+{
+  "id": "kpis_marketing_analytics_v1",
+  "type": "kpi_set",
+  "for": ["Marketing", "Analytics", "Business"],
+  "content": [
+    "Attribution coverage %",
+    "Share of voice / organic traffic growth",
+    "Lead-to-SQL conversion",
+    "Pipeline source mix",
+    "CAC payback period"
+  ]
+}

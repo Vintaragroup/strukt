@@ -1,0 +1,12 @@
+{
+  "id": "ac_sales_enablement_ready_v1",
+  "type": "acceptance_criteria",
+  "for": ["Business", "Marketing", "Product"],
+  "content": [
+    "Core assets published and discoverable",
+    "Sales onboarding and certification completed",
+    "Objection handling documented",
+    "Demo environment stable with scripts",
+    "Analytics instrumented for asset usage"
+  ]
+}

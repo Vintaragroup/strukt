@@ -1,0 +1,18 @@
+{
+  "id": "competitive_landscape_analysis_v1",
+  "name": "Competitive Landscape Analysis PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define competitors, substitutes, and alternatives with a structured analysis to inform positioning and roadmap." },
+    { "title": "Segmentation & ICP Fit", "key": "segmentation", "content": "Segment markets and map competitor strengths/weaknesses by ICP, use case, and vertical." },
+    { "title": "Feature & Value Comparison", "key": "feature_comparison", "content": "Capability matrix, outcomes, pricing posture, integrations, developer experience, and ecosystem." },
+    { "title": "Differentiation & Moat", "key": "differentiation", "content": "Unique strengths, defensibility, switching costs, network effects, and roadmap bets." },
+    { "title": "Implications & Plays", "key": "plays", "content": "Messaging moves, sales plays, pricing/packaging considerations, product bets, and risks." }
+  ],
+  "stack_keywords": ["competitive", "positioning", "moat"],
+  "risk_profile": ["price_wars", "feature_chase", "messaging_confusion"],
+  "kpi_examples": ["Win rate vs target competitor", "Competitive objection rate"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

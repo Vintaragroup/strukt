@@ -1,0 +1,12 @@
+{
+  "id": "partner_integrations_program_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "tiers", "vector": []},
+    {"key": "standards", "vector": []},
+    {"key": "marketplace", "vector": []},
+    {"key": "comarketing", "vector": []}
+  ]
+}

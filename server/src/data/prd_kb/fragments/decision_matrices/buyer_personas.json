@@ -1,0 +1,11 @@
+{
+  "id": "dm_buyer_personas_v1",
+  "type": "decision_matrix",
+  "for": ["Business", "Marketing", "Product"],
+  "content": [
+    "Persona definition: role, pains, JTBD, evaluation criteria",
+    "ICP fit: company size, industry, tech stack, compliance",
+    "Buying committee: influencer, champion, approver, blocker",
+    "Key objections and proof points"
+  ]
+}

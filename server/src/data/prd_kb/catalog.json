@@ -355,5 +355,61 @@
       "embedding": "embeddings/content_seo_strategy_v1.json",
       "raw": "raw/content_seo_strategy_v1.md"
     }
+    ,
+    {
+      "id": "competitive_landscape_analysis_v1",
+      "name": "Competitive Landscape Analysis PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["competitive", "positioning", "moat"],
+      "path": "prds/competitive_landscape_analysis_v1.json",
+      "embedding": "embeddings/competitive_landscape_analysis_v1.json",
+      "raw": "raw/competitive_landscape_analysis_v1.md"
+    },
+    {
+      "id": "sales_enablement_assets_v1",
+      "name": "Sales Enablement Assets PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["sales", "enablement", "playbooks"],
+      "path": "prds/sales_enablement_assets_v1.json",
+      "embedding": "embeddings/sales_enablement_assets_v1.json",
+      "raw": "raw/sales_enablement_assets_v1.md"
+    },
+    {
+      "id": "lifecycle_marketing_messaging_v1",
+      "name": "Lifecycle Marketing & Messaging PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product", "Analytics"],
+      "tags": ["lifecycle", "messaging", "email"],
+      "path": "prds/lifecycle_marketing_messaging_v1.json",
+      "embedding": "embeddings/lifecycle_marketing_messaging_v1.json",
+      "raw": "raw/lifecycle_marketing_messaging_v1.md"
+    },
+    {
+      "id": "partner_integrations_program_v1",
+      "name": "Partner Integrations Program PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["partners", "integrations", "marketplace"],
+      "path": "prds/partner_integrations_program_v1.json",
+      "embedding": "embeddings/partner_integrations_program_v1.json",
+      "raw": "raw/partner_integrations_program_v1.md"
+    },
+    {
+      "id": "analytics_attribution_modeling_v1",
+      "name": "Marketing Analytics & Attribution Modeling PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Analytics"],
+      "tags": ["attribution", "analytics", "MMM", "MTA"],
+      "path": "prds/analytics_attribution_modeling_v1.json",
+      "embedding": "embeddings/analytics_attribution_modeling_v1.json",
+      "raw": "raw/analytics_attribution_modeling_v1.md"
+    }
   ]
 }

@@ -4,6 +4,16 @@ import path from 'node:path'
 
 const router = Router()
 
+// GET /api/kb/health — lightweight health with kb_version and item count
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const catalog = await kbService.loadCatalog()
+    res.json({ success: true, status: 'ok', kb_version: catalog.kb_version, items: catalog.items?.length || 0 })
+  } catch (e) {
+    res.status(500).json({ success: false, status: 'error', error: (e as Error).message })
+  }
+})
+
 // GET /api/kb/catalog — return the KB catalog.json
 router.get('/catalog', async (_req: Request, res: Response) => {
   try {

@@ -1,0 +1,18 @@
+{
+  "id": "analytics_attribution_modeling_v1",
+  "name": "Marketing Analytics & Attribution Modeling PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define measurement and attribution: UTMs, channel taxonomy, MTA vs MMM, and source of truth." },
+    { "title": "Data Model & Instrumentation", "key": "data_model", "content": "Events schema, session stitching, identity resolution, consent, and data retention." },
+    { "title": "Attribution Methods", "key": "methods", "content": "Rule-based (first/last, linear, time-decay), data-driven, MMM; model evaluation and guardrails." },
+    { "title": "Reporting & Decisions", "key": "reporting", "content": "Dashboards, cohort views, budget reallocation rules, and experimentation interplay." },
+    { "title": "Compliance & Privacy", "key": "privacy", "content": "Consent management, regional rules, differential privacy options, and opt-out handling." }
+  ],
+  "stack_keywords": ["attribution", "analytics", "MMM", "MTA"],
+  "risk_profile": ["tracking_gaps", "model_overfit", "privacy"],
+  "kpi_examples": ["Attribution coverage", "Channel ROI shift"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

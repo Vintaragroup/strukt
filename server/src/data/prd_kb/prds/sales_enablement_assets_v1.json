@@ -1,0 +1,18 @@
+{
+  "id": "sales_enablement_assets_v1",
+  "name": "Sales Enablement Assets PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define the enablement system: discovery guide, pitch, objection handling, demos, case studies, and playbooks." },
+    { "title": "Core Assets", "key": "core_assets", "content": "One-pager, deck, demo scripts, ROI calculators, competitor battlecards, FAQs, and messaging maps." },
+    { "title": "Process & Training", "key": "process_training", "content": "Onboarding program, certification, refresh cadence, feedback loop from sales, content governance." },
+    { "title": "Tooling & Distribution", "key": "tooling", "content": "CMS/saleshub, access control, localization, versioning, and analytics for usage/effectiveness." },
+    { "title": "Measurement & KPIs", "key": "measurement", "content": "Asset adoption, time-to-first-meeting, stage conversion lift, and win rate impact." }
+  ],
+  "stack_keywords": ["sales", "enablement", "playbooks"],
+  "risk_profile": ["stale_content", "off_message", "low_adoption"],
+  "kpi_examples": ["Asset usage coverage", "Stage conversion rate"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

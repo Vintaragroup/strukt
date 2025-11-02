@@ -1,0 +1,12 @@
+{
+  "id": "lifecycle_marketing_messaging_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "segmentation", "vector": []},
+    {"key": "channels", "vector": []},
+    {"key": "journeys", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "partner_integrations_program_v1",
+  "name": "Partner Integrations Program PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define program to recruit, build, certify, list, and co-market integrations and partners." },
+    { "title": "Partner Types & Tiers", "key": "tiers", "content": "Technology, solution, and agency partners; certification tiers and benefits." },
+    { "title": "Integration Standards", "key": "standards", "content": "API requirements, SDKs, security, UX guidelines, and certification checklist." },
+    { "title": "Marketplace & Listing", "key": "marketplace", "content": "Listing requirements, review process, ratings, support obligations, and deprecation policy." },
+    { "title": "Co-Marketing & Measurement", "key": "comarketing", "content": "Launch playbook, joint content, attribution, and shared KPIs." }
+  ],
+  "stack_keywords": ["partners", "integrations", "marketplace"],
+  "risk_profile": ["support_burden", "security_risks", "low_quality_integrations"],
+  "kpi_examples": ["Partner-sourced pipeline", "Active certified integrations"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

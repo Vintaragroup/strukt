@@ -58,6 +58,16 @@ export type ComposeInput = {
 }
 
 export class KBService {
+  private static _ttlMs = Number(process.env.KB_CACHE_TTL_MS || '60000')
+  private static _cache = {
+    catalog: { value: null as Catalog | null, ts: 0 },
+    fragments: { value: null as Fragment[] | null, ts: 0 },
+    prd: new Map<string, { value: PRD; ts: number }>(),
+  }
+
+  private static isFresh(ts: number) {
+    return Date.now() - ts < this._ttlMs
+  }
   static async readJSON<T>(p: string): Promise<T> {
     const raw = await fs.readFile(p, 'utf-8')
     return JSON.parse(raw) as T
@@ -68,16 +78,31 @@ export class KBService {
   }
 
   static async loadCatalog(): Promise<Catalog> {
+    const now = Date.now()
+    if (this._cache.catalog.value && this.isFresh(this._cache.catalog.ts)) {
+      return this._cache.catalog.value
+    }
     const p = this.resolveKBPath('catalog.json')
-    return this.readJSON<Catalog>(p)
+    const cat = await this.readJSON<Catalog>(p)
+    this._cache.catalog = { value: cat, ts: now }
+    return cat
   }
 
   static async loadPRD(relPath: string): Promise<PRD> {
+    const now = Date.now()
+    const hit = this._cache.prd.get(relPath)
+    if (hit && this.isFresh(hit.ts)) return hit.value
     const p = this.resolveKBPath(relPath)
-    return this.readJSON<PRD>(p)
+    const prd = await this.readJSON<PRD>(p)
+    this._cache.prd.set(relPath, { value: prd, ts: now })
+    return prd
   }
 
   static async listFragments(): Promise<Fragment[]> {
+    const now = Date.now()
+    if (this._cache.fragments.value && this.isFresh(this._cache.fragments.ts)) {
+      return this._cache.fragments.value
+    }
     const root = this.resolveKBPath('fragments')
     const cats = await fs.readdir(root)
     const all: Fragment[] = []
@@ -92,6 +117,7 @@ export class KBService {
         all.push(frag)
       }
     }
+    this._cache.fragments = { value: all, ts: now }
     return all
   }
 

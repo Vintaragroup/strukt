@@ -1,0 +1,12 @@
+{
+  "id": "sales_enablement_assets_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "core_assets", "vector": []},
+    {"key": "process_training", "vector": []},
+    {"key": "tooling", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}
