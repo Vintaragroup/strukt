@@ -1,0 +1,12 @@
+{
+  "id": "incident_response_oncall_runbook_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "severity_escalation", "vector": []},
+    {"key": "comms_roles", "vector": []},
+    {"key": "runbooks_tooling", "vector": []},
+    {"key": "postmortems_kpis", "vector": []}
+  ]
+}

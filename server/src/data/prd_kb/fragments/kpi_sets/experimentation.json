@@ -1,0 +1,11 @@
+{
+  "id": "kpis_experimentation_v1",
+  "type": "kpi_set",
+  "for": ["frontend", "backend", "analytics", "product", "domain"],
+  "content": [
+    "Time-to-rollback < 5 minutes",
+    "Flag cleanup within 2 sprints",
+    "Experiment power >= 80% before readout",
+    "MDE documented for primary metric"
+  ]
+}

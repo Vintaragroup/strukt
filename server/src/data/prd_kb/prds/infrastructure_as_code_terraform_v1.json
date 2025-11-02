@@ -1,0 +1,18 @@
+{
+  "id": "infrastructure_as_code_terraform_v1",
+  "name": "Infrastructure as Code (Terraform) PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "domain"],
+  "domains": ["Tech", "Ops"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Standardize infrastructure provisioning with Terraform using modules, workspaces, and CI/CD to ensure reproducibility and compliance." },
+    { "title": "Module Design", "key": "module_design", "content": "Define reusable modules (networking, compute, databases, observability). Versioned releases with semantic versioning and CHANGELOGs." },
+    { "title": "Environments & State", "key": "envs_state", "content": "Per-environment workspaces (dev/stage/prod). Remote state in Terraform Cloud/S3 + DynamoDB locking; state access controls." },
+    { "title": "CI/CD & Guardrails", "key": "ci_cd_guardrails", "content": "Plan/apply via CI with policy-as-code (OPA/Sentinel). Mandatory reviews for prod; drift detection; cost checks." },
+    { "title": "Security & Compliance", "key": "security_compliance", "content": "Least-privilege IAM for pipelines, secrets management, tagging standards, and audit logging of changes." }
+  ],
+  "stack_keywords": ["terraform", "iac", "opa", "sentinel"],
+  "risk_profile": ["misconfiguration", "drift"],
+  "kpi_examples": ["Drift incidents = 0 per quarter", "Mean plan review time < 2h"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

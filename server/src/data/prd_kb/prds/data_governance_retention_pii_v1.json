@@ -1,0 +1,18 @@
+{
+  "id": "data_governance_retention_pii_v1",
+  "name": "Data Governance, Retention, and PII PRD",
+  "version": "1.0.0",
+  "node_types": ["domain"],
+  "domains": ["Tech", "Ops", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Policies and controls for data classification, retention, and privacy (PII) to meet regulatory and customer requirements." },
+    { "title": "Classification & Catalog", "key": "classification_catalog", "content": "Data classes (PII, sensitive, public); catalog coverage; lineage basics; owners and stewards." },
+    { "title": "Retention & Deletion", "key": "retention_deletion", "content": "Service-level retention schedules; deletion workflows; backups handling; legal holds and exemptions." },
+    { "title": "Privacy & DSRs", "key": "privacy_dsrs", "content": "Consent management; Data Subject Requests (export/delete); response SLAs; audit trails for requests." },
+    { "title": "PII Redaction & Access", "key": "pii_redaction_access", "content": "Redaction/tokenization; role-based access; masked views for non-prod; secrets and encryption hygiene." }
+  ],
+  "stack_keywords": ["governance", "retention", "pii"],
+  "risk_profile": ["non_compliance", "data_leakage"],
+  "kpi_examples": ["DSR SLA < 30 days", "PII in logs = 0"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

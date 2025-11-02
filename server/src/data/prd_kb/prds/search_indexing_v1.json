@@ -1,0 +1,18 @@
+{
+  "id": "search_indexing_v1",
+  "name": "Search & Indexing PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "frontend"],
+  "domains": ["Tech", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Provide fast, relevant search via schema design, ranking, and incremental indexing with robust monitoring." },
+    { "title": "Schema & Fields", "key": "schema_fields", "content": "Entity schemas; analyzers; synonyms; facets/filters; multi-language support and stemming rules." },
+    { "title": "Ranking & Relevance", "key": "ranking_relevance", "content": "Signals (text, popularity, recency); boosting; query understanding; evaluation with offline/online metrics." },
+    { "title": "Indexing & Consistency", "key": "indexing_consistency", "content": "Incremental updates; backfills; idempotent pipelines; consistency models and SLAs for freshness." },
+    { "title": "Monitoring & Ops", "key": "monitoring_ops", "content": "Query latency/error budgets; zero-results tracking; degradation alerts; safe reindex strategies." }
+  ],
+  "stack_keywords": ["search", "ranking", "indexing"],
+  "risk_profile": ["poor_relevance", "stale_indexes"],
+  "kpi_examples": ["Zero-result rate < 5%", "p95 search latency < 300ms"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

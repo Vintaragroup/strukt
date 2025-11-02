@@ -1,0 +1,11 @@
+{
+  "id": "kpis_observability_v1",
+  "type": "kpi_set",
+  "for": ["backend", "domain"],
+  "content": [
+    "Log loss < 0.1%",
+    "Trace sampling within budget and SLO",
+    "Alert noise < 5% non-actionable",
+    "Dashboard coverage >= 90% of critical services"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "infrastructure_as_code_terraform_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "module_design", "vector": []},
+    {"key": "envs_state", "vector": []},
+    {"key": "ci_cd_guardrails", "vector": []},
+    {"key": "security_compliance", "vector": []}
+  ]
+}

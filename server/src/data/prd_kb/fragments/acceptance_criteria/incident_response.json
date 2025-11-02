@@ -1,0 +1,11 @@
+{
+  "id": "ac_incident_response_v1",
+  "type": "acceptance_criteria",
+  "for": ["domain"],
+  "content": [
+    "Sev matrix published and accessible",
+    "On-call rotation configured with paging",
+    "Runbooks exist for top 5 services",
+    "Postmortem template used with action tracking"
+  ]
+}

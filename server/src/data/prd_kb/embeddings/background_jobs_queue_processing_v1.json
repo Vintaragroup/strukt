@@ -1,0 +1,12 @@
+{
+  "id": "background_jobs_queue_processing_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "idempotency_ordering", "vector": []},
+    {"key": "retries_dlq", "vector": []},
+    {"key": "scheduling_concurrency", "vector": []},
+    {"key": "observability_ops", "vector": []}
+  ]
+}

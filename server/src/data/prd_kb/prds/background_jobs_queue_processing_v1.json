@@ -1,0 +1,18 @@
+{
+  "id": "background_jobs_queue_processing_v1",
+  "name": "Background Jobs & Queue Processing PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Asynchronous processing for long-running or high-volume tasks using queues, workers, and scheduling." },
+    { "title": "Idempotency & Ordering", "key": "idempotency_ordering", "content": "Idempotent handlers with deterministic keys; exactly-once illusion via at-least-once and dedupe; partitioning for ordering." },
+    { "title": "Retries & DLQ", "key": "retries_dlq", "content": "Exponential backoff; max attempts; poison message handling; DLQ monitoring and replay tooling." },
+    { "title": "Scheduling & Concurrency", "key": "scheduling_concurrency", "content": "CRON and ad-hoc triggers; rate limits, concurrency caps, and worker autoscaling; graceful shutdown." },
+    { "title": "Observability & Ops", "key": "observability_ops", "content": "Per-queue dashboards, lag and throughput metrics; structured logs; alerting on failures and DLQ growth." }
+  ],
+  "stack_keywords": ["queues", "dlq", "scheduling"],
+  "risk_profile": ["duplicate_processing", "poison_messages"],
+  "kpi_examples": ["DLQ < 0.1% of traffic", "p99 latency within SLO"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

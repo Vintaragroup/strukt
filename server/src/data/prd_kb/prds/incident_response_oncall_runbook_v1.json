@@ -1,0 +1,18 @@
+{
+  "id": "incident_response_oncall_runbook_v1",
+  "name": "Incident Response & On-Call Runbook PRD",
+  "version": "1.0.0",
+  "node_types": ["domain"],
+  "domains": ["Ops", "Tech"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Standardize incident triage, escalation, communications, and post-incident learning to reduce MTTA/MTTR." },
+    { "title": "Severity & Escalation", "key": "severity_escalation", "content": "Sev0–Sev3 matrix with business impact; paging policies; escalation ladders; ownership." },
+  { "title": "Comms & Roles", "key": "comms_roles", "content": "Incident commander, comms lead, scribe; stakeholder updates cadence; status pages and customer comms." },
+  { "title": "Runbooks & Tooling", "key": "runbooks_tooling", "content": "Playbooks per service; on-call handoff process; tooling checklist; simulated drills and game days." },
+  { "title": "Postmortems & KPIs", "key": "postmortems_kpis", "content": "Blameless PMs with action items; tracking MTTA/MTTR, incident count, regression rate; review cadence." }
+  ],
+  "stack_keywords": ["oncall", "postmortem", "pager"],
+  "risk_profile": ["slow_response", "regressions"],
+  "kpi_examples": ["MTTA < 5m", "MTTR < 60m for Sev1"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

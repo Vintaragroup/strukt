@@ -1,0 +1,12 @@
+{
+  "id": "feature_flags_experimentation_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "flag_lifecycle", "vector": []},
+    {"key": "rollouts_safety", "vector": []},
+    {"key": "experiments_metrics", "vector": []},
+    {"key": "governance_audit", "vector": []}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "pattern_job_idempotency_v1",
+  "type": "interface_pattern",
+  "for": ["backend"],
+  "content": {
+    "idempotency_key": "Derive from business entity and action (e.g., orderId + step)",
+    "dedup_window": "Store processed keys for 24-72h depending on use case",
+    "exactly_once_illusion": "Achieve with at-least-once + dedupe; ensure handlers are idempotent"
+  }
+}

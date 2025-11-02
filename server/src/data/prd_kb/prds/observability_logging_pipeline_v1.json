@@ -1,0 +1,18 @@
+{
+  "id": "observability_logging_pipeline_v1",
+  "name": "Observability Logging & Telemetry Pipeline PRD",
+  "version": "1.0.0",
+  "node_types": ["backend", "domain"],
+  "domains": ["Tech", "Ops", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Centralize logs, metrics, and traces with durable ingestion, enrichment, storage tiers, and actionable alerting." },
+    { "title": "Signals & Ingestion", "key": "signals_ingestion", "content": "Structured logs (JSON), metrics (RED/USE), distributed traces (W3C). Agents/OTel collectors; backpressure and buffering." },
+    { "title": "Retention & Costs", "key": "retention_costs", "content": "Hot/warm/cold tiers; sampling strategies; index lifecycle; cost caps and budgeting with usage SLOs." },
+    { "title": "Dashboards & Alerting", "key": "dashboards_alerting", "content": "Golden dashboards for services; SLO-based alerts; noise reduction and runbook links." },
+    { "title": "Privacy & Redaction", "key": "privacy_redaction", "content": "PII scrubbing at source; tokenization; access controls; audit trails and data retention compliance." }
+  ],
+  "stack_keywords": ["otel", "slo", "w3c-trace"],
+  "risk_profile": ["log_loss", "cost_spike"],
+  "kpi_examples": ["Log loss < 0.1%", "Alert noise < 5% non-actionable"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

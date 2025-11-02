@@ -1,0 +1,10 @@
+{
+  "id": "pattern_pii_redaction_v1",
+  "type": "interface_pattern",
+  "for": ["backend", "domain"],
+  "content": {
+    "scrubbing": "Strip PII in logs at source; whitelist fields; classify data flows",
+    "tokenization": "Replace sensitive values with tokens; store mapping in secure vault",
+    "non_prod": "Mask PII in non-production environments; restrict access via RBAC"
+  }
+}

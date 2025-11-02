@@ -1,0 +1,12 @@
+{
+  "id": "data_governance_retention_pii_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "classification_catalog", "vector": []},
+    {"key": "retention_deletion", "vector": []},
+    {"key": "privacy_dsrs", "vector": []},
+    {"key": "pii_redaction_access", "vector": []}
+  ]
+}

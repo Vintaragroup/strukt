@@ -1,0 +1,18 @@
+{
+  "id": "feature_flags_experimentation_v1",
+  "name": "Feature Flags & Experimentation PRD",
+  "version": "1.0.0",
+  "node_types": ["frontend", "backend", "domain"],
+  "domains": ["Product", "Tech", "Analytics"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Safely ship changes via feature flags with controlled rollouts, targeting, and A/B experiments with sound metrics." },
+    { "title": "Flag Lifecycle & Targeting", "key": "flag_lifecycle", "content": "Flag creation, ownership, and TTL; targeting by user/org/segment; kill-switches; technical debt cleanup." },
+    { "title": "Rollouts & Safety", "key": "rollouts_safety", "content": "Gradual rollouts, percentage-based exposure, automated rollback on guardrail breaches; change freeze rules." },
+    { "title": "Experiment Design & Metrics", "key": "experiments_metrics", "content": "Hypotheses, primary/secondary metrics, sample size, bucketing, stat-sig; anti-patterns avoidance." },
+    { "title": "Governance & Audit", "key": "governance_audit", "content": "Approvals for high-risk flags; audit logs; retention policy; naming conventions and documentation." }
+  ],
+  "stack_keywords": ["feature-flags", "ab-testing", "guardrails"],
+  "risk_profile": ["metric_gaming", "flag_debt"],
+  "kpi_examples": ["Rollback time < 5m", "Flag cleanup within 2 sprints"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

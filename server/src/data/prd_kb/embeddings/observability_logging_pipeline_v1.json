@@ -1,0 +1,12 @@
+{
+  "id": "observability_logging_pipeline_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "signals_ingestion", "vector": []},
+    {"key": "retention_costs", "vector": []},
+    {"key": "dashboards_alerting", "vector": []},
+    {"key": "privacy_redaction", "vector": []}
+  ]
+}

@@ -232,6 +232,83 @@
       "path": "prds/backend_event_sourcing_cqrs_v1.json",
       "embedding": "embeddings/backend_event_sourcing_cqrs_v1.json",
       "raw": "raw/backend_event_sourcing_cqrs_v1.md"
+    },
+    {
+      "id": "infrastructure_as_code_terraform_v1",
+      "name": "Infrastructure as Code (Terraform) PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "domain"],
+      "domains": ["Tech", "Ops"],
+      "tags": ["terraform", "iac"],
+      "path": "prds/infrastructure_as_code_terraform_v1.json",
+      "embedding": "embeddings/infrastructure_as_code_terraform_v1.json",
+      "raw": "raw/infrastructure_as_code_terraform_v1.md"
+    },
+    {
+      "id": "observability_logging_pipeline_v1",
+      "name": "Observability Logging & Telemetry Pipeline PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "domain"],
+      "domains": ["Tech", "Ops", "Analytics"],
+      "tags": ["observability", "otel"],
+      "path": "prds/observability_logging_pipeline_v1.json",
+      "embedding": "embeddings/observability_logging_pipeline_v1.json",
+      "raw": "raw/observability_logging_pipeline_v1.md"
+    },
+    {
+      "id": "incident_response_oncall_runbook_v1",
+      "name": "Incident Response & On-Call Runbook PRD",
+      "version": "1.0.0",
+      "node_types": ["domain"],
+      "domains": ["Ops", "Tech"],
+      "tags": ["oncall", "incident"],
+      "path": "prds/incident_response_oncall_runbook_v1.json",
+      "embedding": "embeddings/incident_response_oncall_runbook_v1.json",
+      "raw": "raw/incident_response_oncall_runbook_v1.md"
+    },
+    {
+      "id": "background_jobs_queue_processing_v1",
+      "name": "Background Jobs & Queue Processing PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["queues", "dlq"],
+      "path": "prds/background_jobs_queue_processing_v1.json",
+      "embedding": "embeddings/background_jobs_queue_processing_v1.json",
+      "raw": "raw/background_jobs_queue_processing_v1.md"
+    },
+    {
+      "id": "feature_flags_experimentation_v1",
+      "name": "Feature Flags & Experimentation PRD",
+      "version": "1.0.0",
+      "node_types": ["frontend", "backend", "domain"],
+      "domains": ["Product", "Tech", "Analytics"],
+      "tags": ["feature-flags", "experimentation"],
+      "path": "prds/feature_flags_experimentation_v1.json",
+      "embedding": "embeddings/feature_flags_experimentation_v1.json",
+      "raw": "raw/feature_flags_experimentation_v1.md"
+    },
+    {
+      "id": "data_governance_retention_pii_v1",
+      "name": "Data Governance, Retention, and PII PRD",
+      "version": "1.0.0",
+      "node_types": ["domain"],
+      "domains": ["Tech", "Ops", "Product"],
+      "tags": ["governance", "pii"],
+      "path": "prds/data_governance_retention_pii_v1.json",
+      "embedding": "embeddings/data_governance_retention_pii_v1.json",
+      "raw": "raw/data_governance_retention_pii_v1.md"
+    },
+    {
+      "id": "search_indexing_v1",
+      "name": "Search & Indexing PRD",
+      "version": "1.0.0",
+      "node_types": ["backend", "frontend"],
+      "domains": ["Tech", "Product"],
+      "tags": ["search", "indexing"],
+      "path": "prds/search_indexing_v1.json",
+      "embedding": "embeddings/search_indexing_v1.json",
+      "raw": "raw/search_indexing_v1.md"
     }
   ]
 }
