@@ -1,0 +1,12 @@
+{
+  "id": "template_case_study_outline_v1",
+  "type": "template",
+  "for": ["Marketing", "Product"],
+  "content": [
+    "Customer background and problem",
+    "Solution and implementation",
+    "Results with metrics",
+    "Quotes and visuals",
+    "Call-to-action"
+  ]
+}

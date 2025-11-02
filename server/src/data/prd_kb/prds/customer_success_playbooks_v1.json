@@ -1,0 +1,18 @@
+{
+  "id": "customer_success_playbooks_v1",
+  "name": "Customer Success Playbooks PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define CSM playbooks across onboarding, adoption, QBRs, risk management, and expansion." },
+    { "title": "Onboarding & Adoption", "key": "onboarding", "content": "Milestones, timelines, responsibilities, and success criteria for onboarding." },
+    { "title": "QBRs & Health Scoring", "key": "qbr", "content": "Health scoring model, QBR template, action tracking, and executive alignment." },
+    { "title": "Churn Risk & Saves", "key": "churn", "content": "Signals, playbooks, escalation paths, and save offers with approvals." },
+    { "title": "Expansion & Advocacy", "key": "expansion", "content": "Expansion triggers, land-and-expand strategy, references, and case studies." }
+  ],
+  "stack_keywords": ["customer_success", "onboarding", "qbr"],
+  "risk_profile": ["adoption_gaps", "late_escalations", "untracked_risk"],
+  "kpi_examples": ["TTFV", "Gross/Net revenue retention", "NPS"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

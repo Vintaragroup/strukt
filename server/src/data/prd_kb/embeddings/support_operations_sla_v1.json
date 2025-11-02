@@ -1,0 +1,12 @@
+{
+  "id": "support_operations_sla_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "help_center", "vector": []},
+    {"key": "slas", "vector": []},
+    {"key": "tooling", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "developer_community_program_v1",
+  "name": "Developer Community & Advocacy Program PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define developer community program: forums, events, contributions, and advocacy." },
+    { "title": "Channels & Programs", "key": "channels", "content": "Forums, Discord/Slack, office hours, meetups, webinars, and content contributions." },
+    { "title": "Advocacy & Recognition", "key": "advocacy", "content": "Ambassador program, badges, swag, and spotlight; contribution rubric and moderation." },
+    { "title": "Tooling & Moderation", "key": "tooling", "content": "Platforms, moderation policies, governance, and safety; code of conduct." },
+    { "title": "Measurement & Impact", "key": "measurement", "content": "Community health, engagement, contribution velocity, and influence on product roadmap." }
+  ],
+  "stack_keywords": ["community", "advocacy", "devrel"],
+  "risk_profile": ["toxicity", "fragmentation", "low_engagement"],
+  "kpi_examples": ["Active members", "Contributions/month", "Community-sourced issues closed"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "developer_community_program_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "channels", "vector": []},
+    {"key": "advocacy", "vector": []},
+    {"key": "tooling", "vector": []},
+    {"key": "measurement", "vector": []}
+  ]
+}

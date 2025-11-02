@@ -1,0 +1,18 @@
+{
+  "id": "support_operations_sla_v1",
+  "name": "Support Operations & SLAs PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define support operating model: help center, tiering, SLAs/SLGs, and escalations." },
+    { "title": "Help Center & Content", "key": "help_center", "content": "Information architecture, article standards, search, localization, and feedback loops." },
+    { "title": "SLAs & Escalations", "key": "slas", "content": "Priority definitions, response/resolution targets, escalations, and credits policies." },
+    { "title": "Tooling & Workflows", "key": "tooling", "content": "Ticketing, routing, macros, knowledge base, and QA; integrations with product analytics." },
+    { "title": "Measurement & Quality", "key": "measurement", "content": "CSAT, FCR, backlog/aging, QA scorecards, and continuous improvement." }
+  ],
+  "stack_keywords": ["support", "sla", "help_center"],
+  "risk_profile": ["backlog_growth", "poor_quality", "escalation_overuse"],
+  "kpi_examples": ["CSAT", "FCR", "SLA adherence"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

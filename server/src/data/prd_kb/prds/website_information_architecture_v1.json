@@ -1,0 +1,18 @@
+{
+  "id": "website_information_architecture_v1",
+  "name": "Public Website Information Architecture PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define website IA: navigation, page templates, content standards, and SEO hooks." },
+    { "title": "Navigation & Structure", "key": "navigation", "content": "Header/footer, primary/secondary nav, breadcrumbs, and discoverability guidelines." },
+    { "title": "Templates & Blocks", "key": "templates", "content": "Templates for home, product, pricing, docs, case studies, blog; reusable blocks." },
+    { "title": "Content Standards", "key": "standards", "content": "Readability, accessibility, media handling, localization, and governance." },
+    { "title": "Technical SEO & Performance", "key": "technical_seo", "content": "Metadata, schema, sitemaps, internal linking, and CWV budgets." }
+  ],
+  "stack_keywords": ["website", "ia", "templates", "seo"],
+  "risk_profile": ["content_sprawl", "nav_confusion", "performance_regressions"],
+  "kpi_examples": ["Navigation success rate", "Bounce rate on key pages", "CWV pass rate"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

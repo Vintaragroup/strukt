@@ -1,0 +1,12 @@
+{
+  "id": "website_information_architecture_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "navigation", "vector": []},
+    {"key": "templates", "vector": []},
+    {"key": "standards", "vector": []},
+    {"key": "technical_seo", "vector": []}
+  ]
+}

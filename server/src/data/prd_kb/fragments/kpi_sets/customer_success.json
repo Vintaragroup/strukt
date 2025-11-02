@@ -1,0 +1,12 @@
+{
+  "id": "kpis_customer_success_v1",
+  "type": "kpi_set",
+  "for": ["Business", "Product", "Marketing"],
+  "content": [
+    "TTFV (time-to-first-value)",
+    "Adoption milestones completion %",
+    "NPS / CSAT",
+    "Gross/Net revenue retention",
+    "Churn rate"
+  ]
+}

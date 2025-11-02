@@ -65,6 +65,7 @@
 │  │  • CORS (cross-origin)                                  │   │
 │  │  • Morgan (logging)                                     │   │
 │  │  • authOptional (JWT parsing)                           │   │
+│  │  • KB cache (in-memory TTL)                             │   │
 │  │                                                          │   │
 │  │ Routes:                                                  │   │
 │  │  • GET  /api/workspaces           - List                │   │
@@ -73,6 +74,9 @@
 │  │  • PUT  /api/workspaces/:name     - Update              │   │
 │  │  • DEL  /api/workspaces/:name     - Delete              │   │
 │  │  • POST /api/ai/suggest           - AI suggestions      │   │
+│  │  • GET  /api/kb/health            - KB status/version   │   │
+│  │  • GET  /api/kb/catalog           - KB catalog          │   │
+│  │  • POST /api/kb/compose           - KB composition      │   │
 │  └──────┬──────────────────────────────────────────────────┘   │
 │         │                                                        │
 │         ├─────────────────────┬────────────────────┐            │

@@ -1,0 +1,18 @@
+{
+  "id": "brand_voice_guidelines_v1",
+  "name": "Brand Voice & Messaging Guidelines PRD",
+  "version": "1.0.0",
+  "node_types": ["requirement", "domain"],
+  "domains": ["Business", "Marketing", "Product"],
+  "sections": [
+    { "title": "Overview", "key": "overview", "content": "Define brand voice, tone, and messaging pillars to ensure consistency across all touchpoints." },
+    { "title": "Voice & Tone", "key": "voice_tone", "content": "Personality traits, do/don'ts, examples by context (website, docs, emails, UI)." },
+    { "title": "Messaging Pillars", "key": "pillars", "content": "Core value pillars with proof points, RTBs, and differentiators mapped to personas." },
+    { "title": "Style & Terminology", "key": "style", "content": "Naming conventions, terminology, inclusive language, and localization notes." },
+    { "title": "Governance & Updates", "key": "governance", "content": "Review cadence, ownership, change management, and enablement plan." }
+  ],
+  "stack_keywords": ["brand", "messaging", "tone"],
+  "risk_profile": ["off_brand", "inconsistency", "confusion"],
+  "kpi_examples": ["Consistency score in content QA", "Asset rework rate"],
+  "generated_by": { "model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z" }
+}

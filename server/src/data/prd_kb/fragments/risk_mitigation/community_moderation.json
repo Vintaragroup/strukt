@@ -1,0 +1,11 @@
+{
+  "id": "rm_community_moderation_v1",
+  "type": "risk_mitigation",
+  "for": ["Marketing", "Product"],
+  "content": [
+    "Code of conduct and enforcement",
+    "Moderator guidelines and tooling",
+    "Appeals process",
+    "Safety and privacy considerations"
+  ]
+}

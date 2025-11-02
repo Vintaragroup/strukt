@@ -1,0 +1,12 @@
+{
+  "id": "customer_success_playbooks_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "onboarding", "vector": []},
+    {"key": "qbr", "vector": []},
+    {"key": "churn", "vector": []},
+    {"key": "expansion", "vector": []}
+  ]
+}

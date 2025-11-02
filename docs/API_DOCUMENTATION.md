@@ -622,6 +622,7 @@ const result = await fetch(`/api/generation/queue/${queueResult.jobId}/result`)
 
 - **Status**: /health
 - **API Health**: /api/generation/health
+- **KB Health**: /api/kb/health
 - **Issues**: Check error messages and circuit breaker state
 - **Monitoring**: Queue stats at /api/generation/queue/stats
 
@@ -629,4 +630,4 @@ const result = await fetch(`/api/generation/queue/${queueResult.jobId}/result`)
 
 **API Version**: 1.0.0  
 **Status**: ✅ Production Ready  
-**Last Updated**: October 23, 2025
+**Last Updated**: November 2, 2025

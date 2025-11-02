@@ -411,5 +411,61 @@
       "embedding": "embeddings/analytics_attribution_modeling_v1.json",
       "raw": "raw/analytics_attribution_modeling_v1.md"
     }
+    ,
+    {
+      "id": "brand_voice_guidelines_v1",
+      "name": "Brand Voice & Messaging Guidelines PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["brand", "messaging", "tone"],
+      "path": "prds/brand_voice_guidelines_v1.json",
+      "embedding": "embeddings/brand_voice_guidelines_v1.json",
+      "raw": "raw/brand_voice_guidelines_v1.md"
+    },
+    {
+      "id": "customer_success_playbooks_v1",
+      "name": "Customer Success Playbooks PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["customer_success", "onboarding", "qbr"],
+      "path": "prds/customer_success_playbooks_v1.json",
+      "embedding": "embeddings/customer_success_playbooks_v1.json",
+      "raw": "raw/customer_success_playbooks_v1.md"
+    },
+    {
+      "id": "support_operations_sla_v1",
+      "name": "Support Operations & SLAs PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["support", "sla", "help_center"],
+      "path": "prds/support_operations_sla_v1.json",
+      "embedding": "embeddings/support_operations_sla_v1.json",
+      "raw": "raw/support_operations_sla_v1.md"
+    },
+    {
+      "id": "developer_community_program_v1",
+      "name": "Developer Community & Advocacy Program PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["community", "advocacy", "devrel"],
+      "path": "prds/developer_community_program_v1.json",
+      "embedding": "embeddings/developer_community_program_v1.json",
+      "raw": "raw/developer_community_program_v1.md"
+    },
+    {
+      "id": "website_information_architecture_v1",
+      "name": "Public Website Information Architecture PRD",
+      "version": "1.0.0",
+      "node_types": ["requirement", "domain"],
+      "domains": ["Business", "Marketing", "Product"],
+      "tags": ["website", "ia", "seo"],
+      "path": "prds/website_information_architecture_v1.json",
+      "embedding": "embeddings/website_information_architecture_v1.json",
+      "raw": "raw/website_information_architecture_v1.md"
+    }
   ]
 }

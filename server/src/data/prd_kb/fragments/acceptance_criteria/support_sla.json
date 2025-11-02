@@ -1,0 +1,11 @@
+{
+  "id": "ac_support_sla_v1",
+  "type": "acceptance_criteria",
+  "for": ["Business", "Product"],
+  "content": [
+    "SLAs documented and accessible",
+    "Priority definitions agreed with stakeholders",
+    "Escalation paths configured",
+    "Credits/compensation policy approved"
+  ]
+}

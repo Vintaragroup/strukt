@@ -1,0 +1,12 @@
+{
+  "id": "brand_voice_guidelines_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "voice_tone", "vector": []},
+    {"key": "pillars", "vector": []},
+    {"key": "style", "vector": []},
+    {"key": "governance", "vector": []}
+  ]
+}
