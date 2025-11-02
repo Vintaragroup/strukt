@@ -1,5 +1,5 @@
 {
   "version": "kb-v2025-11-02",
   "locked": false,
-  "notes": "Initial KB seed with 2 normalized PRDs and catalog."
+  "notes": "Expanded KB: +8 normalized PRDs (cloud provider, identity/onboarding, Stripe, Lemon Squeezy, security/compliance, frontend design system, frontend perf/observability, event sourcing/CQRS) and supporting fragments (decision matrix, onboarding flow, webhook verification, security KPIs)."
 }
