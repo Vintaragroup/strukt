@@ -1,0 +1,17 @@
+{
+  "id": "analytics_dashboard_v1",
+  "name": "Analytics Dashboard PRD",
+  "version": "1.0.0",
+  "node_types": ["frontend"],
+  "domains": ["Product", "Analytics"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Dashboard for product analytics with filters, drill-downs, and export features."},
+    {"title": "Metrics & Definitions", "key": "metrics_definitions", "content": "Canonical metric definitions, time windows, segments, and ownership."},
+    {"title": "Visualization & UX", "key": "visualization_ux", "content": "Chart types, interactions (hover, zoom), empty/error states, and accessibility."},
+    {"title": "Performance & Caching", "key": "performance_caching", "content": "Pre-aggregation, query caching, and progressive rendering."}
+  ],
+  "stack_keywords": ["react", "charts"],
+  "risk_profile": ["misleading_metrics", "query_latency"],
+  "kpi_examples": ["Dashboard load < 2s p75", "Export success rate ≥ 99%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

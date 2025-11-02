@@ -1,0 +1,10 @@
+{
+  "id": "kpis_streaming_pipeline_v1",
+  "type": "kpi_set",
+  "for": ["backend"],
+  "content": [
+    "End-to-end latency < 10s",
+    "DLQ rate < 0.1%",
+    "Consumer lag < 1000 msgs"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "acceptance_analytics_dashboard_v1",
+  "type": "acceptance_criteria",
+  "for": ["frontend"],
+  "content": [
+    "Filters apply within 500ms and persist on refresh",
+    "Charts render accessible labels and ARIA descriptions",
+    "Exports succeed for 1M-row datasets with queued processing",
+    "Empty and error states present actionable guidance"
+  ]
+}

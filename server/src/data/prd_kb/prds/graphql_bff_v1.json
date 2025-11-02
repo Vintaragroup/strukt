@@ -1,0 +1,17 @@
+{
+  "id": "graphql_bff_v1",
+  "name": "GraphQL BFF PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "GraphQL BFF aggregating upstream services with type-safe schema and caching."},
+    {"title": "Schema & Types", "key": "schema_types", "content": "Federation vs monolith; schema design; deprecations; connection pattern for pagination."},
+    {"title": "Resolvers & Data Sources", "key": "resolvers_data", "content": "Batching, caching, error mapping; timeouts and retries for upstreams."},
+    {"title": "Security & Caching", "key": "security_caching", "content": "AuthZ in resolvers; persisted queries; CDN/Edge caching strategies."}
+  ],
+  "stack_keywords": ["graphql", "bff", "apollo"],
+  "risk_profile": ["n+1", "overfetching"],
+  "kpi_examples": ["Query p95 < 300ms", "Cache hit rate ≥ 70%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

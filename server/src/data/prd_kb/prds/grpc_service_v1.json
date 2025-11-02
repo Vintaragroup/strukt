@@ -1,0 +1,17 @@
+{
+  "id": "grpc_service_v1",
+  "name": "gRPC Service PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Binary RPC service with protobuf contracts and bidirectional streaming."},
+    {"title": "Protos & Contracts", "key": "protos_contracts", "content": "Versioning strategy, backward compatibility, error mapping to status codes."},
+    {"title": "Performance & Concurrency", "key": "performance_concurrency", "content": "QPS targets, connection pooling, streaming flow control."},
+    {"title": "Security", "key": "security", "content": "mTLS, per-method authZ, rate limits and quotas."}
+  ],
+  "stack_keywords": ["grpc", "protobuf"],
+  "risk_profile": ["compatibility", "resource_usage"],
+  "kpi_examples": ["p95 < 100ms", "QPS ≥ 10k"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

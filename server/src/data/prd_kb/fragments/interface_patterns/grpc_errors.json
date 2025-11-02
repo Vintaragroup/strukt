@@ -1,0 +1,13 @@
+{
+  "id": "pattern_grpc_errors_v1",
+  "type": "interface_pattern",
+  "for": ["backend"],
+  "content": {
+    "status_mapping": [
+      {"domain": "invalid_argument", "status": "INVALID_ARGUMENT"},
+      {"domain": "not_found", "status": "NOT_FOUND"},
+      {"domain": "permission", "status": "PERMISSION_DENIED"}
+    ],
+    "metadata": "Attach error details via trailers; avoid leaking internals"
+  }
+}

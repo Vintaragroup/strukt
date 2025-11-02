@@ -1,0 +1,10 @@
+{
+  "id": "pattern_graphql_connections_v1",
+  "type": "interface_pattern",
+  "for": ["backend"],
+  "content": {
+    "pagination": "Relay-style connections with edges, nodes, pageInfo {hasNextPage, endCursor}",
+    "errors": "Use extensions for codes; avoid exposing internals",
+    "deprecations": "@deprecated(reason: ...) with migration guidance"
+  }
+}

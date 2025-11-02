@@ -78,6 +78,72 @@
       "path": "prds/requirements_document_v2.json",
       "embedding": "embeddings/requirements_document_v2.json",
       "raw": "raw/requirements_document_v2.md"
+    },
+    {
+      "id": "event_backend_kafka_v1",
+      "name": "Event-Driven Backend (Kafka) PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["kafka", "event-driven"],
+      "path": "prds/event_backend_kafka_v1.json",
+      "embedding": "embeddings/event_backend_kafka_v1.json",
+      "raw": "raw/event_backend_kafka_v1.md"
+    },
+    {
+      "id": "graphql_bff_v1",
+      "name": "GraphQL BFF PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["graphql", "bff"],
+      "path": "prds/graphql_bff_v1.json",
+      "embedding": "embeddings/graphql_bff_v1.json",
+      "raw": "raw/graphql_bff_v1.md"
+    },
+    {
+      "id": "grpc_service_v1",
+      "name": "gRPC Service PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Tech"],
+      "tags": ["grpc", "protobuf"],
+      "path": "prds/grpc_service_v1.json",
+      "embedding": "embeddings/grpc_service_v1.json",
+      "raw": "raw/grpc_service_v1.md"
+    },
+    {
+      "id": "mobile_react_native_app_v1",
+      "name": "React Native Mobile App PRD",
+      "version": "1.0.0",
+      "node_types": ["frontend"],
+      "domains": ["Product", "Tech"],
+      "tags": ["react-native", "mobile"],
+      "path": "prds/mobile_react_native_app_v1.json",
+      "embedding": "embeddings/mobile_react_native_app_v1.json",
+      "raw": "raw/mobile_react_native_app_v1.md"
+    },
+    {
+      "id": "analytics_dashboard_v1",
+      "name": "Analytics Dashboard PRD",
+      "version": "1.0.0",
+      "node_types": ["frontend"],
+      "domains": ["Product", "Analytics"],
+      "tags": ["analytics", "dashboard"],
+      "path": "prds/analytics_dashboard_v1.json",
+      "embedding": "embeddings/analytics_dashboard_v1.json",
+      "raw": "raw/analytics_dashboard_v1.md"
+    },
+    {
+      "id": "data_pipeline_streaming_v1",
+      "name": "Streaming Data Pipeline PRD",
+      "version": "1.0.0",
+      "node_types": ["backend"],
+      "domains": ["Data & AI", "Tech"],
+      "tags": ["streaming", "pipeline"],
+      "path": "prds/data_pipeline_streaming_v1.json",
+      "embedding": "embeddings/data_pipeline_streaming_v1.json",
+      "raw": "raw/data_pipeline_streaming_v1.md"
     }
   ]
 }

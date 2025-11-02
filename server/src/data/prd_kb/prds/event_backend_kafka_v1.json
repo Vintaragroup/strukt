@@ -1,0 +1,18 @@
+{
+  "id": "event_backend_kafka_v1",
+  "name": "Event-Driven Backend (Kafka) PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Event-driven services using Kafka for pub/sub, consumer groups, and stream processing."},
+    {"title": "Architecture", "key": "architecture", "content": "Producers → Kafka topics → Consumers; partitions, replication, DLQ; schema registry."},
+    {"title": "Topics & Schemas", "key": "topics_schemas", "content": "Topic naming, keying strategy, Avro/JSON schema evolution, compatibility policies."},
+    {"title": "Ordering & Exactly-Once", "key": "ordering_eos", "content": "Partitioning strategy; idempotent producers; transactional writes for EOS where needed."},
+    {"title": "Monitoring & SLOs", "key": "monitoring_slos", "content": "Consumer lag thresholds, throughput, error rates; alerting for lag and retries."}
+  ],
+  "stack_keywords": ["kafka", "schema-registry", "avro"],
+  "risk_profile": ["ordering", "schema_evolution"],
+  "kpi_examples": ["Consumer lag < 1k msgs", "Throughput ≥ 5k msgs/s"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

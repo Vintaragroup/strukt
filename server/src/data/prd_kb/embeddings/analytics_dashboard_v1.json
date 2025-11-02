@@ -1,0 +1,11 @@
+{
+  "id": "analytics_dashboard_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "metrics_definitions", "vector": []},
+    {"key": "visualization_ux", "vector": []},
+    {"key": "performance_caching", "vector": []}
+  ]
+}

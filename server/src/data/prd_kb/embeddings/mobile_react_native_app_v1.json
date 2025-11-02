@@ -1,0 +1,11 @@
+{
+  "id": "mobile_react_native_app_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "ux_states", "vector": []},
+    {"key": "offline_sync", "vector": []},
+    {"key": "performance_a11y", "vector": []}
+  ]
+}

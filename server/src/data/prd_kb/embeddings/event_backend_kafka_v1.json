@@ -1,0 +1,12 @@
+{
+  "id": "event_backend_kafka_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "architecture", "vector": []},
+    {"key": "topics_schemas", "vector": []},
+    {"key": "ordering_eos", "vector": []},
+    {"key": "monitoring_slos", "vector": []}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "data_pipeline_streaming_v1",
+  "model": "text-embedding-3-large",
+  "dim": 3072,
+  "sections": [
+    {"key": "overview", "vector": []},
+    {"key": "sources_sinks", "vector": []},
+    {"key": "processing_semantics", "vector": []},
+    {"key": "monitoring_quality", "vector": []}
+  ]
+}

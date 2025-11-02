@@ -1,0 +1,10 @@
+{
+  "id": "kpis_analytics_dashboard_v1",
+  "type": "kpi_set",
+  "for": ["frontend"],
+  "content": [
+    "Dashboard load < 2s (p75)",
+    "Export success rate ≥ 99%",
+    "Time-to-first-chart < 1s (p75)"
+  ]
+}

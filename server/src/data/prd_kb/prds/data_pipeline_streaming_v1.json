@@ -1,0 +1,17 @@
+{
+  "id": "data_pipeline_streaming_v1",
+  "name": "Streaming Data Pipeline PRD",
+  "version": "1.0.0",
+  "node_types": ["backend"],
+  "domains": ["Data & AI", "Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Streaming ingestion and processing with at-least-once guarantees and monitoring."},
+    {"title": "Sources & Sinks", "key": "sources_sinks", "content": "Sources (Kafka, HTTP), sinks (warehouse, lake); schema evolution and contracts."},
+    {"title": "Processing & Semantics", "key": "processing_semantics", "content": "Windowing, watermarking, idempotence, retries, deduplication."},
+    {"title": "Monitoring & Quality", "key": "monitoring_quality", "content": "Lag, throughput, dead-letter handling, data quality checks (nulls, ranges)."}
+  ],
+  "stack_keywords": ["kafka", "flink", "spark"],
+  "risk_profile": ["data_loss", "late_data"],
+  "kpi_examples": ["End-to-end latency < 10s", "DLQ rate < 0.1%"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}

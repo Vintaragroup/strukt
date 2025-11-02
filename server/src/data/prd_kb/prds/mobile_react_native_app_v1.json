@@ -1,0 +1,17 @@
+{
+  "id": "mobile_react_native_app_v1",
+  "name": "React Native Mobile App PRD",
+  "version": "1.0.0",
+  "node_types": ["frontend"],
+  "domains": ["Product", "Tech"],
+  "sections": [
+    {"title": "Overview", "key": "overview", "content": "Cross-platform mobile app using React Native with offline-first and push notifications."},
+    {"title": "UX States", "key": "ux_states", "content": "Empty/loading/error/success with native patterns; retry flows; accessibility gestures."},
+    {"title": "Offline & Sync", "key": "offline_sync", "content": "Local storage, conflict resolution, background sync, bandwidth-aware behavior."},
+    {"title": "Performance & A11y", "key": "performance_a11y", "content": "60fps targets, memory and battery constraints; screen reader testing; dynamic type support."}
+  ],
+  "stack_keywords": ["react-native", "expo"],
+  "risk_profile": ["sync_conflicts", "device_variability"],
+  "kpi_examples": ["Crash-free sessions ≥ 99.5%", "Cold start < 2s"],
+  "generated_by": {"model": "editorial", "prompt_template": "kb_new_v1", "timestamp": "2025-11-02T00:00:00Z"}
+}
