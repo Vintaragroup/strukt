@@ -40,6 +40,7 @@ export function SuggestionPanel({
   const [suggestions, setSuggestions] = useState<SuggestedNode[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [resultSource, setResultSource] = useState<"ai" | "heuristic" | null>(null);
+  const [foundationInjected, setFoundationInjected] = useState(false);
   const {
     allowSpecContext,
     specReferenceId,
@@ -55,6 +56,7 @@ export function SuggestionPanel({
       if (!node || !isOpen) {
         setSuggestions([]);
         setResultSource(null);
+        setFoundationInjected(false);
         return;
       }
       setLoading(true);
@@ -103,6 +105,7 @@ export function SuggestionPanel({
         if (!cancelled) {
           setSuggestions(result.suggestions);
           setResultSource(result.source ?? null);
+          setFoundationInjected(Boolean(result.foundationInjected));
         }
       } catch (err) {
         console.error("Failed to fetch next suggestions", err);
@@ -110,6 +113,7 @@ export function SuggestionPanel({
           setError("Unable to load suggestions. Try again later.");
           setSuggestions([]);
           setResultSource(null);
+          setFoundationInjected(false);
         }
       } finally {
         if (!cancelled) {
@@ -184,7 +188,7 @@ export function SuggestionPanel({
 
   return (
     <div
-      className={`absolute right-4 top-4 z-50 w-[280px] max-h-[70vh] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-xl backdrop-blur ${className ?? ""}`}
+      className={`absolute right-4 top-4 z-[70] w-[280px] max-h-[70vh] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-xl backdrop-blur ${className ?? ""}`}
     >
       <div className="p-4 pb-0">
         <div className="flex items-center justify-between gap-4">
@@ -211,6 +215,12 @@ export function SuggestionPanel({
             {allowSpecContext
               ? " Spec details were still applied where possible, but you can retry once the AI service is back online."
               : " Attach an API spec or retry later for richer context."}
+          </div>
+        )}
+
+        {foundationInjected && resultSource !== "heuristic" && (
+          <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-700">
+            <span className="font-semibold">Baseline added:</span> We pre-seeded critical platform nodes (backend, data, auth, ops) so you can build on a complete foundation immediately.
           </div>
         )}
 

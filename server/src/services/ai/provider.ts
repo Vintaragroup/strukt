@@ -38,20 +38,27 @@ interface AIResult {
   rationale?: string
 }
 
+const FOUNDATION_REQUIREMENTS =
+  `- Always ensure the plan includes a sound technical foundation with at least these distinct concepts: core backend/API service, persistent data storage or pipeline, authentication & access control, and observability/monitoring.` +
+  ` If any of these are missing in the current workspace, prioritise adding them before higher-level features.` +
+  `- Favour unique, implementation-ready labels and avoid duplicating existing node titles. Summaries must describe concrete responsibilities, not generic statements.`
+
 const BASE_SYSTEM_PROMPT = `You are Strukt AI, the lead architect for a software product team.\n` +
   `You are meeting with a client to plan their product. Respond ONLY in JSON with the following shape:\n` +
-  `{"nodes":[{"label":"string","type":"root|frontend|backend|requirement|doc","summary":"string","domain":"business|product|tech|data-ai|operations","ring":1}],"rationale":"string"}\n` +
+  `{"nodes":[{"label":"string","type":"root|frontend|backend|requirement|doc","summary":"string","domain":"business|product|tech|data-ai|operations","ring":1,"metadata":{}}],"rationale":"string"}\n` +
   `- "type" must be one of: root, frontend, backend, requirement, doc.\n` +
   `- "domain" must be one of: business, product, tech, data-ai, operations.\n` +
   `- "ring" is an integer between 1 and 6 indicating proximity to the center (1 is core).\n` +
-  `- Keep labels short and specific. Summaries should be one sentence explaining the intent.\n` +
-  `- Do NOT include Markdown, code fences, or commentary outside the JSON.\n`
+  `- Keep labels short and specific. Summaries should be one sentence explaining the intent and key deliverable.\n` +
+  `- Do NOT include Markdown, code fences, or commentary outside the JSON.\n` +
+  FOUNDATION_REQUIREMENTS +
+  `\n`
 
 const NEXT_SYSTEM_PROMPT = BASE_SYSTEM_PROMPT +
   `Focus on deepening or extending the existing architecture. Recommend 1-3 nodes that progress the plan without repeating existing work.` +
   ` When a focus node id is supplied, every suggested node must include a metadata object with {"parentId":"<focusId>"} so the client can link it correctly.` +
   ` When API specification context is provided, include metadata.apiIntegration with {"apiName":"string","specHash":"string","rationale":"string","recommendedCalls":["VERB path"],"integrationPoints":["component or service names"]}.` +
-  ` Summaries must explain why the API call matters and what part of the workspace benefits.`
+  ` Summaries must explain why the API call matters, what dependencies it introduces, and how it supports the broader foundation.`
 
 export function isAIProviderAvailable() {
   return Boolean(openAIClient)

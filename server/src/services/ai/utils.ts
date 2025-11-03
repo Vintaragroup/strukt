@@ -14,23 +14,127 @@ export function ensureObjectId(value: string): Types.ObjectId {
   throw new Error(`Invalid ObjectId: ${value}`)
 }
 
+type FoundationRule = {
+  key: string
+  satisfiedBy: (node: SuggestedNode) => boolean
+  build: () => SuggestedNode
+}
+
+const FOUNDATION_RULES: FoundationRule[] = [
+  {
+    key: 'foundation-backend-core',
+    satisfiedBy: (node) => node.type === 'backend',
+    build: () => ({
+      label: 'Core Backend API Service',
+      type: 'backend',
+      summary: 'Design the primary API/service layer handling business logic, contracts, scaling, and reliability.',
+      domain: 'tech',
+      ring: 1,
+      metadata: { foundationKey: 'foundation-backend-core' },
+    }),
+  },
+  {
+    key: 'foundation-data-layer',
+    satisfiedBy: (node) => node.domain === 'data-ai' || /data|analytics|warehouse|storage/i.test(`${node.label} ${node.summary}`),
+    build: () => ({
+      label: 'Data Persistence & Pipeline Plan',
+      type: 'backend',
+      summary: 'Define data models, storage technology, ingestion pipelines, retention, and access patterns for the program.',
+      domain: 'data-ai',
+      ring: 1,
+      metadata: { foundationKey: 'foundation-data-layer' },
+    }),
+  },
+  {
+    key: 'foundation-auth-access',
+    satisfiedBy: (node) => /auth|identity|access|iam|login|permission/i.test(`${node.label} ${node.summary}`),
+    build: () => ({
+      label: 'Identity & Access Control',
+      type: 'backend',
+      summary: 'Implement authentication, authorization, session management, and compliance guardrails for all user flows.',
+      domain: 'operations',
+      ring: 1,
+      metadata: { foundationKey: 'foundation-auth-access' },
+    }),
+  },
+  {
+    key: 'foundation-observability',
+    satisfiedBy: (node) => /observability|monitor|telemetry|logging|alert/i.test(`${node.label} ${node.summary}`),
+    build: () => ({
+      label: 'Observability & Run Operations',
+      type: 'doc',
+      summary: 'Capture logging, metrics, tracing, and alerting needed to operate the platform reliably.',
+      domain: 'operations',
+      ring: 2,
+      metadata: { foundationKey: 'foundation-observability' },
+    }),
+  },
+]
+
+export function ensureFoundationNodes(existing: SuggestedNode[]): SuggestedNode[] {
+  const nodes = [...existing]
+  const seenLabels = new Set<string>(
+    nodes
+      .map((node) => (typeof node.label === 'string' ? node.label.toLowerCase() : ''))
+      .filter(Boolean)
+  )
+
+  for (const rule of FOUNDATION_RULES) {
+    const alreadyPresent = nodes.some((node) => {
+      if (typeof node.metadata?.foundationKey === 'string' && node.metadata.foundationKey === rule.key) {
+        return true
+      }
+      return rule.satisfiedBy(node)
+    })
+
+    if (alreadyPresent) {
+      continue
+    }
+
+    const baseNode = rule.build()
+    let candidate = baseNode
+    let duplicateCounter = 1
+
+    while (seenLabels.has(candidate.label.toLowerCase())) {
+      duplicateCounter += 1
+      candidate = {
+        ...baseNode,
+        label: `${baseNode.label} ${duplicateCounter}`,
+      }
+    }
+
+    seenLabels.add(candidate.label.toLowerCase())
+    nodes.push(candidate)
+  }
+
+  return nodes
+}
+
 export function buildMockNodes(seed: string, count = 3): SuggestedNode[] {
   const domains = ['business', 'product', 'tech', 'data-ai', 'operations']
   const types = ['requirement', 'frontend', 'backend', 'doc']
   const base = Math.abs(hashString(seed))
-  const nodes: SuggestedNode[] = []
+  const nodes: SuggestedNode[] = ensureFoundationNodes([])
+  const targetLength = Math.max(count, nodes.length)
+  const seenLabels = new Set<string>(nodes.map((node) => node.label.toLowerCase()))
 
-  for (let i = 0; i < count; i++) {
+  let i = 0
+  while (nodes.length < targetLength) {
     const domain = domains[(base + i) % domains.length]
     const type = types[(base + i) % types.length]
-    nodes.push({
-      label: suggestLabel(domain, type, i),
-      type,
-      summary: `Auto-generated ${type} for ${domain} focus`,
-      domain,
-      ring: (i % 3) + 1,
-      metadata: undefined,
-    })
+    const candidateLabel = suggestLabel(domain, type, i)
+    if (!seenLabels.has(candidateLabel.toLowerCase())) {
+      nodes.push({
+        label: candidateLabel,
+        type,
+        summary: `Auto-generated ${type} for ${domain} focus`,
+        domain,
+        ring: (i % 3) + 1,
+        metadata: undefined,
+      })
+      seenLabels.add(candidateLabel.toLowerCase())
+    }
+    i += 1
   }
 
   return nodes

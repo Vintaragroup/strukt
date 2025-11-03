@@ -64,6 +64,7 @@ export const SuggestionResultSchema = z.object({
   edges: z.array(SuggestedEdgeSchema).optional(),
   rationale: z.string().optional(),
   source: z.enum(['ai', 'heuristic']).optional(),
+  foundationInjected: z.boolean().optional(),
   knowledge: SuggestionKnowledgeSchema.optional(),
 })
 

@@ -1,5 +1,5 @@
 import Workspace from '../../models/Workspace.js'
-import { ensureObjectId, summarizeWorkspace, summarizeNode, buildMockNodes, buildApiIntegrationNodes } from './utils.js'
+import { ensureObjectId, summarizeWorkspace, summarizeNode, buildMockNodes, buildApiIntegrationNodes, ensureFoundationNodes } from './utils.js'
 import { generateNextSuggestions } from './provider.js'
 import { persistSuggestions } from './storage.js'
 import { SuggestedNode, SuggestionResult } from '../../types/ai.js'
@@ -83,6 +83,10 @@ export async function generateSuggestions({
     source = 'heuristic'
   }
 
+  const foundationAdjustedNodes = ensureFoundationNodes(nodes)
+  const foundationInjected = foundationAdjustedNodes.length !== nodes.length
+  nodes = foundationAdjustedNodes
+
   if (cursorNodeId) {
     nodes = nodes.map((node) => ({
       ...node,
@@ -107,6 +111,7 @@ export async function generateSuggestions({
   return {
     suggestions: persisted,
     source,
+    foundationInjected,
   }
 }
 

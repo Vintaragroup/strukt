@@ -53,6 +53,7 @@ export type SuggestionResult = {
   edges?: SuggestedEdge[];
   rationale?: string;
   source?: "ai" | "heuristic";
+  foundationInjected?: boolean;
   knowledge?: SuggestionKnowledge;
 };
 
