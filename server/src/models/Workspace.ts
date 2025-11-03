@@ -11,7 +11,18 @@ export const WorkspaceNodeSchema = z.object({
     summary: z.string().optional(),
     tags: z.array(z.string()).optional(),
     stackHint: z.string().optional(),
+    domain: z.string().optional(),
+    ring: z.number().int().optional(),
+    metadata: z.record(z.unknown()).optional(),
+    coreIdea: z.string().optional(),
+    coreProblem: z.string().optional(),
+    coreOutcome: z.string().optional(),
+    primaryAudience: z.string().optional(),
+    launchScope: z.string().optional(),
+    primaryRisk: z.string().optional(),
+    kickoffCompletedAt: z.string().optional(),
   }),
+  label: z.string().optional(),
 })
 
 export const WorkspaceEdgeSchema = z.object({
@@ -41,6 +52,16 @@ const NodeDataSchema = new Schema(
     summary: String,
     tags: [String],
     stackHint: String,
+    domain: String,
+    ring: Number,
+    metadata: Schema.Types.Mixed,
+    coreIdea: String,
+    coreProblem: String,
+    coreOutcome: String,
+    primaryAudience: String,
+    launchScope: String,
+    primaryRisk: String,
+    kickoffCompletedAt: String,
   },
   { _id: false }
 )
@@ -58,6 +79,7 @@ const NodeSchema = new Schema(
       y: { type: Number, required: true },
     },
     data: NodeDataSchema,
+    label: { type: String },
   },
   { _id: false }
 )
@@ -97,7 +119,18 @@ export interface IWorkspaceNode {
     summary?: string
     tags?: string[]
     stackHint?: string
+    domain?: string
+    ring?: number
+    metadata?: Record<string, unknown>
+    coreIdea?: string
+    coreProblem?: string
+    coreOutcome?: string
+    primaryAudience?: string
+    launchScope?: string
+    primaryRisk?: string
+    kickoffCompletedAt?: string
   }
+  label?: string
 }
 
 export interface IWorkspaceEdge {

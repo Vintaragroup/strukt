@@ -1,77 +1,66 @@
 ---
-description: Defines core data models, relationships and validation rules for the domain-driven architecture generation system
+description: Defines core data models and relationships for nodes, workspaces, templates and validation rules in a graph-based system
 ---
 
 
 # domain-models
 
-## Core Domain Models
+## Node Model
 
-### Workspace Model
-**Importance Score: 95**
-- Represents the root container for architecture designs
-- Implements versioning system with snapshots and history tracking
-- Supports collaborative editing with change conflict resolution
-- Contains metadata about workspace type, domains and context
-- File: `server/src/models/Workspace.ts`
+### Core Structure
+- Unique identifier and version tracking
+- Domain classification (Product, Tech, Business, Data/AI, Ops)
+- Type categorization (doc, requirement, backend, frontend)
+- Custom metadata fields for domain-specific attributes
+- Importance Score: 90
 
-### Node Types
-**Importance Score: 90**
-- Defines domain-specific node categories:
-  - Technical (Frontend, Backend, Data, Infrastructure)
-  - Business (Requirements, Use Cases, Workflows)
-  - Product (Features, Epics, User Stories)
-  - Operations (SLAs, Runbooks, Monitoring)
-  - Documentation (Architecture, APIs, Testing)
-- Implements validation rules for node relationships
-- File: `server/src/models/WorkspaceVersion.ts`
+### Validation Rules
+- Prevents circular dependencies in node relationships
+- Enforces domain-specific naming conventions
+- Validates required fields based on node type
+- Domain-aware type compatibility checks
+- Importance Score: 85
 
-### Relationship Types 
-**Importance Score: 85**
-- Manages semantic connections between nodes:
-  - Dependencies (requires, extends, implements)
-  - Flows (data flow, process flow)
-  - Organization (groups, contains)
-  - Documentation (describes, specifies)
-- Enforces domain-specific validation rules
-- File: `server/src/types/ai.ts`
+## Workspace Model
 
-### Generation History
-**Importance Score: 80**
-- Tracks AI generation attempts and outcomes
-- Records feedback and improvements
-- Maintains suggestion quality metrics
-- Files: `server/src/models/GenerationHistory.ts`, `server/src/models/GenerationRequest.ts`
+### Organization
+- Hierarchical structure with parent-child relationships
+- Version control with immutable snapshots
+- Access control and collaboration rules
+- Domain separation with cross-domain relationship tracking
+- Importance Score: 90
 
-### Template Models
-**Importance Score: 85** 
-- PRD templates with domain-specific sections
-- Architecture patterns and best practices
-- Node type templates with default metadata
-- Files: `server/src/models/PRDTemplate.ts`
+### Template Integration
+- Domain-specific template recommendations
+- Automated template matching based on workspace context
+- Custom validation rules for template application
+- Template inheritance and composition patterns
+- Importance Score: 85
 
-### Feedback Collection
-**Importance Score: 75**
-- Captures user feedback on generated content
-- Maps feedback to specific node/relationship types
-- Aggregates feedback for model improvements
-- File: `server/src/models/Feedback.ts`
+## Relationship Types
 
-### Audit Trail
-**Importance Score: 70**
-- Records workspace modifications
-- Tracks template usage patterns
-- Monitors generation metrics
-- File: `server/src/models/AuditLog.ts`
+### Core Types
+- depends-on: Tracks technical dependencies
+- implements: Links requirements to implementations
+- documents: Associates documentation with components
+- tests: Connects test cases to features
+- Importance Score: 85
 
-### Workspace Suggestions
-**Importance Score: 85**
-- AI-driven suggestions for workspace improvements
-- Contextual recommendations based on workspace type
-- Template matching algorithms
-- Files: `server/src/models/Suggestion.ts`, `server/src/models/WizardSession.ts`
+### Validation Matrix
+- Cross-domain relationship rules
+- Type compatibility enforcement
+- Circular dependency prevention
+- Required relationship validations
+- Importance Score: 80
 
-The domain models form an interconnected system focused on architecture generation, with strong emphasis on versioning, relationships, and AI-driven improvements. The models support both technical and business aspects of software architecture while maintaining clear separation of concerns.
+File Paths:
+```
+server/src/models/Workspace.ts
+server/src/models/PRDTemplate.ts
+server/src/models/GenerationRequest.ts
+server/src/types/ai.ts
+client/src/utils/validation.ts
+```
 
 $END$
 

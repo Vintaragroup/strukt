@@ -1,60 +1,51 @@
 ---
-description: Core implementation of graph algorithms for domain layout, relationship management, cycle detection, and automated layout optimization
+description: Core graph algorithms specification covering domain layout system, node relationships, cycle detection, and auto-layout implementations
 ---
 
 
 # graph-algorithms
 
-## Domain Layout Engine
-- Implements domain-driven radial layout for organizing nodes by business domains
-- Handles smart sector allocation and boundary management for domains
-- Dynamic angle calculation based on domain relationships
-- Custom collision avoidance for nodes within domains
-Importance Score: 95
+## Domain Layout System
+**Importance Score: 95**
+- Specialized radial layout algorithm organizing nodes by business domains
+- Smart domain sector calculations for Business, Product, Tech, Data/AI, Operations
+- Dynamic radius scaling based on node density per domain
+- Automatic department inference and positioning within domains
+- Collision detection with domain-aware spacing rules
+File: client/src/utils/domainLayout.ts
 
-## Relationship Management System
-- Domain-specific relationship type management and validation
-- Cycle detection for technical dependencies
-- Critical path analysis for relationship chains
-- Smart relationship suggestion based on node types and domains
-Importance Score: 90
+## Node Relationship Management  
+**Importance Score: 90**
+- Domain-specific relationship types (depends-on, implements, documents, tests)
+- Critical path analysis for technical dependencies
+- Circular dependency detection with domain context awareness
+- Cross-domain relationship validation rules
+- Relationship suggestion engine based on node types
+File: client/src/utils/relationships.ts
 
-## Auto-Layout Optimization
-- Multi-stage layout optimization with domain constraints
-- Force-directed layout with business domain gravity
-- Custom node distribution algorithms for domain balance
-- Edge crossing minimization with domain awareness
-Importance Score: 85
+## Auto-Layout Engine
+**Importance Score: 85**
+- Force-directed layout with domain constraints
+- Smart node grouping based on relationship density
+- Domain boundary preservation during layout
+- Hierarchical layout for parent-child relationships
+File: client/src/utils/autoLayout.ts
 
-## Graph Operations
-- Domain-aware node grouping and clustering
-- Relationship path optimization between domains
-- Smart edge routing with domain boundary respect
-- Hierarchical layout management within domains
-Importance Score: 80
+## Cycle Detection
+**Importance Score: 80**
+- Domain-aware cycle detection algorithm
+- Dependency chain validation across domains
+- Critical path identification with domain context
+- Cycle prevention with relationship type rules
+File: client/src/utils/graphOps.ts
 
-## Domain Ring System
-- Implements concentric ring layout for domain visualization
-- Dynamic sector sizing based on node density
-- Custom collision detection for domain boundaries
-- Automatic domain expansion/contraction based on content
-Importance Score: 85
-
-## Edge Routing Engine
-- Smart path finding between domains
-- Custom routing around domain boundaries
-- Relationship type-specific routing strategies
-- Dynamic bend point calculation for clarity
-Importance Score: 75
-
-## Graph Validation System
-- Domain relationship constraint validation
-- Cycle detection in cross-domain relationships
-- Path validity checking across domain boundaries
-- Relationship type compatibility verification
-Importance Score: 80
-
-The system uniquely combines domain-driven layout algorithms with business relationship management to create an intelligent graph visualization system that respects organizational and technical boundaries while optimizing for clarity and usability.
+## Collision Prevention
+**Importance Score: 75**
+- Domain-specific spacing rules
+- Dynamic collision box calculation
+- Smart node repositioning within domain constraints
+- Overlap resolution preserving domain hierarchy
+File: client/src/utils/collision.ts
 
 $END$
 

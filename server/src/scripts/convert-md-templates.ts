@@ -27,6 +27,8 @@ type TechnologyProfile = {
   notes?: string
 }
 
+type TechnologyProfileKey = Exclude<keyof TechnologyProfile, 'notes'>
+
 type TemplateFile = {
   template_id: string
   name: string
@@ -164,7 +166,7 @@ function parseTechnicalOverview(section: string | undefined): { profile: Technol
     const values = match[2].split(/[,•]/).map((v) => v.trim()).filter(Boolean)
     suggested.push(...values)
 
-    const assign = (field: keyof TechnologyProfile) => {
+    const assign = (field: TechnologyProfileKey) => {
       profile[field] = Array.from(new Set([...(profile[field] ?? []), ...values]))
     }
 

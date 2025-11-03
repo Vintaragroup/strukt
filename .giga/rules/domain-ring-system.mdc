@@ -1,65 +1,74 @@
 ---
-description: Technical specification for domain-based radial visualization system with sector calculations and node hierarchy management
+description: Implements specialized radial visualization system for organizing nodes by business domains with intelligent sector calculations and node placement
 ---
 
 
 # domain-ring-system
 
-### Core Domain Organization System
-- Implements specialized radial layout algorithm for organizing nodes into domain sectors
-- Dynamic sector size calculation based on node density and importance 
-- Five primary domains: Product, Technology, Business, Data/AI, Operations
-- Automatic node distribution within sectors based on relationships
-Importance Score: 95
+## Ring Layout Engine
+- Implements specialized radial layout algorithm for organizing nodes by business domains
+- Custom domain configurations for Business, Product, Tech, Data/AI, and Operations rings
+- Intelligent sector size calculations based on node density
+- Node placement optimization within sectors using force-directed layouts
+- Department-specific positioning with context-aware angle distribution
+- Importance Score: 95
 
-### Domain Ring Manager
-`client/src/components/DomainRings.tsx`
-- Controls domain ring visualization and interaction
-- Handles sector boundary calculations and transitions
-- Manages node placement within sectors using polar coordinates
-- Implements collision detection between nodes in same sector
-Importance Score: 90
+```typescript
+// client/src/utils/domainLayout.ts
+interface DomainRing {
+  domain: string;
+  radius: number;
+  sectors: Sector[];
+}
 
-### Layout Engine 
-`client/src/utils/domainLayout.ts`
-- Calculates optimal node positions within domain sectors
-- Implements force-directed layout within sector constraints
-- Handles sector resize and reflow operations
-- Maintains hierarchical relationships during layout
-Importance Score: 85
+interface Sector {
+  startAngle: number;
+  endAngle: number;
+  nodes: Node[];
+}
+```
 
-### Key Features:
-1. Sector Management
-- Dynamic sector angle calculation based on domain importance
-- Smart sector resizing based on node density
-- Smooth transitions during sector changes
-Importance Score: 80
+## Domain-Specific Visualization
+- Custom SVG path generation for sector visualization with dynamic gradients
+- Intelligent node grouping within sectors based on relationships
+- Visual hierarchy management through ring spacing and node placement
+- Interactive sector resizing based on content density
+- Importance Score: 90
 
-2. Node Positioning
-- Hierarchical node placement within sectors
-- Distance-based positioning from sector center
-- Smart overlap avoidance within sectors
-Importance Score: 85
+```typescript
+// client/src/components/DomainRings.tsx
+const calculateSectorPath = (ring: DomainRing, sector: Sector): string => {
+  // Domain-specific path calculation logic
+}
+```
 
-3. Domain Relationships
-- Visual connection handling between domains
-- Cross-domain relationship visualization
-- Relationship strength indicators
-Importance Score: 80
+## Node Alignment System
+- Smart node alignment within sectors based on domain context
+- Relationship-aware positioning to minimize edge crossings
+- Department clustering with intelligent space distribution
+- Dynamic sector boundaries based on content relationships
+- Importance Score: 85
 
-4. Hierarchy Management
-- Parent-child relationship visualization
-- Sub-domain organization within main domains
-- Hierarchical collapse/expand functionality
-Importance Score: 85
+```typescript
+// client/src/utils/alignment.ts
+const alignNodesInSector = (nodes: Node[], sector: Sector) => {
+  // Domain-aware node alignment logic
+}
+```
 
-5. Domain-specific Rules
-- Custom layout rules per domain type
-- Domain-specific node spacing algorithms
-- Visual differentiation between domains
-Importance Score: 75
+## Domain Ring Hierarchy
+- Multi-level ring structure with inheritance relationships
+- Dynamic ring scaling based on domain importance
+- Intelligent ring spacing with relationship density consideration
+- Automatic domain detection from node metadata
+- Importance Score: 80
 
-The domain ring system implements a unique approach to organizing and visualizing software architecture components using a radial layout with domain-specific sectors. Each sector represents a key business domain with its own layout rules and relationship handling.
+## Domain Context Management
+- Context-aware sector generation based on project type
+- Smart domain mapping for unassigned nodes
+- Department-based node clustering within sectors
+- Historical pattern analysis for optimal sector sizing
+- Importance Score: 75
 
 $END$
 

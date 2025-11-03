@@ -27,12 +27,44 @@ export const SuggestionActionSchema = z.object({
   payload: z.record(z.unknown()),
 })
 
+const KnowledgeSectionSchema = z.object({
+  title: z.string(),
+  key: z.string().optional(),
+  snippet: z.string(),
+})
+
+const KnowledgePrdSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sections: z.array(KnowledgeSectionSchema),
+})
+
+const KnowledgeFragmentSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  label: z.string().optional(),
+})
+
+export const SuggestionKnowledgeSchema = z.object({
+  filters: z.object({
+    nodeTypes: z.array(z.string()),
+    domains: z.array(z.string()),
+    tags: z.array(z.string()),
+  }),
+  summary: z.string(),
+  prds: z.array(KnowledgePrdSchema),
+  fragments: z.array(KnowledgeFragmentSchema),
+  questionHints: z.array(z.string()),
+  promptContext: z.string().optional().default(''),
+})
+
 export const SuggestionResultSchema = z.object({
   sessionId: z.string().optional(),
   suggestions: z.array(SuggestedNodeSchema),
   edges: z.array(SuggestedEdgeSchema).optional(),
   rationale: z.string().optional(),
   source: z.enum(['ai', 'heuristic']).optional(),
+  knowledge: SuggestionKnowledgeSchema.optional(),
 })
 
 export const StartWizardBody = z.object({
@@ -76,6 +108,7 @@ export type SuggestedNode = z.infer<typeof SuggestedNodeSchema>
 export type SuggestedEdge = z.infer<typeof SuggestedEdgeSchema>
 export type SuggestionAction = z.infer<typeof SuggestionActionSchema>
 export type SuggestionResult = z.infer<typeof SuggestionResultSchema>
+export type SuggestionKnowledge = z.infer<typeof SuggestionKnowledgeSchema>
 export type StartWizardBodyInput = z.infer<typeof StartWizardBody>
 export type ContinueWizardBodyInput = z.infer<typeof ContinueWizardBody>
 export type SuggestionRequestBodyInput = z.infer<typeof SuggestionRequestBody>

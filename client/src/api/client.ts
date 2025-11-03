@@ -284,6 +284,16 @@ export interface GenerateCardContentPayload {
       relation?: string
       summary?: string
     }>
+    metadata?: Record<string, unknown>
+    intent?: {
+      idea?: string
+      problem?: string
+      primaryAudience?: string
+      coreOutcome?: string
+      launchScope?: string
+      primaryRisk?: string
+      blueprintAutoKind?: string
+    }
   }
   card: {
     id: string
@@ -302,6 +312,10 @@ export interface GeneratedCardContent {
   accuracy: CardAccuracy
   template?: { id: string; label: string; description?: string }
   prdTemplateId?: string
+  provenance?: {
+    kbPrds?: Array<{ id: string; name: string; path: string }>
+    kbFragments?: Array<{ id: string; type: string }>
+  }
 }
 
 export const cardsAPI = {
@@ -332,6 +346,7 @@ export const cardsAPI = {
         accuracy: data.accuracy,
         template: data.template,
         prdTemplateId: data.prdTemplateId,
+        provenance: data.provenance,
       }
     } catch (error) {
       const appError = ErrorHandler.parseError(error)

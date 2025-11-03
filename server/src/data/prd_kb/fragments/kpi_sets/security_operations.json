@@ -1,0 +1,12 @@
+{
+  "id": "security_operations",
+  "type": "kpi_set",
+  "for": ["backend", "domain", "ops"],
+  "content": [
+    "Mean Time to Detect (MTTD) < 15 minutes for high-severity alerts.",
+    "Mean Time to Remediate (MTTR) < 4 hours for P1 vulnerabilities.",
+    "Security patch compliance ≥ 95% within 7 days for critical CVEs.",
+    "Quarterly penetration test coverage across core services, zero critical findings outstanding.",
+    "Secrets rotation cadence compliance ≥ 98% (automated reporting)."
+  ]
+}

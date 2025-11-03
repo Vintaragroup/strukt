@@ -30,12 +30,30 @@ export type SuggestedEdge = {
   targetId?: string;
 };
 
+export type SuggestionKnowledge = {
+  filters: {
+    nodeTypes: string[];
+    domains: string[];
+    tags: string[];
+  };
+  summary: string;
+  prds: Array<{
+    id: string;
+    name: string;
+    sections: Array<{ title: string; key?: string; snippet: string }>;
+  }>;
+  fragments: Array<{ id: string; type: string; label?: string }>;
+  questionHints: string[];
+  promptContext?: string;
+};
+
 export type SuggestionResult = {
   sessionId?: string;
   suggestions: SuggestedNode[];
   edges?: SuggestedEdge[];
   rationale?: string;
   source?: "ai" | "heuristic";
+  knowledge?: SuggestionKnowledge;
 };
 
 export type FeedbackInput = {

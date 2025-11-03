@@ -44,11 +44,12 @@ describe('buildApiIntegrationNodes', () => {
     assert.equal(nodes.length, 2)
     const [first] = nodes
     assert.equal(first.type, 'backend')
-    assert.equal(first.domain, 'tech')
-    assert.ok(first.metadata)
-    assert.equal(first.metadata?.parentId, 'backend-1')
-    assert.ok(first.metadata?.apiIntegration)
-    assert.equal(first.metadata?.apiIntegration?.apiName, 'Example Payments API')
-    assert.ok(Array.isArray(first.metadata?.apiIntegration?.recommendedCalls))
+   assert.equal(first.domain, 'tech')
+   assert.ok(first.metadata)
+   assert.equal(first.metadata?.parentId, 'backend-1')
+    const integration = (first.metadata as { apiIntegration?: { apiName?: string; recommendedCalls?: unknown } })?.apiIntegration
+    assert.ok(integration)
+    assert.equal(integration?.apiName, 'Example Payments API')
+    assert.ok(Array.isArray(integration?.recommendedCalls))
   })
 })

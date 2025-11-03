@@ -16,6 +16,7 @@ interface WizardAIParams {
   idea: string
   workspaceSummary?: string
   previousTurns?: WizardTurn[]
+  knowledgeContext?: string
 }
 
 interface NextSuggestionParams {
@@ -117,6 +118,9 @@ function buildWizardMessages(params: WizardAIParams): ChatCompletionMessageParam
   const context: string[] = []
   if (params.workspaceSummary) {
     context.push(`Current workspace plan:\n${params.workspaceSummary}`)
+  }
+  if (params.knowledgeContext) {
+    context.push(`Reference architecture guidance:\n${params.knowledgeContext}`)
   }
   if (params.previousTurns && params.previousTurns.length > 1) {
     const history = params.previousTurns

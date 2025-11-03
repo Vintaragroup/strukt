@@ -64,12 +64,12 @@ const nodeTypes = [
 ];
 
 const domainTypes = [
-  { value: "business", label: "Business", icon: Briefcase },
-  { value: "product", label: "Product", icon: Package },
-  { value: "tech", label: "Tech", icon: Code },
-  { value: "data-ai", label: "Data / AI", icon: Brain },
-  { value: "operations", label: "Operations", icon: Settings },
-];
+  { value: "business" as DomainType, label: "Business", icon: Briefcase },
+  { value: "product" as DomainType, label: "Product", icon: Package },
+  { value: "tech" as DomainType, label: "Tech", icon: Code },
+  { value: "data-ai" as DomainType, label: "Data / AI", icon: Brain },
+  { value: "operations" as DomainType, label: "Operations", icon: Settings },
+] as const;
 
 export function AddNodeModal({
   isOpen,
@@ -81,10 +81,10 @@ export function AddNodeModal({
 }: AddNodeModalProps) {
   const defaultType = initialType || "requirement";
   const defaultDomain = getDomainForNodeType(defaultType);
-  const defaultDepartment = getRecommendedDepartment(defaultDomain as DomainType, defaultType);
+  const defaultDepartment = getRecommendedDepartment(defaultDomain, defaultType);
 
   const [selectedType, setSelectedType] = useState(defaultType);
-  const [selectedDomain, setSelectedDomain] = useState<string | undefined>(defaultDomain);
+  const [selectedDomain, setSelectedDomain] = useState<DomainType | undefined>(defaultDomain);
   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(
     defaultDepartment || undefined
   );
@@ -102,7 +102,7 @@ export function AddNodeModal({
 
     const nextType = initialType || "requirement";
     const nextDomain = getDomainForNodeType(nextType);
-    const recommendedDept = getRecommendedDepartment(nextDomain as DomainType, nextType);
+    const recommendedDept = getRecommendedDepartment(nextDomain, nextType);
 
     setSelectedType(nextType);
     setSelectedDomain(nextDomain);
@@ -124,7 +124,7 @@ export function AddNodeModal({
     );
 
     if (!showAdvanced) {
-      const recommendedDept = getRecommendedDepartment(recommendedDomain as DomainType, selectedType);
+      const recommendedDept = getRecommendedDepartment(recommendedDomain, selectedType);
       setSelectedDepartment(recommendedDept || undefined);
     }
   }, [selectedType, showAdvanced]);
@@ -307,7 +307,7 @@ export function AddNodeModal({
                       <div className="grid grid-cols-2 gap-2">
                         {Object.entries(availableDepartments).map(([key, dept]) => {
                           const domainColor =
-                            DOMAIN_CONFIG[selectedDomain as DomainType]?.color || "#4b5563";
+                            selectedDomain ? DOMAIN_CONFIG[selectedDomain]?.color || "#4b5563" : "#4b5563";
                           const isActive = selectedDepartment === key;
                           return (
                             <Button

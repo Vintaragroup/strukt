@@ -56,6 +56,16 @@ export interface CardContentRequest {
       relation?: string
       summary?: string
     }>
+    metadata?: Record<string, unknown>
+    intent?: {
+      idea?: string
+      problem?: string
+      primaryAudience?: string
+      coreOutcome?: string
+      launchScope?: string
+      primaryRisk?: string
+      blueprintAutoKind?: string
+    }
   }
   card: {
     title: string
@@ -470,46 +480,13 @@ Generate ONLY valid JSON. Start with { and end with }. No markdown. No explanati
           return prdMatch.content
         }
 
-        const heuristics: string[] = []
-        heuristics.push(
-          `### ${title}\n` +
-            `- **Node focus:** ${request.node.label} (${request.node.type})` +
-            `${request.node.domain ? ` within the ${request.node.domain} domain` : ''}.`
-        )
+        const body = buildSectionScaffold({
+          request,
+          title,
+          index,
+        })
 
-        if (request.node.summary) {
-          heuristics.push(`- **Summary context:** ${request.node.summary}`)
-        }
-
-        if (request.node.tags?.length) {
-          heuristics.push(`- **Relevant tags:** ${request.node.tags.join(', ')}`)
-        }
-
-        if (request.card.description && index === 0) {
-          heuristics.push(`- **Template guidance:** ${request.card.description}`)
-        }
-
-        heuristics.push(
-          '- **Action items:** Describe current state, desired outcome, success metrics, and open questions.'
-        )
-
-        if (request.card.checklist?.length) {
-          heuristics.push(
-            `- **Checklist alignment:** Ensure the following are covered:\n${request.card.checklist
-              .map((item) => `  - ${item}`)
-              .join('\n')}`
-          )
-        }
-
-        if (request.prdContext?.name) {
-          heuristics.push(
-            `- **Reference PRD:** Align with ${request.prdContext.name}${
-              request.prdContext.templateId ? ` (${request.prdContext.templateId})` : ''
-            }.`
-          )
-        }
-
-        return heuristics.join('\n\n')
+        return body
       }
 
       const sections = request.card.sections.map((section, index) => ({
@@ -548,8 +525,205 @@ Respond ONLY with valid JSON matching this schema:
     "factors": ["short bullet list summarising why"]
   }
 }
-
 Do NOT wrap the JSON in markdown code fences.`
+
+    type ScaffoldContext = {
+      request: CardContentRequest
+      title: string
+      index: number
+    }
+
+    function buildSectionScaffold({ request, title, index }: ScaffoldContext): string {
+      const normalized = title.toLowerCase()
+      const isFirstSection = index === 0
+
+      const { node, card, prdContext } = request
+      const intent = node.intent ?? {}
+      const blueprintKind =
+        typeof node.metadata?.blueprintAutoKind === 'string'
+          ? String(node.metadata.blueprintAutoKind)
+          : undefined
+      const domainText = node.domain ? `${node.domain} domain` : 'overall platform'
+      const baseDescriptor =
+        node.type === 'frontend'
+          ? 'user experience layer'
+          : node.type === 'backend'
+          ? 'service layer'
+          : node.type === 'doc'
+          ? 'knowledge hub'
+          : node.type === 'requirement'
+          ? 'product capability'
+          : 'node'
+
+      const tagSnippet = node.tags?.length ? `Key tags: ${node.tags.join(', ')}.` : ''
+      const relatedSnippet =
+        node.relatedNodes && node.relatedNodes.length
+          ? `Coordinate with related nodes such as ${node.relatedNodes
+              .slice(0, 4)
+              .map((rel) => `${rel.label}${rel.type ? ` (${rel.type})` : ''}`)
+              .join(', ')}.`
+          : ''
+      const checklistSnippet =
+        card.checklist && card.checklist.length
+          ? `Ensure the following items are satisfied: ${card.checklist.join(', ')}.`
+          : ''
+      const prdSnippet = prdContext
+        ? `Reference PRD template **${prdContext.name}**${
+            prdContext.templateId ? ` (${prdContext.templateId})` : ''
+          } for alignment.`
+        : ''
+
+      const introLines: string[] = []
+      if (isFirstSection) {
+        introLines.push(
+          `**Purpose:** Define how **${node.label}** functions as a ${baseDescriptor} within the ${domainText}.`
+        )
+        if (node.summary) {
+          introLines.push(`**Context summary:** ${node.summary}`)
+        }
+        if (tagSnippet) introLines.push(tagSnippet)
+        if (relatedSnippet) introLines.push(relatedSnippet)
+        if (prdSnippet) introLines.push(prdSnippet)
+        if (intent.primaryAudience) {
+          introLines.push(`**Primary audience:** ${intent.primaryAudience}`)
+        }
+        if (intent.coreOutcome) {
+          introLines.push(`**Target outcome:** ${intent.coreOutcome}`)
+        }
+        if (intent.launchScope) {
+          introLines.push(`**Launch must include:** ${intent.launchScope}`)
+        }
+        if (intent.primaryRisk) {
+          introLines.push(`**Known risk:** ${intent.primaryRisk}`)
+        }
+        if (blueprintKind) {
+          introLines.push(`**Blueprint focus:** auto-generated ${blueprintKind} detail from idea kickoff.`)
+        }
+      }
+
+      const sectionLines: string[] = []
+
+      const pushForTopic = (heading: string, content: string[]) => {
+        sectionLines.push(`#### ${heading}`)
+        sectionLines.push(...content)
+      }
+
+      const ensureCallouts = (content: string[]) => {
+        if (checklistSnippet) {
+          content.push(checklistSnippet)
+        }
+        if (relatedSnippet && !content.includes(relatedSnippet)) {
+          content.push(relatedSnippet)
+        }
+      }
+
+      if (normalized.includes('overview') || normalized.includes('summary')) {
+        pushForTopic('Role & Scope', [
+          `Describe the core responsibilities of **${node.label}** and how it fits into the ${domainText}.`,
+          `Highlight the personas or systems that depend on this node.`,
+        ])
+        pushForTopic('Key Outcomes', [
+          'List measurable outcomes or KPIs that indicate success.',
+          'Identify any open questions or decisions still pending.',
+        ])
+      } else if (normalized.includes('architecture') || normalized.includes('design')) {
+        if (node.type === 'frontend') {
+          pushForTopic('UI Composition', [
+            'Outline component hierarchy, shared layout primitives, and state management approach.',
+            'Explain routing, navigation guards, and responsiveness requirements.',
+          ])
+          pushForTopic('Data Flow', [
+            'Detail how data is fetched, cached, and synchronized with backend services.',
+            'Document error-handling patterns and loading states.',
+          ])
+        } else if (node.type === 'backend') {
+          pushForTopic('Service Responsibilities', [
+            'Break down the primary modules and their responsibilities.',
+            'Note API surface area, contracts, and performance expectations.',
+          ])
+          pushForTopic('Operational Concerns', [
+            'Indicate deployment strategy, scaling expectations, and resilience patterns (circuit breakers, retries).',
+          ])
+        } else {
+          pushForTopic('Structure', [
+            `Document how the ${baseDescriptor} is organized (chapters, sections, or modules).`,
+            'Mention ownership and maintenance model.',
+          ])
+        }
+        ensureCallouts(sectionLines)
+      } else if (normalized.includes('interface')) {
+        pushForTopic('Consumers', [
+          'List internal/external consumers and the entry points they use.',
+          'Clarify how authentication/authorization or feature flags are enforced.',
+        ])
+        pushForTopic('Interaction Contracts', [
+          'Document key request/response schemas, events, or UI interactions that must be stable.',
+        ])
+        ensureCallouts(sectionLines)
+      } else if (normalized.includes('dependency')) {
+        pushForTopic('Upstream Dependencies', [
+          'Enumerate services, libraries, or data sources required by this node.',
+          'Document version constraints, SLAs, and failure fallback behaviour.',
+        ])
+        pushForTopic('Downstream Impact', [
+          'Call out modules that depend on this node and what breaks if it is unavailable.',
+        ])
+        ensureCallouts(sectionLines)
+      } else if (normalized.includes('testing') || normalized.includes('validation')) {
+        pushForTopic('Quality Strategy', [
+          'Specify automated test coverage expectations (unit, integration, e2e).',
+          'Describe manual validation steps or staging environments required.',
+        ])
+        pushForTopic('Monitoring & Alerts', [
+          'List key metrics, logs, or tracing that confirm the node is healthy in production.',
+        ])
+        ensureCallouts(sectionLines)
+      } else if (normalized.includes('roadmap') || normalized.includes('backlog')) {
+        pushForTopic('Near-Term Deliverables', [
+          'Capture the backlog items required to launch or iterate on this node.',
+        ])
+        pushForTopic('Risks & Mitigations', [
+          'Identify risks, mitigations, and contingency plans.',
+        ])
+      } else {
+        sectionLines.push(
+          `Provide actionable guidance tailored to **${node.label}** for the **${title}** discipline.`
+        )
+        sectionLines.push('Highlight current state, desired target state, and concrete next steps.')
+        ensureCallouts(sectionLines)
+      }
+
+      if (blueprintKind === 'persona') {
+        sectionLines.push('#### Persona Snapshot')
+        if (intent.primaryAudience) {
+          sectionLines.push(
+            `Describe the primary audience in clear terms (kickoff input: ${intent.primaryAudience}).`
+          )
+        }
+        sectionLines.push('Capture needs, pains, and success signals for this audience. Tie them to the broader mission.')
+      } else if (blueprintKind === 'outcome') {
+        sectionLines.push('#### Outcome Guardrails')
+        if (intent.coreOutcome) {
+          sectionLines.push(`Anchor every deliverable to the desired outcome: ${intent.coreOutcome}.`)
+        }
+        sectionLines.push('Provide milestone KPIs and leading indicators so the team knows if they are on track.')
+      } else if (blueprintKind === 'launch') {
+        sectionLines.push('#### Launch Commitments')
+        if (intent.launchScope) {
+          sectionLines.push(`Remind the reader of the promised launch scope: ${intent.launchScope}.`)
+        }
+        sectionLines.push('List readiness checkpoints, owners, and cross-team dependencies that must be cleared before launch.')
+      } else if (blueprintKind === 'risk') {
+        sectionLines.push('#### Primary Risk')
+        if (intent.primaryRisk) {
+          sectionLines.push(`Explain the primary risk in detail: ${intent.primaryRisk}.`)
+        }
+        sectionLines.push('Outline mitigations, contingency plans, and monitoring required to manage this risk.')
+      }
+
+      const assembled = [`### ${title}`, ...introLines, ...sectionLines]
+      return assembled.join('\n\n')
+    }
 
     const parts: string[] = []
     parts.push(`### Node Context
@@ -584,6 +758,14 @@ ${request.node.tags && request.node.tags.length ? `- Tags: ${request.node.tags.j
         )
         .join('\n')}`
     )
+
+    if (request.existingContent?.some((section) => section.body && section.body.trim().length > 0)) {
+      parts.push(
+        `### Draft Content\n${request.existingContent
+          .map((section) => `#### ${section.title}\n${section.body || ''}`.trim())
+          .join('\n\n')}`
+      )
+    }
 
     if (request.prdContext) {
       parts.push(

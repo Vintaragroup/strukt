@@ -1,0 +1,16 @@
+{
+  "id": "release_notes_outline",
+  "type": "template",
+  "for": ["doc", "product", "ops", "marketing"],
+  "content": {
+    "sections": [
+      "Highlights — top 3 customer-facing wins with promo blurbs.",
+      "New Features — bullet list with persona, impact, rollout date.",
+      "Improvements — UX tweaks, performance gains, support fixes.",
+      "Fixes — ticket references, severity, workaround status.",
+      "Deprecations & Removals — timelines, migration links, owners.",
+      "Known Issues — severity, next update ETA, support contact.",
+      "Enablement Assets — links to playbooks, FAQs, demos."
+    ]
+  }
+}

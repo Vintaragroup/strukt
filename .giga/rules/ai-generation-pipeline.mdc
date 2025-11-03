@@ -1,65 +1,60 @@
 ---
-description: Specialized service for handling AI-driven workspace generation, template matching, and the generation queue system
+description: Handles core AI content generation pipeline including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-### Generation Service Core
-`server/src/services/GenerationService.ts`
-- Orchestrates multi-stage AI generation pipeline for workspace content
-- Implements domain-specific prompt engineering for architecture design
-- Handles contextual template matching and specialized validation rules
-- Manages fallback mechanisms for failed generations
-**Importance Score**: 95
+## Context Injection Service
+- Analyzes workspace state and injects relevant context into AI prompts
+- Maps domain types to specialized prompt templates
+- Handles template inheritance and composition
+- File: `server/src/services/ContextInjector.ts`
+Importance Score: 85
 
-### Context Injection System
-`server/src/services/ContextInjector.ts`
-- Builds sophisticated context hierarchies for AI prompts based on workspace analysis
-- Implements domain-specific template matching for software architecture patterns
-- Handles workspace archetype detection and classification
-- Manages hierarchical context assembly for prompt enhancement
-**Importance Score**: 90
+## Generation Queue Management
+- Prioritizes generation requests based on user context and template complexity  
+- Handles concurrent generation with circuit breaker patterns
+- Implements backpressure for large batch requests
+- File: `server/src/services/GenerationQueue.ts`
+Importance Score: 90
 
-### Generation Queue Management
-`server/src/services/GenerationQueue.ts`
-- Implements prioritized queue system for AI generation requests
-- Handles intelligent request batching based on context similarity
-- Manages concurrent generation limits and budget allocation
-- Provides real-time generation status tracking
-**Importance Score**: 85
+## Template Matching System
+- Matches content requirements to specialized templates
+- Scores template relevance based on node type and domain
+- Handles template inheritance and composition
+- File: `server/src/services/cards/templatePlanner.ts`
+Importance Score: 85
 
-### Template Planning & Matching
-`server/src/services/cards/templatePlanner.ts`
-- Sophisticated scoring algorithm for template selection based on context
-- Domain-specific template categorization and matching
-- Handles template composition and fragment assembly
-- Manages template versioning and compatibility
-**Importance Score**: 80
+## Knowledge Integration
+- Integrates domain knowledge into generation context
+- Maintains generation history for improved suggestions
+- Handles specialized template fragment selection
+- File: `server/src/services/KBService.ts`
+Importance Score: 80
 
-### AI Provider Integration
-`server/src/services/ai/provider.ts`
-- Handles model selection based on generation context
-- Manages prompt optimization and token budget allocation
-- Implements specialized retry logic for different failure modes
-- Provides model-specific prompt formatting
-**Importance Score**: 85
+## Generation Pipeline Workflows
+- Orchestrates multi-stage content generation
+- Handles specialized Q&A interaction patterns
+- Manages preview and editing workflows
+- Files: 
+  - `client/src/components/AIEnrichmentModal.tsx`
+  - `client/src/services/ai/suggestions.ts`
+Importance Score: 90
 
-### Generation History & Analytics
-`server/src/services/ai/storage.ts`
-- Tracks generation success rates by template type
-- Maintains historical context for improving future generations
-- Implements generation quality metrics
-- Handles persistent storage of successful generations
-**Importance Score**: 75
+## AI Response Processing
+- Normalizes AI responses into domain-specific formats
+- Handles specialized content transformation rules
+- Manages response validation and cleanup
+- File: `server/src/services/ai/normalize.ts` 
+Importance Score: 85
 
-### Generation Normalization
-`server/src/services/ai/normalize.ts`
-- Standardizes AI outputs across different models
-- Implements domain-specific content validation rules
-- Handles edge case detection and correction
-- Manages output format consistency
-**Importance Score**: 80
+## Feedback Integration
+- Captures user feedback on generated content
+- Integrates feedback into future generations
+- Maintains feedback history for quality improvement
+- File: `server/src/services/ai/feedback.ts`
+Importance Score: 75
 
 $END$
 

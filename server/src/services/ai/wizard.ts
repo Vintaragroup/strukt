@@ -4,7 +4,8 @@ import Workspace from '../../models/Workspace.js'
 import { buildMockNodes, ensureObjectId, summarizeWorkspace } from './utils.js'
 import { generateWizardNodes } from './provider.js'
 import { persistSuggestions } from './storage.js'
-import { SuggestedNode, SuggestionResult } from '../../types/ai.js'
+import { SuggestedNode, SuggestionResult, type SuggestionKnowledge } from '../../types/ai.js'
+import { buildWizardKnowledge } from './wizardKnowledge.js'
 
 interface StartParams {
   workspaceId: string
@@ -29,11 +30,13 @@ export async function startWizardSession({ workspaceId, userText }: StartParams)
   })
 
   const workspace = await Workspace.findById(workspaceObjectId).lean()
+  const knowledge = await buildWizardKnowledge(userText)
 
   const aiResult = await generateWizardNodes({
     idea: userText,
     workspaceSummary: summarizeWorkspace(workspace),
     previousTurns: session.turns,
+    knowledgeContext: knowledge?.promptContext,
   })
 
   let nodes = aiResult.nodes
@@ -48,16 +51,27 @@ export async function startWizardSession({ workspaceId, userText }: StartParams)
     rationale: aiResult.rationale || `Seeded from: ${userText}`,
   })
 
+  const updates: Record<string, unknown> = {}
   if (aiResult.rationale) {
+    updates['turns.0.aiText'] = aiResult.rationale
+  }
+  if (knowledge) {
+    updates['turns.0.payload'] = {
+      ...(session.turns?.[0]?.['payload'] as Record<string, unknown> | undefined),
+      knowledge,
+    }
+  }
+  if (Object.keys(updates).length > 0) {
     await WizardSession.updateOne(
       { _id: session._id },
-      { $set: { 'turns.0.aiText': aiResult.rationale } }
+      { $set: updates }
     )
   }
 
   return {
     sessionId: session._id.toHexString(),
     suggestions,
+    knowledge: knowledge ?? undefined,
   }
 }
 
@@ -73,11 +87,32 @@ export async function continueWizardSession({ sessionId, userText }: ContinuePar
   await session.save()
 
   const workspace = await Workspace.findById(session.workspaceId).lean()
+  let knowledge: SuggestionKnowledge | null | undefined =
+    (session.turns?.[0]?.payload as Record<string, unknown> | undefined)?.['knowledge'] as SuggestionKnowledge | null | undefined
+
+  if (!knowledge || !knowledge.promptContext) {
+    const aggregateIdea = session.turns.map((turn) => turn.userText).join(' ')
+    knowledge = await buildWizardKnowledge(aggregateIdea || userText)
+    if (knowledge) {
+      await WizardSession.updateOne(
+        { _id: session._id },
+        {
+          $set: {
+            'turns.0.payload': {
+              ...(session.turns?.[0]?.payload as Record<string, unknown> | undefined),
+              knowledge,
+            },
+          },
+        }
+      )
+    }
+  }
 
   const aiResult = await generateWizardNodes({
     idea: userText,
     workspaceSummary: summarizeWorkspace(workspace),
     previousTurns: session.turns,
+    knowledgeContext: knowledge?.promptContext,
   })
 
   let nodes = aiResult.nodes
@@ -103,5 +138,6 @@ export async function continueWizardSession({ sessionId, userText }: ContinuePar
   return {
     sessionId: session._id.toHexString(),
     suggestions,
+    knowledge: knowledge ?? undefined,
   }
 }

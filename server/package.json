@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src --ext ts --report-unused-disable-directives --max-warnings 0",
+    "test:kb": "tsx --test src/services/__tests__/KBService.compose.test.ts",
     "seed:prd-templates": "tsx src/scripts/seed-prd-templates.ts",
     "seed:prd-templates:reset": "tsx src/scripts/seed-prd-templates.ts --reset",
     "generate:embeddings": "tsx src/scripts/generate-embeddings.ts",

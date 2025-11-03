@@ -13,60 +13,48 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-## Core Architecture Generation System
-The system orchestrates AI-driven architecture generation through multiple specialized services:
+The system implements a specialized node-based project management platform with several key business domains:
 
-### Generation Pipeline (server/src/services/GenerationService.ts)
-- Manages workspace generation using specialized GPT models
-- Implements domain-specific template matching
-- Handles multi-stage generation with fallback mechanisms
-- Importance Score: 95
+## Core Domain Management
+- Domain-aware node organization using radial layout algorithm
+- Custom domain configurations for Business, Product, Tech, Data/AI, and Operations
+- Intelligent node placement with department inference rules
+- Auto-scaling radius calculations based on node density
+Importance Score: 95
 
-### Context Management (server/src/services/ContextInjector.ts) 
-- Builds AI prompts through workspace analysis
-- Detects and classifies workspace archetypes
-- Assembles hierarchical context for enhanced generation
-- Importance Score: 90
+## Relationship Engine 
+- Domain-specific relationship types management (depends-on, implements, documents)
+- Critical path analysis for dependency chains
+- Relationship suggestion engine based on node types
+- Circular dependency detection with domain context
+File: server/src/utils/relationships.ts
+Importance Score: 90
 
-### Knowledge Base Integration (server/src/services/KBService.ts)
-- Manages PRD template scoring and matching
-- Implements fragment prioritization for different domains
-- Composes PRD sections based on node types
-- Importance Score: 85
+## AI Integration System
+- Domain-specific prompt engineering for architecture suggestions
+- Context-aware API integration recommendations
+- Template-based card composition with context inheritance
+- Knowledge base integration for domain-specific content
+File: server/src/services/ai/provider.ts
+Importance Score: 85
 
-## Visualization and Organization
+## Template Management
+- Domain-specific template configurations
+- Template inheritance and composition rules
+- Category-based template organization
+- Template validation and enrichment logic
+File: server/src/services/cards/templatePlanner.ts
+Importance Score: 75
 
-### Domain Layout System (client/src/utils/domainLayout.ts)
-- Implements radial layout for business domains
-- Manages department hierarchies and positioning
-- Handles smart node distribution
-- Importance Score: 90
+## Knowledge Base Service
+- Advanced pattern matching for software architecture templates
+- Domain-specific scoring system for template relevance
+- Fragment prioritization logic for architecture components
+- Domain and node type detection algorithms
+File: server/src/services/KBService.ts
+Importance Score: 90
 
-### Relationship Management (client/src/utils/relationships.ts)
-- Defines domain-specific relationship types
-- Analyzes critical paths in dependency chains
-- Suggests relationships between node types
-- Importance Score: 85
-
-### Node Enhancement (client/src/components/AIEnrichmentModal.tsx)
-- Manages AI-driven content enrichment
-- Handles template-based question generation
-- Processes structured outputs for cards and metadata
-- Importance Score: 80
-
-## Integration Components
-
-### Suggestion Engine (client/src/services/aiSuggestions.ts)
-- Provides AI-driven node suggestions
-- Implements fallback to heuristic suggestions
-- Manages feedback collection for improvement
-- Importance Score: 85
-
-### API Context Processing (client/src/services/specIntegrations.ts)
-- Processes OpenAPI/Postman specifications
-- Generates summaries for integration points
-- Manages API context for suggestions
-- Importance Score: 80
+The system's core value lies in its domain-aware organization and relationship management capabilities, with specialized layouts and suggestions based on business context. AI integration provides intelligent recommendations while maintaining domain-specific rules and relationships.
 
 $END$
 

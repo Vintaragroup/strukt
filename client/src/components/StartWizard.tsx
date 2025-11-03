@@ -24,10 +24,11 @@ import {
   evaluatePromptForWizard,
   generateQuestionOpinion,
   generateQuestionSuggestion,
+  getWizardQuestionById,
   type WizardPromptEvaluation,
   WizardQuestion,
 } from "@/data/wizardQuestions";
-import type { SuggestedNode } from "@/types/ai";
+import type { SuggestedNode, SuggestionKnowledge } from "@/types/ai";
 import { suggestStartNodes, continueWizard } from "@/services/aiSuggestions";
 import { Input } from "./ui/input";
 
@@ -94,10 +95,6 @@ const THEME_NAME_DATA: Partial<Record<WizardPromptEvaluation["analysis"]["themes
   internal_enablement: {
     roots: ["Enable", "Allies", "Crew", "Pulse"],
     suffixes: ["Hub", "Collective", "Studio"],
-  },
-  data_ai: {
-    roots: ["Signal", "Pattern", "Insight", "Cortex"],
-    suffixes: ["Lab", "Works", "Center"],
   },
 };
 
@@ -209,6 +206,29 @@ type AnswerMap = Record<string, string>;
 
 const STEP_ORDER: WizardStep[] = ["idea", "summary", "questions", "review"];
 
+function mergeKnowledgeQuestionHints(base: WizardQuestion[], knowledge: SuggestionKnowledge | null): WizardQuestion[] {
+  if (!knowledge || !knowledge.questionHints || knowledge.questionHints.length === 0) {
+    return base;
+  }
+  const existing = new Set(base.map((question) => question.id));
+  const extras: WizardQuestion[] = [];
+  knowledge.questionHints.forEach((hint) => {
+    const normalized = hint.trim();
+    if (!normalized || existing.has(normalized)) {
+      return;
+    }
+    const candidate = getWizardQuestionById(normalized);
+    if (candidate) {
+      extras.push(candidate);
+      existing.add(normalized);
+    }
+  });
+  if (extras.length === 0) {
+    return base;
+  }
+  return [...base, ...extras];
+}
+
 const THEME_LABELS: Record<
   string,
   {
@@ -302,6 +322,7 @@ export function StartWizard({
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [prefetchedStartSuggestions, setPrefetchedStartSuggestions] = useState<SuggestedNode[] | null>(null);
   const [prefetchedStartRationale, setPrefetchedStartRationale] = useState<string | null>(null);
+  const [prefetchedKnowledge, setPrefetchedKnowledge] = useState<SuggestionKnowledge | null>(null);
   const [hasAppliedPrefetchedStart, setHasAppliedPrefetchedStart] = useState(false);
   const [questionOpinions, setQuestionOpinions] = useState<
     Record<
@@ -356,6 +377,7 @@ export function StartWizard({
     setAnalysisError(null);
     setPrefetchedStartSuggestions(null);
     setPrefetchedStartRationale(null);
+    setPrefetchedKnowledge(null);
     setHasAppliedPrefetchedStart(false);
     setQuestionOpinions({});
     setQuestionSuggestions({});
@@ -434,13 +456,17 @@ export function StartWizard({
         }
 
         const evaluation = await evaluationPromise;
+        const knowledge = startResult.knowledge ?? null;
+        setPrefetchedKnowledge(knowledge);
 
         setPromptAnalysis(evaluation.analysis);
-        setSummary(startResult.rationale || evaluation.summary || trimmed);
-        setQuestions(evaluation.questions);
+        const combinedQuestions = mergeKnowledgeQuestionHints(evaluation.questions, knowledge);
+        const baseSummary = startResult.rationale || evaluation.summary || trimmed;
+        setSummary(baseSummary);
+        setQuestions(combinedQuestions);
         setAnswers((previous) => {
           const next: AnswerMap = {};
-          for (const question of evaluation.questions) {
+          for (const question of combinedQuestions) {
             next[question.id] = previous[question.id] ?? "";
           }
           return next;
@@ -673,6 +699,7 @@ export function StartWizard({
         setHasAppliedPrefetchedStart(true);
         setPrefetchedStartSuggestions(null);
         setPrefetchedStartRationale(null);
+        setPrefetchedKnowledge(null);
         handleClose();
         return;
       }
@@ -696,6 +723,7 @@ export function StartWizard({
         setHasAppliedPrefetchedStart(true);
         setPrefetchedStartSuggestions(null);
         setPrefetchedStartRationale(null);
+        setPrefetchedKnowledge(null);
         handleClose();
       }
     } catch (err) {
@@ -802,6 +830,51 @@ export function StartWizard({
           )}
         </div>
       </div>
+
+      {prefetchedKnowledge && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5">
+          <h4 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+            <MessageSquareText className="w-4 h-4 text-amber-700" />
+            Knowledge base signals
+          </h4>
+          <p className="text-xs text-amber-900 leading-relaxed whitespace-pre-line">
+            {prefetchedKnowledge.summary}
+          </p>
+          {prefetchedKnowledge.prds.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {prefetchedKnowledge.prds.slice(0, 2).map((prd) => (
+                <div key={prd.id} className="rounded-xl border border-amber-100 bg-white/70 p-3">
+                  <div className="text-xs font-semibold text-amber-900">{prd.name}</div>
+                  <ul className="mt-2 space-y-1">
+                    {prd.sections
+                      .filter((section) => section.snippet)
+                      .slice(0, 2)
+                      .map((section) => (
+                        <li key={`${prd.id}-${section.title}`} className="text-[11px] text-amber-800 leading-relaxed">
+                          <span className="font-medium">{section.title}:</span> {section.snippet}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+          {prefetchedKnowledge.fragments.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {prefetchedKnowledge.fragments.slice(0, 4).map((fragment) => (
+                <Badge
+                  key={fragment.id}
+                  variant="secondary"
+                  className="border border-amber-200 bg-amber-100/70 text-[11px] font-medium text-amber-700"
+                >
+                  {fragment.type.replace(/_/g, " ")}
+                  {fragment.label ? ` • ${fragment.label}` : ""}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {promptAnalysis && (
         <div className="rounded-2xl border border-indigo-100 bg-white p-5">
@@ -1076,6 +1149,16 @@ export function StartWizard({
           </div>
         </div>
       </div>
+
+      {prefetchedKnowledge && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5">
+          <h4 className="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-2">
+            <MessageSquareText className="w-4 h-4 text-amber-700" />
+            Referenced guidance
+          </h4>
+          <p className="text-xs text-amber-900 leading-relaxed whitespace-pre-line">{prefetchedKnowledge.summary}</p>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

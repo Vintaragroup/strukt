@@ -1,0 +1,31 @@
+{
+  "id": "audit_logging",
+  "type": "interface_pattern",
+  "for": ["backend", "domain", "ops"],
+  "content": {
+    "description": "Standard audit log payload for security/compliance hardening programs.",
+    "schema": {
+      "event_id": "UUID",
+      "occurred_at": "ISO-8601 UTC timestamp",
+      "actor": {
+        "type": "user|service|system",
+        "id": "string",
+        "ip": "string",
+        "user_agent": "string"
+      },
+      "action": "string (CRUD + domain verb)",
+      "resource": {
+        "type": "string",
+        "id": "string"
+      },
+      "result": "success|failure",
+      "metadata": "JSON object",
+      "trace_id": "optional string for distributed tracing"
+    },
+    "requirements": [
+      "Emit to append-only sink (CloudWatch/Splunk/Elastic) with 30-day hot + 1-year cold storage.",
+      "Expose query/filter APIs to Security and Compliance roles with least-privilege.",
+      "Document retention/PII redaction strategy."
+    ]
+  }
+}

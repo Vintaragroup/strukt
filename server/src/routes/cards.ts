@@ -72,6 +72,8 @@ router.post('/generate-content', async (req: Request, res: Response) => {
         summary: node.summary,
         tags: node.tags ?? [],
         relatedNodes: node.relatedNodes ?? [],
+        metadata: node.metadata ?? undefined,
+        intent: node.intent ?? undefined,
       },
       card: {
         id: card.id,
@@ -100,6 +102,7 @@ router.post('/generate-content', async (req: Request, res: Response) => {
           }
         : undefined,
       prdTemplateId: result.prdTemplateId,
+      provenance: result.provenance,
     })
   } catch (error) {
     console.error('Card generation failed:', error)

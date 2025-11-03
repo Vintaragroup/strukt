@@ -1,0 +1,12 @@
+{
+  "id": "api_docs_published",
+  "type": "acceptance_criteria",
+  "for": ["doc", "backend", "frontend"],
+  "content": [
+    "Published reference includes every GA endpoint with request/response examples, auth requirements, pagination, rate limits, and error catalog.",
+    "Quickstart tutorial validated by at least two non-author engineers (time-to-first-success ≤ 15 minutes).",
+    "Language SDK parity table kept current (TypeScript, Python, Go, Java, Kotlin, Swift, Rust) with last-reviewed timestamp ≤ 30 days.",
+    "Broken-link scan, OpenAPI validation, and code sample tests run in CI and passing for the release.",
+    "Doc search analytics configured; top 10 queries mapped to owned pages with < 5% 404/anchor error rate."
+  ]
+}

@@ -19,6 +19,7 @@ import "@xyflow/react/dist/style.css";
 import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
 import { AnimatePresence } from "motion/react";
+import { Sparkles } from "lucide-react";
 import { updateEdgesWithOptimalHandles } from "./utils/edgeRouting";
 import { applyRadialLayout } from "./utils/autoLayout";
 import { applyDomainRadialLayout, calculateNewNodePosition, getDomainForNodeType } from "./utils/domainLayout";
@@ -39,6 +40,7 @@ import { NodeHierarchy } from "./components/NodeHierarchy";
 import { AIButton } from "./components/AIButton";
 import { CustomNode, CustomNodeData } from "./components/CustomNode";
 import { CenterNode, CenterNodeData } from "./components/CenterNode";
+import { IdeaKickoffDialog, type IdeaKickoffValues } from "./components/IdeaKickoffDialog";
 import { StartWizard } from "./components/StartWizard";
 import { SuggestionPanel } from "./components/SuggestionPanel";
 import type { SuggestedNode } from "./types/ai";
@@ -113,6 +115,23 @@ const WORKSPACE_ID_STORAGE_KEY = "flowforge-active-workspace-id";
 const WORKSPACE_NAME_STORAGE_KEY = "flowforge-active-workspace-name";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
+const createAutoNodeId = () => `auto-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
+
+const buildAutoTags = (base: string[], value: string): string[] => {
+  const normalizedBase = base.map((tag) => tag.toLowerCase());
+  const raw = value.trim().toLowerCase();
+  if (raw) {
+    normalizedBase.push(raw);
+  }
+  const keywords = value
+    .split(/[,;\n]+/)
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean)
+    .map((token) => token.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""))
+    .filter(Boolean);
+  return Array.from(new Set([...normalizedBase, ...keywords]));
+};
+
 const DEFAULT_WORKSPACE_NODE = {
   id: "center",
   type: "root",
@@ -158,6 +177,10 @@ type SerializableWorkspaceNode = {
     summary?: string;
     tags?: string[];
     stackHint?: string;
+    preferredHeight?: number;
+    preferredWidth?: number;
+    maxNodeHeight?: number;
+    maxNodeWidth?: number;
   };
 };
 
@@ -176,6 +199,23 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
     const isRoot = workspaceNode.type === "root";
     if (isRoot) {
       const rootData = workspaceNode.data || {};
+      const preferredHeight =
+        typeof rootData.preferredHeight === "number" && Number.isFinite(rootData.preferredHeight)
+          ? rootData.preferredHeight
+          : undefined;
+      const preferredWidth =
+        typeof rootData.preferredWidth === "number" && Number.isFinite(rootData.preferredWidth)
+          ? rootData.preferredWidth
+          : undefined;
+      const maxNodeHeight =
+        typeof rootData.maxNodeHeight === "number" && Number.isFinite(rootData.maxNodeHeight)
+          ? rootData.maxNodeHeight
+          : undefined;
+      const maxNodeWidth =
+        typeof rootData.maxNodeWidth === "number" && Number.isFinite(rootData.maxNodeWidth)
+          ? rootData.maxNodeWidth
+          : undefined;
+
       return {
         id: workspaceNode.id,
         type: "center",
@@ -190,11 +230,32 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
           icon: (rootData as any).icon,
           buttonText: (rootData as any).buttonText || "Connect your Git or Wiki",
           secondaryButtonText: (rootData as any).secondaryButtonText || "Create your first node",
+          ...(preferredHeight ? { preferredHeight } : {}),
+          ...(preferredWidth ? { preferredWidth } : {}),
+          ...(maxNodeHeight ? { maxNodeHeight } : {}),
+          ...(maxNodeWidth ? { maxNodeWidth } : {}),
         },
       } as Node<CenterNodeData>;
     }
 
     const nodeData = workspaceNode.data || {};
+    const preferredHeight =
+      typeof nodeData.preferredHeight === "number" && Number.isFinite(nodeData.preferredHeight)
+        ? nodeData.preferredHeight
+        : undefined;
+    const preferredWidth =
+      typeof nodeData.preferredWidth === "number" && Number.isFinite(nodeData.preferredWidth)
+        ? nodeData.preferredWidth
+        : undefined;
+    const maxNodeHeight =
+      typeof nodeData.maxNodeHeight === "number" && Number.isFinite(nodeData.maxNodeHeight)
+        ? nodeData.maxNodeHeight
+        : undefined;
+    const maxNodeWidth =
+      typeof nodeData.maxNodeWidth === "number" && Number.isFinite(nodeData.maxNodeWidth)
+        ? nodeData.maxNodeWidth
+        : undefined;
+
     return {
       id: workspaceNode.id,
       type: "custom",
@@ -206,6 +267,10 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         stackHint: nodeData.stackHint,
         type: workspaceNode.type,
         cards: [],
+        ...(preferredHeight ? { preferredHeight } : {}),
+        ...(preferredWidth ? { preferredWidth } : {}),
+        ...(maxNodeHeight ? { maxNodeHeight } : {}),
+        ...(maxNodeWidth ? { maxNodeWidth } : {}),
       },
     } as Node<CustomNodeData>;
   });
@@ -258,6 +323,22 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       : undefined;
 
   const tags = Array.isArray(data.tags) ? (data.tags as string[]) : undefined;
+  const preferredHeight =
+    typeof data.preferredHeight === "number" && Number.isFinite(data.preferredHeight)
+      ? data.preferredHeight
+      : undefined;
+  const preferredWidth =
+    typeof data.preferredWidth === "number" && Number.isFinite(data.preferredWidth)
+      ? data.preferredWidth
+      : undefined;
+  const maxNodeHeight =
+    typeof data.maxNodeHeight === "number" && Number.isFinite(data.maxNodeHeight)
+      ? data.maxNodeHeight
+      : undefined;
+  const maxNodeWidth =
+    typeof data.maxNodeWidth === "number" && Number.isFinite(data.maxNodeWidth)
+      ? data.maxNodeWidth
+      : undefined;
 
   return {
     id: node.id,
@@ -271,6 +352,10 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       summary,
       tags,
       stackHint: typeof data.stackHint === "string" ? data.stackHint : undefined,
+      preferredHeight,
+      preferredWidth,
+      maxNodeHeight,
+      maxNodeWidth,
     },
   };
 }
@@ -520,7 +605,7 @@ const initialNodes = [
       icon: "🧭",
       link: "",
       buttonText: "Launch AI Blueprint Wizard",
-      secondaryButtonText: "Create Your First Node",
+      secondaryButtonText: "Share Your Idea",
       // buttonAction will be added dynamically in nodesWithCallbacks
     } as CenterNodeData,
     positionAbsolute: { x: 0, y: 0 },
@@ -630,6 +715,8 @@ function FlowCanvas() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(false);
+  const [isIdeaKickoffOpen, setIsIdeaKickoffOpen] = useState(false);
+  const [kickoffAutoShown, setKickoffAutoShown] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -669,13 +756,85 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       Boolean(node && (node.type === "center" || node.id === centerNodeIdRef.current)),
     []
   );
-const [edgeContextMenu, setEdgeContextMenu] = useState<{
-  isOpen: boolean;
-  position: { x: number; y: number };
-  edgeId: string | null;
-  relationshipType?: RelationshipType;
-}>({ isOpen: false, position: { x: 0, y: 0 }, edgeId: null });
-const lastPersistedWorkspaceNameRef = useRef<string>("");
+  const autoBlueprintNodeMapRef = useRef<Record<string, string>>({});
+
+  const centerNodeData = useMemo<CenterNodeData | undefined>(() => {
+    const center = nodes.find((n) => n && (n.type === "center" || n.id === centerNodeIdRef.current));
+    return center ? (center.data as CenterNodeData) : undefined;
+  }, [nodes]);
+
+  useEffect(() => {
+    if (!isWorkspaceReady || kickoffAutoShown) return;
+    if (!centerNodeData) return;
+
+    const needsKickoff = !centerNodeData.coreIdea || !centerNodeData.primaryAudience || !centerNodeData.coreOutcome;
+    if (!needsKickoff) {
+      setKickoffAutoShown(true);
+      return;
+    }
+
+    setKickoffAutoShown(true);
+    const timer = setTimeout(() => setIsIdeaKickoffOpen(true), 350);
+    return () => clearTimeout(timer);
+  }, [centerNodeData, isWorkspaceReady, kickoffAutoShown]);
+  useEffect(() => {
+    autoBlueprintNodeMapRef.current = {};
+  }, [workspaceId]);
+
+  const handleOpenEnrichment = useCallback((nodeId: string) => {
+    setEnrichmentNodeId(nodeId);
+    setIsAIEnrichmentModalOpen(true);
+  }, []);
+
+  const blueprintReady = useMemo(() => {
+    if (!centerNodeData) return false;
+    const idea = centerNodeData.coreIdea?.trim();
+    const audience = centerNodeData.primaryAudience?.trim();
+    const outcome = centerNodeData.coreOutcome?.trim();
+    const launch = centerNodeData.launchScope?.trim();
+    if (!idea || !audience || !outcome || !launch) return false;
+
+    const map = autoBlueprintNodeMapRef.current;
+    if (!map.persona || !map.outcome || !map.launch) return false;
+
+    const nodeIds = new Set(nodes.map((node) => node.id));
+    return nodeIds.has(map.persona) && nodeIds.has(map.outcome) && nodeIds.has(map.launch);
+  }, [centerNodeData, nodes]);
+
+  const blueprintHighlights = useMemo(() => {
+    return {
+      audience: centerNodeData?.primaryAudience?.trim(),
+      outcome: centerNodeData?.coreOutcome?.trim(),
+      launch: centerNodeData?.launchScope?.trim(),
+    };
+  }, [centerNodeData]);
+
+  const handleBlueprintEnrichment = useCallback(() => {
+    const order: AutoBlueprintKind[] = ["launch", "outcome", "persona", "risk"];
+    const nodeIds = new Set(nodes.map((node) => node.id));
+    let targetId: string | null = null;
+
+    for (const kind of order) {
+      const candidate = autoBlueprintNodeMapRef.current[kind];
+      if (candidate && nodeIds.has(candidate)) {
+        targetId = candidate;
+        break;
+      }
+    }
+
+    if (!targetId) {
+      targetId = centerNodeIdRef.current || "center";
+    }
+
+    handleOpenEnrichment(targetId);
+  }, [handleOpenEnrichment, nodes]);
+  const [edgeContextMenu, setEdgeContextMenu] = useState<{
+    isOpen: boolean;
+    position: { x: number; y: number };
+    edgeId: string | null;
+    relationshipType?: RelationshipType;
+  }>({ isOpen: false, position: { x: 0, y: 0 }, edgeId: null });
+  const lastPersistedWorkspaceNameRef = useRef<string>("");
 
 const hasCustomNodes = useMemo(
   () => nodes.some((node) => node.type !== "center"),
@@ -996,6 +1155,25 @@ const handleSwitchToWizard = useCallback(
             ? (targetCard.todos ?? []).map((todo) => todo.text).filter((text) => text && text.length > 0)
             : undefined;
 
+        const toTrimmed = (input?: string | null) => {
+          if (typeof input !== "string") return undefined;
+          const trimmed = input.trim();
+          return trimmed.length > 0 ? trimmed : undefined;
+        };
+
+        const intent = {
+          idea: toTrimmed(centerNodeData?.coreIdea),
+          problem: toTrimmed(centerNodeData?.coreProblem),
+          primaryAudience: toTrimmed(centerNodeData?.primaryAudience),
+          coreOutcome: toTrimmed(centerNodeData?.coreOutcome),
+          launchScope: toTrimmed(centerNodeData?.launchScope),
+          primaryRisk: toTrimmed(centerNodeData?.primaryRisk),
+          blueprintAutoKind:
+            typeof targetNode.data.metadata?.blueprintAutoKind === "string"
+              ? String(targetNode.data.metadata?.blueprintAutoKind)
+              : undefined,
+        };
+
         const payload: GenerateCardContentPayload = {
           node: {
             id: targetNode.id,
@@ -1005,6 +1183,8 @@ const handleSwitchToWizard = useCallback(
             summary: targetNode.data.summary,
             tags: targetNode.data.tags ?? [],
             relatedNodes,
+            metadata: targetNode.data.metadata as Record<string, unknown> | undefined,
+            intent,
           },
           card: {
             id: targetCard.id,
@@ -1087,6 +1267,7 @@ const handleSwitchToWizard = useCallback(
                       ? Array.from(suggestedTemplateSet)
                       : undefined,
                   description: generated.template?.description ?? existingMetadata.description,
+                  provenance: generated.provenance ?? existingMetadata.provenance,
                 },
               };
             });
@@ -1124,8 +1305,8 @@ const handleSwitchToWizard = useCallback(
       } finally {
         setActiveCardGeneration(null);
       }
-    },
-    [nodes, edges, activeCardGeneration, setNodes, setIsSaved, getErrorMessage]
+  },
+    [nodes, edges, activeCardGeneration, setNodes, setIsSaved, centerNodeData]
   );
 
   useEffect(() => {
@@ -2575,12 +2756,254 @@ const handleSwitchToWizard = useCallback(
     toast.success("Center node updated");
   }, [setNodes]);
 
-  // AI Enrichment handlers
-  const handleOpenEnrichment = useCallback((nodeId: string) => {
-    setEnrichmentNodeId(nodeId);
-    setIsAIEnrichmentModalOpen(true);
-  }, []);
+  const handleIdeaKickoffComplete = useCallback((values: IdeaKickoffValues) => {
+    const payload: Partial<CenterNodeData> = {
+      kickoffCompletedAt: new Date().toISOString(),
+    };
 
+    Object.entries(values).forEach(([key, value]) => {
+      if (typeof value === "string" && value.trim().length > 0) {
+        payload[key] = value.trim();
+      }
+    });
+
+    payload.secondaryButtonText = "Create your next node";
+
+    handleUpdateCenterNode(payload);
+    setIsIdeaKickoffOpen(false);
+    setKickoffAutoShown(true);
+    setShowEmptyState(false);
+  }, [handleUpdateCenterNode, setShowEmptyState, setIsIdeaKickoffOpen, setKickoffAutoShown]);
+
+  type AutoBlueprintKind = "persona" | "outcome" | "launch" | "risk";
+
+  type AutoNodeSeed = {
+    kind: AutoBlueprintKind;
+    nodeType: CustomNodeData["type"];
+    label: string;
+    summary: string;
+    tags: string[];
+    domain?: CustomNodeData["domain"];
+    ring?: number;
+    metadata?: Record<string, unknown>;
+  };
+
+  const spawnAutoNode = useCallback(
+    (seed: AutoNodeSeed) => {
+      const centerId = centerNodeIdRef.current || "center";
+      const normalizedDomain = seed.domain ?? getDomainForNodeType(seed.nodeType);
+      const ring = seed.ring ?? 1;
+      const newNodeId = createAutoNodeId();
+      const position = calculateNewNodePosition(nodes, centerId, {
+        domain: normalizedDomain,
+        type: seed.nodeType,
+        ring,
+      });
+
+      const metadata = {
+        ...(seed.metadata ?? {}),
+        blueprintAutoKind: seed.kind,
+        blueprintAutoSource: "center-kickoff",
+      };
+
+      const newNode = {
+        id: newNodeId,
+        type: "custom",
+        position,
+        data: {
+          label: seed.label,
+          type: seed.nodeType,
+          summary: seed.summary,
+          tags: seed.tags,
+          domain: normalizedDomain,
+          ring,
+          cards: [],
+          metadata,
+          isNew: true,
+        } as CustomNodeData,
+      };
+
+      const nextNodes = [...nodes, newNode];
+      setNodes(nextNodes);
+
+      const newEdge = {
+        id: `auto-edge-${centerId}-${newNodeId}`,
+        source: centerId,
+        target: newNodeId,
+        type: "custom",
+      };
+      setEdges((eds) => updateEdgesWithOptimalHandles(nextNodes, [...eds, newEdge], centerId));
+
+      autoBlueprintNodeMapRef.current[seed.kind] = newNodeId;
+      setIsSaved(false);
+
+      setTimeout(() => {
+        setNodes((current) =>
+          current.map((node) =>
+            node.id === newNodeId
+              ? { ...node, data: { ...node.data, isNew: false } }
+              : node
+          )
+        );
+      }, 1800);
+    },
+    [nodes, setEdges, setIsSaved, setNodes]
+  );
+
+  const removeAutoNode = useCallback(
+    (kind: AutoBlueprintKind) => {
+      const nodeId = autoBlueprintNodeMapRef.current[kind];
+      if (!nodeId) return;
+
+      const existing = nodes.find((node) => node.id === nodeId);
+      if (!existing) {
+        delete autoBlueprintNodeMapRef.current[kind];
+        return;
+      }
+
+      const centerId = centerNodeIdRef.current || "center";
+      const filteredNodes = nodes.filter((node) => node.id !== nodeId);
+      setNodes(filteredNodes);
+      setEdges((eds) => {
+        const filteredEdges = eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId);
+        return updateEdgesWithOptimalHandles(filteredNodes, filteredEdges, centerId);
+      });
+
+      delete autoBlueprintNodeMapRef.current[kind];
+      setIsSaved(false);
+    },
+    [nodes, setEdges, setIsSaved, setNodes]
+  );
+
+  useEffect(() => {
+    if (!isWorkspaceReady || !centerNodeData) return;
+
+    const ensureAutoNode = (
+      kind: AutoBlueprintKind,
+      rawValue: string | undefined,
+      buildSeed: (value: string) => AutoNodeSeed
+    ) => {
+      const trimmed = rawValue?.trim();
+      const centerId = centerNodeIdRef.current || "center";
+
+      let mappedId = autoBlueprintNodeMapRef.current[kind];
+      let existing = mappedId ? nodes.find((node) => node.id === mappedId) : undefined;
+      if (!existing) {
+        const fallback = nodes.find(
+          (node) => node.id !== centerId && node.data?.metadata?.blueprintAutoKind === kind
+        );
+        if (fallback) {
+          autoBlueprintNodeMapRef.current[kind] = fallback.id;
+          existing = fallback;
+          mappedId = fallback.id;
+        }
+      }
+
+      if (!trimmed) {
+        if (existing) {
+          removeAutoNode(kind);
+        }
+        return;
+      }
+
+      const seed = buildSeed(trimmed);
+
+      if (!existing) {
+        spawnAutoNode(seed);
+        return;
+      }
+
+      const targetId = existing?.id;
+      if (!targetId) {
+        return;
+      }
+
+      const existingData = existing.data as CustomNodeData;
+      const nextMetadata = {
+        ...(existingData.metadata ?? {}),
+        ...(seed.metadata ?? {}),
+        blueprintAutoKind: kind,
+        blueprintAutoSource: "center-kickoff",
+      };
+
+      const tagsChanged =
+        JSON.stringify((existingData.tags ?? []).sort()) !== JSON.stringify(seed.tags.slice().sort());
+      const summaryChanged = (existingData.summary ?? "") !== seed.summary;
+      const labelChanged = existingData.label !== seed.label;
+      const domainChanged = seed.domain && existingData.domain !== seed.domain;
+      const ringChanged = typeof seed.ring === "number" && existingData.ring !== seed.ring;
+
+      if (!tagsChanged && !summaryChanged && !labelChanged && !domainChanged && !ringChanged) {
+        return;
+      }
+
+      setNodes((current) =>
+        current.map((node) => {
+          if (node.id !== targetId) return node;
+          const data = node.data as CustomNodeData;
+          return {
+            ...node,
+            data: {
+              ...data,
+              label: seed.label,
+              summary: seed.summary,
+              tags: seed.tags,
+              domain: seed.domain ?? data.domain,
+              ring: seed.ring ?? data.ring,
+              metadata: nextMetadata,
+            },
+          };
+        })
+      );
+      setIsSaved(false);
+    };
+
+    ensureAutoNode("persona", centerNodeData.primaryAudience, (value) => ({
+      kind: "persona",
+      nodeType: "doc",
+      label: "Primary Audience",
+      summary: value,
+      tags: buildAutoTags(["persona", "audience", "kickoff"], value),
+      domain: "business",
+      ring: 1,
+      metadata: { persona: value },
+    }));
+
+    ensureAutoNode("outcome", centerNodeData.coreOutcome, (value) => ({
+      kind: "outcome",
+      nodeType: "requirement",
+      label: "Success Metric",
+      summary: value,
+      tags: buildAutoTags(["kpi", "success", "kickoff"], value),
+      domain: "business",
+      ring: 1,
+      metadata: { outcome: value },
+    }));
+
+    ensureAutoNode("launch", centerNodeData.launchScope, (value) => ({
+      kind: "launch",
+      nodeType: "requirement",
+      label: "Launch Scope",
+      summary: value,
+      tags: buildAutoTags(["launch", "scope", "kickoff"], value),
+      domain: "product",
+      ring: 2,
+      metadata: { launchScope: value },
+    }));
+
+    ensureAutoNode("risk", centerNodeData.primaryRisk, (value) => ({
+      kind: "risk",
+      nodeType: "doc",
+      label: "Primary Risk",
+      summary: value,
+      tags: buildAutoTags(["risk", "constraint", "kickoff"], value),
+      domain: "operations",
+      ring: 2,
+      metadata: { primaryRisk: value },
+    }));
+  }, [centerNodeData, isWorkspaceReady, nodes, removeAutoNode, spawnAutoNode, setIsSaved]);
+
+  // AI Enrichment handlers
   const handleOpenConnectSources = useCallback(() => {
     setShowEmptyState(false);
     setIsConnectSourcesOpen(true);
@@ -2804,8 +3227,12 @@ const handleSwitchToWizard = useCallback(
       const hasValidParent = !node.parentNode || nodes.some(n => n && n.id === node.parentNode);
       
       const isCenter = node.type === "center";
+      const centerMetadata: CenterNodeData | undefined = isCenter ? (node.data as CenterNodeData) : undefined;
+      const ideaCaptured = Boolean(centerMetadata?.coreIdea && centerMetadata?.primaryAudience && centerMetadata?.coreOutcome);
       const primaryText = isCenter ? (node.data?.buttonText ?? "Connect your Git or Wiki") : node.data?.buttonText;
-      const secondaryText = isCenter ? (node.data?.secondaryButtonText ?? "Create your first node") : node.data?.secondaryButtonText;
+      const secondaryText = isCenter
+        ? centerMetadata?.secondaryButtonText ?? (ideaCaptured ? "Create your next node" : "Share your idea")
+        : node.data?.secondaryButtonText;
 
       return {
         ...node,
@@ -2871,11 +3298,21 @@ const handleSwitchToWizard = useCallback(
                 },
                 secondaryButtonText: secondaryText,
                 secondaryButtonAction: () => {
-                  const centerId = centerNodeIdRef.current || "center";
                   setShowEmptyState(false);
+                  if (!ideaCaptured) {
+                    setKickoffAutoShown(true);
+                    setIsIdeaKickoffOpen(true);
+                    return;
+                  }
+                  const centerId = centerNodeIdRef.current || "center";
                   launchNodeCreator({
                     sourceNodeId: centerId,
                   });
+                },
+                onOpenKickoffDialog: () => {
+                  setShowEmptyState(false);
+                  setKickoffAutoShown(true);
+                  setIsIdeaKickoffOpen(true);
                 },
                 onUpdateCenterNode: handleUpdateCenterNode,
                 isConnectSource: true,
@@ -2910,7 +3347,9 @@ const handleSwitchToWizard = useCallback(
     setSelectedNodeId,
     setIsWizardOpen,
     isCenterNode,
-    activeCardGeneration
+    activeCardGeneration,
+    setIsIdeaKickoffOpen,
+    setKickoffAutoShown
     // Note: Export/copy handlers intentionally omitted from deps to avoid hoisting issues
     // These functions are stable and don't need to trigger re-computation
   ]);
@@ -4530,6 +4969,38 @@ const handleSwitchToWizard = useCallback(
         onCenterClick={handleCenterCanvas}
       />
 
+      {blueprintReady && (
+        <div className="fixed bottom-36 right-4 z-40 w-[min(320px,calc(100vw-2rem))]">
+          <div className="rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-200/60 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-indigo-600 font-semibold text-sm">
+              <Sparkles className="w-4 h-4" />
+              Blueprint ready
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Your kickoff answers give enough context for a full plan. Review the highlights below, then let Strukt draft the requirements.
+            </p>
+            <ul className="text-xs text-slate-500 space-y-1">
+              {blueprintHighlights.audience && (
+                <li><span className="font-medium text-slate-600">Audience:</span> {blueprintHighlights.audience}</li>
+              )}
+              {blueprintHighlights.outcome && (
+                <li><span className="font-medium text-slate-600">Outcome:</span> {blueprintHighlights.outcome}</li>
+              )}
+              {blueprintHighlights.launch && (
+                <li><span className="font-medium text-slate-600">Launch scope:</span> {blueprintHighlights.launch}</li>
+              )}
+            </ul>
+            <Button
+              type="button"
+              onClick={handleBlueprintEnrichment}
+              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-700 hover:via-purple-700 hover:to-indigo-700 text-white shadow-md hover:shadow-xl"
+            >
+              Generate detailed plan
+            </Button>
+          </div>
+        </div>
+      )}
+
       <AIButton onClick={() => setIsAISuggestPanelOpen(true)} />
 
       <StartWizard
@@ -4575,6 +5046,19 @@ const handleSwitchToWizard = useCallback(
         onClose={() => setIsConnectSourcesOpen(false)}
         onConnectGit={handleConnectGitRepo}
         onConnectWiki={handleConnectWiki}
+      />
+
+      <IdeaKickoffDialog
+        open={isIdeaKickoffOpen}
+        onClose={() => setIsIdeaKickoffOpen(false)}
+        onComplete={handleIdeaKickoffComplete}
+        initialValues={{
+          coreIdea: centerNodeData?.coreIdea,
+          primaryAudience: centerNodeData?.primaryAudience,
+          coreOutcome: centerNodeData?.coreOutcome,
+          launchScope: centerNodeData?.launchScope,
+          primaryRisk: centerNodeData?.primaryRisk,
+        }}
       />
 
       <AISuggestPanel

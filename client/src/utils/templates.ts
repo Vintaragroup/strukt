@@ -536,7 +536,7 @@ const CUSTOM_TEMPLATES_KEY = "flowforge_custom_templates";
 
 // Get all templates (built-in + custom)
 export function getAllTemplates(): Template[] {
-  const customTemplates = getCustomTemplates();
+  const customTemplates = typeof window === "undefined" ? [] : getCustomTemplates();
   return [...BUILT_IN_TEMPLATES, ...customTemplates];
 }
 
@@ -644,8 +644,53 @@ export function deleteTemplate(templateId: string): void {
 }
 
 // Get template by ID
+const cloneTemplate = (template: Template): Template => {
+  const cloneNodeData = <T,>(data: T): T => {
+    if (data === undefined || data === null) {
+      return data;
+    }
+    const structuredCloneFn = typeof globalThis !== "undefined"
+      ? (globalThis as unknown as { structuredClone?: <U>(value: U) => U }).structuredClone
+      : undefined;
+    if (typeof structuredCloneFn === "function") {
+      try {
+        return structuredCloneFn(data);
+      } catch {
+        // Fall back to JSON strategy if structuredClone fails (e.g., functions in data)
+      }
+    }
+    try {
+      return JSON.parse(JSON.stringify(data));
+    } catch {
+      return data;
+    }
+  };
+
+  return {
+    ...template,
+    nodes: template.nodes.map((node) => ({
+      ...node,
+      position: node.position ? { ...node.position } : node.position,
+      style: node.style ? { ...node.style } : node.style,
+      data: node.data ? cloneNodeData(node.data) : node.data,
+    })),
+    edges: template.edges.map((edge) => ({
+      ...edge,
+      data: edge.data ? cloneNodeData(edge.data) : edge.data,
+    })),
+    metadata: {
+      ...template.metadata,
+      createdAt: new Date(template.metadata.createdAt),
+      tags: template.metadata.tags ? [...template.metadata.tags] : undefined,
+    },
+  };
+};
+
 export function getTemplateById(templateId: string): Template | undefined {
-  return getAllTemplates().find((t) => t.id === templateId);
+  if (!templateId) return undefined;
+  const normalizedId = templateId.trim().toLowerCase();
+  const template = getAllTemplates().find((t) => t.id.toLowerCase() === normalizedId);
+  return template ? cloneTemplate(template) : undefined;
 }
 
 // Get templates by category

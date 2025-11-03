@@ -128,3 +128,43 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+/* Resize handle styling for node cards */
+.react-flow__resize-handle.custom-node-resize-handle,
+.react-flow__resize-handle.center-node-resize-handle {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.react-flow__node:hover .react-flow__resize-handle.custom-node-resize-handle,
+.react-flow__node.selected .react-flow__resize-handle.custom-node-resize-handle,
+.react-flow__node:hover .react-flow__resize-handle.center-node-resize-handle,
+.react-flow__node.selected .react-flow__resize-handle.center-node-resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-n,
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-nw,
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-ne,
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-e,
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-w,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-n,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-nw,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-ne,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-e,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-w {
+  display: none;
+}
+
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-s,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-s {
+  cursor: ns-resize;
+}
+
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-se,
+.react-flow__resize-handle.custom-node-resize-handle.react-flow__resize-handle-sw,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-se,
+.react-flow__resize-handle.center-node-resize-handle.react-flow__resize-handle-sw {
+  cursor: nwse-resize;
+}

@@ -77,6 +77,12 @@ const TECH_CORE: WizardQuestion[] = [
   },
 ];
 
+const CORE_POOLS = [BUSINESS_CORE, PRODUCT_CORE, TECH_CORE] as const;
+const CORE_LOOKUP = new Map<string, WizardQuestion>();
+CORE_POOLS.forEach((pool) => {
+  pool.forEach((question) => CORE_LOOKUP.set(question.id, question));
+});
+
 const OPTIONAL_POOL: WizardQuestion[] = [
   {
     id: "timeline",
@@ -1507,4 +1513,14 @@ export function evaluatePromptForWizard(
     questions,
     analysis,
   };
+}
+
+export function getWizardQuestionById(id: string): WizardQuestion | undefined {
+  const normalized = id.trim();
+  if (!normalized) return undefined;
+  const optional = OPTIONAL_LOOKUP.get(normalized);
+  if (optional) {
+    return optional;
+  }
+  return CORE_LOOKUP.get(normalized);
 }

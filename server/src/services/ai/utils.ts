@@ -1,5 +1,6 @@
 import { Types } from 'mongoose'
 import type { SpecSummary } from '../specs/SpecSummaryService.js'
+import type { SuggestedNode } from '../../types/ai.js'
 
 interface IntegrationNodeOptions {
   apiIntent?: string
@@ -13,11 +14,11 @@ export function ensureObjectId(value: string): Types.ObjectId {
   throw new Error(`Invalid ObjectId: ${value}`)
 }
 
-export function buildMockNodes(seed: string, count = 3) {
+export function buildMockNodes(seed: string, count = 3): SuggestedNode[] {
   const domains = ['business', 'product', 'tech', 'data-ai', 'operations']
   const types = ['requirement', 'frontend', 'backend', 'doc']
   const base = Math.abs(hashString(seed))
-  const nodes = []
+  const nodes: SuggestedNode[] = []
 
   for (let i = 0; i < count; i++) {
     const domain = domains[(base + i) % domains.length]
@@ -28,6 +29,7 @@ export function buildMockNodes(seed: string, count = 3) {
       summary: `Auto-generated ${type} for ${domain} focus`,
       domain,
       ring: (i % 3) + 1,
+      metadata: undefined,
     })
   }
 
@@ -38,13 +40,13 @@ export function buildApiIntegrationNodes(
   summary: SpecSummary,
   count = 3,
   options: IntegrationNodeOptions = {}
-) {
+): SuggestedNode[] {
   const operations = summary.operations.slice(0, count)
   if (!operations.length) {
     return buildMockNodes(summary.importHash, count)
   }
 
-  return operations.map((operation, index) => {
+  return operations.map((operation): SuggestedNode => {
     const labelBase = operation.summary
       ? operation.summary.split('.')[0]
       : `${operation.method} ${operation.path}`

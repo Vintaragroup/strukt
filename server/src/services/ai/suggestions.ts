@@ -41,7 +41,6 @@ export async function generateSuggestions({
 
   const derivedFocusLabel = focusLabel
     || focusNode?.data?.title
-    || focusNode?.data?.label
     || focusNode?.label
     || focusNode?.id
     || undefined

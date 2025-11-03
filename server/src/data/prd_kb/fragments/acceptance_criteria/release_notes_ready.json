@@ -1,0 +1,12 @@
+{
+  "id": "release_notes_ready",
+  "type": "acceptance_criteria",
+  "for": ["doc", "product", "ops", "marketing"],
+  "content": [
+    "Each shipped feature/change linked to Jira/Epic reference, rollout channel, and owner; items grouped by tier (GA, beta, fixes).",
+    "Customer impact and mitigation for breaking changes clearly flagged with callouts and dates.",
+    "Screenshots, animated GIFs, or Loom walkthroughs attached for UI/UX-facing updates.",
+    "Support enablement snippet provided (FAQ answers, escalation path, known limitations).",
+    "Localization handoff package delivered (source markdown, glossary terms, tone guidance) within 24 hours of English publish."
+  ]
+}

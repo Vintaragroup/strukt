@@ -1,6 +1,15 @@
 // @ts-nocheck
-import { memo, useState, useRef, useEffect } from "react";
-import { Handle, Position, NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
+import {
+  memo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type MouseEvent as ReactMouseEvent,
+  type WheelEvent as ReactWheelEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import { Handle, Position, NodeProps, useUpdateNodeInternals } from "@xyflow/react";
 import { Copy, ExternalLink, Settings, Palette, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "./ui/button";
@@ -9,7 +18,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 
-export interface CenterNodeData {
+export interface CenterNodeData extends Record<string, unknown> {
   label: string;
   description: string;
   icon?: string;
@@ -18,6 +27,14 @@ export interface CenterNodeData {
   buttonAction?: () => void;
   secondaryButtonText?: string;
   secondaryButtonAction?: () => void;
+  coreIdea?: string;
+  coreProblem?: string;
+  coreOutcome?: string;
+  primaryAudience?: string;
+  launchScope?: string;
+  primaryRisk?: string;
+  kickoffCompletedAt?: string;
+  onOpenKickoffDialog?: () => void;
   isConnecting?: boolean;
   isConnectSource?: boolean;
   connectStartHandleId?: string | null;
@@ -30,6 +47,10 @@ export interface CenterNodeData {
   isPlacingFromThisNode?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  preferredHeight?: number;
+  maxNodeHeight?: number;
+  preferredWidth?: number;
+  maxNodeWidth?: number;
 }
 
 // Predefined gradient options
@@ -49,12 +70,19 @@ const iconPresets = [
 ];
 
 const CENTER_NODE_WIDTH = 360;
+const CENTER_MIN_WIDTH = 320;
+const DEFAULT_CENTER_MAX_WIDTH = 600;
+const CENTER_SCROLL_HEIGHT = 320;
+const CENTER_MIN_HEIGHT = 220;
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData>) => {
   const [isPlacingMode, setIsPlacingMode] = useState(false);
   const [handleHovered, setHandleHovered] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showPulse, setShowPulse] = useState(data.isNew || false);
+  const [isResizing, setIsResizing] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [isEditingIcon, setIsEditingIcon] = useState(false);
@@ -63,11 +91,56 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
   const [localDescription, setLocalDescription] = useState(data.description);
   const [localIcon, setLocalIcon] = useState(data.icon || "");
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
-  const { screenToFlowPosition } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const labelInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const isCollapsed = !!data.collapsed;
+  const heightCap =
+    typeof data.maxNodeHeight === "number" && Number.isFinite(data.maxNodeHeight)
+      ? data.maxNodeHeight
+      : 640;
+  const preferredHeight =
+    typeof data.preferredHeight === "number" && Number.isFinite(data.preferredHeight)
+      ? data.preferredHeight
+      : Math.round(CENTER_SCROLL_HEIGHT * 1.2);
+  const effectiveHeight = clamp(preferredHeight, CENTER_MIN_HEIGHT, heightCap);
+  const widthCap =
+    typeof data.maxNodeWidth === "number" && Number.isFinite(data.maxNodeWidth)
+      ? data.maxNodeWidth
+      : DEFAULT_CENTER_MAX_WIDTH;
+  const preferredWidth =
+    typeof data.preferredWidth === "number" && Number.isFinite(data.preferredWidth)
+      ? data.preferredWidth
+      : CENTER_NODE_WIDTH;
+  const effectiveWidth = clamp(preferredWidth, CENTER_MIN_WIDTH, widthCap);
+  const resizeContextRef = useRef<{
+    startX: number;
+    startY: number;
+    startHeight: number;
+    startWidth: number;
+    mode: "vertical" | "corner-left" | "corner-right";
+  } | null>(null);
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
+  const applyHeight = useCallback(
+    (nextHeight: number) => {
+      const clamped = clamp(nextHeight, CENTER_MIN_HEIGHT, heightCap);
+      if (typeof data.onUpdateCenterNode === "function") {
+        data.onUpdateCenterNode({ preferredHeight: clamped });
+      }
+    },
+    [data, heightCap]
+  );
+
+  const applyWidth = useCallback(
+    (nextWidth: number) => {
+      const clamped = clamp(nextWidth, CENTER_MIN_WIDTH, widthCap);
+      if (typeof data.onUpdateCenterNode === "function") {
+        data.onUpdateCenterNode({ preferredWidth: clamped });
+      }
+      requestAnimationFrame(() => updateNodeInternals(id));
+    },
+    [data, widthCap, updateNodeInternals, id]
+  );
   
   // Ref to store cleanup functions - MUST be declared before sync effect
   const eventCleanupRef = useRef<(() => void) | null>(null);
@@ -270,6 +343,81 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
     updateNodeInternals(id);
   };
 
+  const handleContentWheel = useCallback((event: ReactWheelEvent<HTMLDivElement>) => {
+    if (!event.ctrlKey) {
+      event.stopPropagation();
+    }
+  }, []);
+
+  const handleContentPointerDown = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+  }, []);
+
+  const stopManualResize = useCallback(() => {
+    resizeContextRef.current = null;
+    if (resizeCleanupRef.current) {
+      resizeCleanupRef.current();
+      resizeCleanupRef.current = null;
+    }
+    document.body.style.cursor = "";
+    setIsResizing(false);
+  }, []);
+
+  const handleResizeMouseMove = useCallback(
+    (event: MouseEvent) => {
+      const ctx = resizeContextRef.current;
+      if (!ctx) return;
+      const deltaY = event.clientY - ctx.startY;
+      if (ctx.mode === "vertical" || ctx.mode === "corner-left" || ctx.mode === "corner-right") {
+        applyHeight(ctx.startHeight + deltaY);
+      }
+
+      if (ctx.mode === "corner-left") {
+        const deltaX = ctx.startX - event.clientX;
+        applyWidth(ctx.startWidth + deltaX);
+        document.body.style.cursor = "nwse-resize";
+      } else if (ctx.mode === "corner-right") {
+        const deltaX = event.clientX - ctx.startX;
+        applyWidth(ctx.startWidth + deltaX);
+        document.body.style.cursor = "nwse-resize";
+      } else {
+        document.body.style.cursor = "ns-resize";
+      }
+    },
+    [applyHeight, applyWidth]
+  );
+
+  const handleResizeMouseUp = useCallback(() => {
+    stopManualResize();
+  }, [stopManualResize]);
+
+  const beginResize = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>, mode: "vertical" | "corner-left" | "corner-right") => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof (event.nativeEvent as any).stopImmediatePropagation === "function") {
+        (event.nativeEvent as any).stopImmediatePropagation();
+      }
+      stopManualResize();
+      resizeContextRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        startHeight: effectiveHeight,
+        startWidth: effectiveWidth,
+        mode,
+      };
+      document.addEventListener("mousemove", handleResizeMouseMove);
+      document.addEventListener("mouseup", handleResizeMouseUp);
+      resizeCleanupRef.current = () => {
+        document.removeEventListener("mousemove", handleResizeMouseMove);
+        document.removeEventListener("mouseup", handleResizeMouseUp);
+      };
+      document.body.style.cursor = mode === "vertical" ? "ns-resize" : "nwse-resize";
+      setIsResizing(true);
+    },
+    [effectiveHeight, effectiveWidth, handleResizeMouseMove, handleResizeMouseUp, stopManualResize]
+  );
+
   return (
     <motion.div 
       initial={{ scale: 0.9, opacity: 0 }}
@@ -281,36 +429,27 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
         delay: 0.1
       }}
       className="relative"
-      style={{ width: CENTER_NODE_WIDTH }}
+      style={{ width: effectiveWidth, minWidth: CENTER_MIN_WIDTH, maxWidth: widthCap }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Node Resizer - Invisible handles, only width resizing; hidden when collapsed */}
-      <NodeResizer
-        color="transparent"
-        isVisible={selected && !isCollapsed}
-        minWidth={CENTER_NODE_WIDTH}
-        minHeight={isCollapsed ? 0 : undefined}
-        maxWidth={CENTER_NODE_WIDTH}
-        handleStyle={{
-          width: "12px",
-          height: "12px",
-          background: "transparent",
-          border: "none",
-        }}
-        lineStyle={{
-          borderWidth: "0px",
-        }}
-        // Only enable left and right handles for width resizing
-        handleClassName={{
-          top: "hidden",
-          bottom: "hidden",
-          topLeft: "hidden",
-          topRight: "hidden",
-          bottomLeft: "hidden",
-          bottomRight: "hidden",
-        }}
-      />
+      {!isCollapsed && (
+        <>
+          <div
+            className="absolute left-6 right-6 -bottom-[6px] h-[14px] cursor-ns-resize"
+            onPointerDown={(e) => beginResize(e, "vertical")}
+          />
+          <div
+            className="absolute -bottom-[6px] -left-[6px] h-[18px] w-[18px] cursor-nwse-resize"
+            onPointerDown={(e) => beginResize(e, "corner-left")}
+          />
+          <div
+            className="absolute -bottom-[6px] -right-[6px] h-[18px] w-[18px] cursor-nesw-resize"
+            onPointerDown={(e) => beginResize(e, "corner-right")}
+          />
+        </>
+      )}
       
       {/* Connection Handles - Multiple for radial layout */}
       <Handle
@@ -409,29 +548,20 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
 
       {/* Center Card - Auto height based on content */}
       <div
-        className={`
-          w-full rounded-3xl bg-gradient-to-br ${data.gradient || "from-indigo-700 via-purple-600 to-violet-700"}
-          border-2 border-indigo-400/60
-          transition-all duration-300 ease-out flex flex-col
-          animate-gradient-shift bg-[length:200%_200%]
-          ${showPulse ? "animate-pulse-scale" : ""}
-          ${
-            selected
-              ? "ring-4 ring-indigo-400 ring-opacity-95 ring-offset-4"
-              : isHovered
-              ? ""
-              : ""
-          }
-        `}
+        className={`w-full rounded-3xl bg-gradient-to-br ${data.gradient || "from-indigo-700 via-purple-600 to-violet-700"} border-2 border-indigo-400/60 flex flex-col animate-gradient-shift bg-[length:200%_200%] ${
+          showPulse ? "animate-pulse-scale" : ""
+        } ${isResizing ? "" : "transition-all duration-200 ease-out"} ${
+          selected ? "ring-4 ring-indigo-400 ring-opacity-95 ring-offset-4" : ""
+        }`}
         style={{
           boxShadow: selected
             ? "0 30px 60px -12px rgba(99, 102, 241, 0.6), 0 0 0 4px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.5)"
             : isHovered
             ? "0 30px 60px -12px rgba(99, 102, 241, 0.4)"
             : "0 25px 50px -12px rgba(99, 102, 241, 0.25)",
-          width: CENTER_NODE_WIDTH,
-          minWidth: CENTER_NODE_WIDTH,
-          maxWidth: CENTER_NODE_WIDTH,
+          width: effectiveWidth,
+          minWidth: CENTER_MIN_WIDTH,
+          maxWidth: widthCap,
         }}
         onTransitionEnd={stopFollowingHandles}
       >
@@ -540,8 +670,10 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
 
         {/* Expandable Content Wrapper: animates height for smooth collapse/expand */}
         <div
-          className={`overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'}`}
+          className={`overflow-hidden ${isResizing ? "transition-none" : "transition-all duration-200"} ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'}`}
           onTransitionEnd={stopFollowingHandles}
+          onWheel={handleContentWheel}
+          onMouseDown={handleContentPointerDown}
         >
           {/* Icon */}
           <div className="flex justify-center pt-6 pb-3">
@@ -559,7 +691,7 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
           </div>
 
           {/* Content */}
-          <div className="px-6 pb-5 text-center">
+          <div className="px-6 pb-5 text-center overflow-y-auto" style={{ maxHeight: CENTER_SCROLL_HEIGHT }}>
           {/* Label - Editable */}
           {isEditingLabel ? (
             <Input
@@ -632,6 +764,60 @@ export const CenterNode = memo(({ data, selected, id }: NodeProps<CenterNodeData
               >
                 <Copy className="w-3 h-3" />
               </Button>
+            </div>
+          )}
+
+          {(data.coreIdea || data.primaryAudience || data.coreOutcome || data.launchScope || data.primaryRisk) && (
+            <div className="mb-4 text-left bg-white/10 border border-white/25 rounded-xl px-4 py-3 space-y-3">
+              {data.coreIdea && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-indigo-200/80 font-semibold">Idea</p>
+                  <p className="text-indigo-50 text-sm leading-relaxed break-words">{data.coreIdea}</p>
+                </div>
+              )}
+              {data.primaryAudience && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-indigo-200/80 font-semibold">First audience</p>
+                  <p className="text-indigo-50 text-sm leading-relaxed break-words">{data.primaryAudience}</p>
+                </div>
+              )}
+              {data.coreOutcome && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-indigo-200/80 font-semibold">Success looks like</p>
+                  <p className="text-indigo-50 text-sm leading-relaxed break-words">{data.coreOutcome}</p>
+                </div>
+              )}
+              {data.launchScope && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-indigo-200/80 font-semibold">Launch focus</p>
+                  <p className="text-indigo-50 text-sm leading-relaxed break-words">{data.launchScope}</p>
+                </div>
+              )}
+              {data.primaryRisk && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-indigo-200/80 font-semibold">Biggest risk</p>
+                  <p className="text-indigo-50 text-sm leading-relaxed break-words">{data.primaryRisk}</p>
+                </div>
+              )}
+
+              {typeof data.onOpenKickoffDialog === "function" && (
+                <div className="pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-indigo-100 hover:text-white hover:bg-white/20"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      data.onOpenKickoffDialog?.();
+                    }}
+                  >
+                    Edit idea details
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

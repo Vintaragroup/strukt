@@ -13,7 +13,12 @@ interface SuggestionPanelProps {
   sessionId: string | null;
   onAdd: (
     suggestions: SuggestedNode[],
-    options?: { suggestionId?: string; renameTo?: string; centerSummary?: string }
+    options?: {
+      suggestionId?: string;
+      renameTo?: string;
+      centerSummary?: string;
+      parentNodeId?: string;
+    }
   ) => void;
   isOpen: boolean;
   onClose: () => void;
@@ -142,6 +147,7 @@ export function SuggestionPanel({
             suggestionId,
             parentNodeId: node?.id,
           });
+          onClose();
           return;
         } catch (error) {
           console.error("Failed to apply suggestion", error);
@@ -185,7 +191,7 @@ export function SuggestionPanel({
           <div>
             <h4 className="text-sm font-semibold text-slate-900">AI Suggestions</h4>
             <span className="text-[11px] uppercase tracking-wide text-slate-400">
-              {node.data?.label || node.id}
+              {typeof node.data?.label === "string" ? node.data.label : node.id}
             </span>
           </div>
           <button

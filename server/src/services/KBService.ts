@@ -23,7 +23,23 @@ type PRD = {
   version: string
   node_types?: string[]
   domains?: string[]
+  tags?: string[]
+  stack_keywords?: string[]
+  risk_profile?: string[]
+  kpi_examples?: string[]
   sections: { title: string; key: string; content: string }[]
+}
+
+type CatalogMatch = {
+  it: Catalog['items'][number]
+  score: number
+}
+
+type ComposeAttempt = {
+  stage: 'strict' | 'dropTags' | 'nodeAndDomain' | 'domainOnly' | 'nodeOnly' | 'any'
+  description: string
+  filters: ComposeInput
+  matches: number
 }
 
 type Fragment = {
@@ -67,6 +83,16 @@ export class KBService {
 
   private static isFresh(ts: number) {
     return Date.now() - ts < this._ttlMs
+  }
+
+  private static normalize(values?: string[] | null): string[] {
+    return (values ?? []).map((value) => value.toLowerCase().trim()).filter(Boolean)
+  }
+
+  private static anyOverlap(a: string[], b: string[]): boolean {
+    if (!a.length || !b.length) return false
+    const set = new Set(a.map((v) => v.toLowerCase()))
+    return b.some((v) => set.has(v.toLowerCase()))
   }
   static async readJSON<T>(p: string): Promise<T> {
     const raw = await fs.readFile(p, 'utf-8')
@@ -123,24 +149,38 @@ export class KBService {
 
   static scoreItem(item: Catalog['items'][number], filters: ComposeInput): number {
     let score = 0
-    const { node_types = [], domains = [], tags = [] } = filters
-    if (node_types.length > 0) {
-      score += (item.node_types || []).some((t) => node_types.includes(t)) ? 2 : 0
+    const node_types = this.normalize(filters.node_types)
+    const domains = this.normalize(filters.domains)
+    const tags = this.normalize(filters.tags)
+
+    const itemNodeTypes = this.normalize(item.node_types)
+    const itemDomains = this.normalize(item.domains)
+    const itemTags = this.normalize(item.tags)
+
+    if (node_types.length > 0 && this.anyOverlap(node_types, itemNodeTypes)) {
+      score += 2
     }
-    if (domains.length > 0) {
-      score += (item.domains || []).some((d) => domains.includes(d)) ? 2 : 0
+    if (domains.length > 0 && this.anyOverlap(domains, itemDomains)) {
+      score += 2
     }
-    if (tags.length > 0) {
-      score += (item.tags || []).some((tg) => tags.includes(tg)) ? 1 : 0
+    if (tags.length > 0 && this.anyOverlap(tags, itemTags)) {
+      score += 1
     }
     return score
   }
 
   static matches(item: Catalog['items'][number], filters: ComposeInput): boolean {
-    const { node_types = [], domains = [], tags = [] } = filters
-    const ntOk = node_types.length === 0 || (item.node_types || []).some((t) => node_types.includes(t))
-    const dOk = domains.length === 0 || (item.domains || []).some((d) => domains.includes(d))
-    const tagOk = tags.length === 0 || (item.tags || []).some((tg) => tags.includes(tg))
+    const node_types = this.normalize(filters.node_types)
+    const domains = this.normalize(filters.domains)
+    const tags = this.normalize(filters.tags)
+
+    const itemNodeTypes = this.normalize(item.node_types)
+    const itemDomains = this.normalize(item.domains)
+    const itemTags = this.normalize(item.tags)
+
+    const ntOk = node_types.length === 0 || this.anyOverlap(node_types, itemNodeTypes)
+    const dOk = domains.length === 0 || this.anyOverlap(domains, itemDomains)
+    const tagOk = tags.length === 0 || this.anyOverlap(tags, itemTags)
     return ntOk && dOk && tagOk
   }
 
@@ -164,20 +204,128 @@ export class KBService {
     return deduped
   }
 
+  private static rankCatalogItems(
+    items: Catalog['items'],
+    filters: ComposeInput,
+    limit: number,
+    { requireScore }: { requireScore: boolean }
+  ): CatalogMatch[] {
+    const scored = items
+      .filter((it) => this.matches(it, filters))
+      .map((it) => ({ it, score: this.scoreItem(it, filters) }))
+
+    const filtered = requireScore ? scored.filter((entry) => entry.score > 0) : scored
+
+    return filtered
+      .sort((a, b) => b.score - a.score || a.it.id.localeCompare(b.it.id))
+      .slice(0, limit)
+  }
+
+  private static buildAttempts(input: ComposeInput): Array<Omit<ComposeAttempt, 'matches'>> {
+    const hasTags = Boolean(input.tags?.length)
+    const hasNodeTypes = Boolean(input.node_types?.length)
+    const hasDomains = Boolean(input.domains?.length)
+
+    const attempts: Array<Omit<ComposeAttempt, 'matches'>> = [
+      {
+        stage: 'strict',
+        description: 'Strict match on node type, domain, and tags',
+        filters: input,
+      },
+    ]
+
+    if (hasTags) {
+      attempts.push({
+        stage: 'dropTags',
+        description: 'Relax tag requirement (node type + domain only)',
+        filters: { ...input, tags: [] },
+      })
+    }
+
+    if (hasNodeTypes && hasDomains) {
+      attempts.push({
+        stage: 'nodeAndDomain',
+        description: 'Allow partial overlap between node type and domain',
+        filters: { node_types: input.node_types, domains: input.domains, tags: [] },
+      })
+    }
+
+    if (hasDomains) {
+      attempts.push({
+        stage: 'domainOnly',
+        description: 'Domain-only PRD match',
+        filters: { domains: input.domains },
+      })
+    }
+
+    if (hasNodeTypes) {
+      attempts.push({
+        stage: 'nodeOnly',
+        description: 'Node-type only match',
+        filters: { node_types: input.node_types },
+      })
+    }
+
+    attempts.push({
+      stage: 'any',
+      description: 'Fallback to catalog ordering when no filters produce matches',
+      filters: {},
+    })
+
+    return attempts
+  }
+
   static async compose(filters: ComposeInput) {
     const catalog = await this.loadCatalog()
     const limit = Math.min(Math.max(1, filters.limit ?? 5), 20)
-    const candidates = catalog.items
-      .filter((it) => this.matches(it, filters))
-      .map((it) => ({ it, score: this.scoreItem(it, filters) }))
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score || a.it.id.localeCompare(b.it.id))
-      .slice(0, limit)
+    const attemptSummaries: ComposeAttempt[] = []
+    const attempts = this.buildAttempts(filters)
 
-    const prds: Array<{ id: string; name: string; path: string; sections: PRD['sections'] }> = []
-    for (const { it } of candidates) {
+    let selectedMatches: CatalogMatch[] = []
+    let selectedAttempt: ComposeAttempt | null = null
+
+    for (const attempt of attempts) {
+      const requireScore = attempt.stage !== 'any'
+      const matches = this.rankCatalogItems(catalog.items, attempt.filters, limit, { requireScore })
+      const summary: ComposeAttempt = { ...attempt, matches: matches.length }
+      attemptSummaries.push(summary)
+
+      if (matches.length && !selectedAttempt) {
+        selectedAttempt = summary
+        selectedMatches = matches
+      }
+
+      if (matches.length) {
+        break
+      }
+    }
+
+    const prds: Array<{
+      id: string
+      name: string
+      path: string
+      sections: PRD['sections']
+      node_types?: string[]
+      domains?: string[]
+      tags?: string[]
+      stack_keywords?: string[]
+      risk_profile?: string[]
+      kpi_examples?: string[]
+    }> = []
+    for (const { it } of selectedMatches) {
       const prd = await this.loadPRD(it.path)
-      prds.push({ id: prd.id, name: prd.name, path: it.path, sections: prd.sections })
+      prds.push({
+        id: prd.id,
+        name: prd.name,
+        path: it.path,
+        sections: prd.sections,
+        node_types: prd.node_types ?? it.node_types,
+        domains: prd.domains ?? it.domains,
+        tags: prd.tags ?? it.tags,
+        stack_keywords: prd.stack_keywords,
+        risk_profile: prd.risk_profile,
+        kpi_examples: prd.kpi_examples,
+      })
     }
 
     const fragments = this.pickFragments(await this.listFragments(), filters)
@@ -190,6 +338,8 @@ export class KBService {
       provenance: {
         catalog: this.resolveKBPath('catalog.json'),
         fragmentRoot: this.resolveKBPath('fragments'),
+        matchStage: selectedAttempt?.stage ?? 'none',
+        attempts: attemptSummaries,
       },
     }
   }

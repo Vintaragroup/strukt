@@ -1,0 +1,17 @@
+{
+  "id": "api_doc_page",
+  "type": "template",
+  "for": ["doc", "backend", "frontend"],
+  "content": {
+    "sections": [
+      "Title & Summary — one-line capability description and key persona.",
+      "Prerequisites — auth scopes, required headers, environment selection.",
+      "Endpoint Details — method, URL, path/query params, headers, rate limits.",
+      "Request Examples — curl + SDK snippets (TypeScript, Python, Go, Java).",
+      "Response Schema — fields table with types, nullability, example payload.",
+      "Error Handling — status codes, error bodies, retry guidance.",
+      "Test Console / Try It — link or instructions for interactive testing.",
+      "Related Guides — onboarding, cookbooks, tutorials."
+    ]
+  }
+}

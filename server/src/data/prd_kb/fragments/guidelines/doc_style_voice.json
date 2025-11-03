@@ -1,0 +1,22 @@
+{
+  "id": "doc_style_voice",
+  "type": "guideline",
+  "for": ["doc", "product", "tech"],
+  "content": {
+    "tone": "Clear, direct, inclusive. Prefer active voice, second person. Avoid marketing fluff.",
+    "terminology": [
+      "Use 'workspace' not 'project'.",
+      "Capitalize API resource names (Node, Edge).",
+      "Spell out acronyms on first use."
+    ],
+    "formatting": [
+      "Max sentence length 24 words.",
+      "Use fenced blocks for code, include copy buttons.",
+      "Tables for parameter lists > 4 entries."
+    ],
+    "review": [
+      "Run Vale lint profile `docs/vale/.ini`.",
+      "Validate links with `npm run docs:check-links`."
+    ]
+  }
+}

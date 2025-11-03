@@ -52,8 +52,9 @@ function extractOpenApiAuth(doc: any): string[] {
   return Object.entries(schemes)
     .map(([name, scheme]) => {
       if (!scheme || typeof scheme !== 'object') return undefined
-      const type = typeof scheme.type === 'string' ? scheme.type : 'custom'
-      const schemeName = typeof scheme.scheme === 'string' ? scheme.scheme : undefined
+      const typedScheme = scheme as { type?: unknown; scheme?: unknown }
+      const type = typeof typedScheme.type === 'string' ? typedScheme.type : 'custom'
+      const schemeName = typeof typedScheme.scheme === 'string' ? typedScheme.scheme : undefined
       return schemeName ? `${name} (${type}:${schemeName})` : `${name} (${type})`
     })
     .filter(Boolean) as string[]
@@ -173,13 +174,14 @@ function flattenPostmanNodes(nodes: PostmanNode[], accumulator: PostmanNode[] = 
   return accumulator
 }
 
-function normalisePostmanUrl(url: PostmanNode['request']['url']): string {
+function normalisePostmanUrl(url: unknown): string {
   if (!url) return ''
   if (typeof url === 'string') return url
-  if (typeof url.raw === 'string') return url.raw
-  if (Array.isArray(url.host) || Array.isArray(url.path)) {
-    const host = Array.isArray(url.host) ? url.host.join('.') : ''
-    const path = Array.isArray(url.path) ? `/${url.path.join('/')}` : ''
+  const record = url as { raw?: unknown; host?: unknown; path?: unknown }
+  if (typeof record.raw === 'string') return record.raw
+  if (Array.isArray(record.host) || Array.isArray(record.path)) {
+    const host = Array.isArray(record.host) ? record.host.join('.') : ''
+    const path = Array.isArray(record.path) ? `/${record.path.join('/')}` : ''
     return `${host}${path}`
   }
   return ''
@@ -204,7 +206,7 @@ function extractPostmanOperations(collection: any, maxOperations: number): Opera
           : node.description,
     }
 
-    const authType = node.auth?.type || collection?.auth?.type
+    const authType = node.auth?.type || (collection?.auth as { type?: string } | undefined)?.type
     if (authType) {
       summary.auth = [authType]
     }

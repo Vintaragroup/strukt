@@ -14,7 +14,11 @@ export type NodeCardTemplateId =
   | "dataPipelineSpec"
   | "modelCard"
   | "monitoringChecklist"
-  | "operationsRunbook";
+  | "operationsRunbook"
+  | "docPage"
+  | "releaseNotes"
+  | "supportArticle"
+  | "postmortemSummary";
 
 export interface NodeCardTemplate {
   id: NodeCardTemplateId;
@@ -209,18 +213,83 @@ export const CARD_TEMPLATES: Record<NodeCardTemplateId, NodeCardTemplate> = {
     ],
     tags: ["operations", "support"],
   },
+  docPage: {
+    id: "docPage",
+    label: "Doc Page Outline",
+    description: "Structure for API or product documentation pages.",
+    cardType: "markdown",
+    defaultSections: [
+      { title: "Summary" },
+      { title: "Prerequisites" },
+      { title: "Steps" },
+      { title: "Examples" },
+      { title: "Related Links" },
+    ],
+    tags: ["docs", "information-architecture"],
+  },
+  releaseNotes: {
+    id: "releaseNotes",
+    label: "Release Notes",
+    description: "Changelog summary including highlights, fixes, and enablement.",
+    cardType: "markdown",
+    defaultSections: [
+      { title: "Highlights" },
+      { title: "New Features" },
+      { title: "Fixes" },
+      { title: "Deprecations" },
+      { title: "Enablement Assets" },
+    ],
+    tags: ["docs", "release", "product"],
+  },
+  supportArticle: {
+    id: "supportArticle",
+    label: "Support Article",
+    description: "Support knowledge base article covering issue, mitigation, and SLA.",
+    cardType: "markdown",
+    defaultSections: [
+      { title: "Issue" },
+      { title: "Impact" },
+      { title: "Resolution Steps" },
+      { title: "Escalation" },
+      { title: "SLA" },
+    ],
+    tags: ["support", "ops", "docs"],
+  },
+  postmortemSummary: {
+    id: "postmortemSummary",
+    label: "Postmortem Summary",
+    description: "Incident postmortem recap capturing timeline, impact, and actions.",
+    cardType: "markdown",
+    defaultSections: [
+      { title: "Incident Overview" },
+      { title: "Impact" },
+      { title: "Timeline" },
+      { title: "Root Cause" },
+      { title: "Follow-up Actions" },
+    ],
+    tags: ["ops", "incident", "postmortem"],
+  },
 };
 
 export const NODE_CARD_MATRIX: NodeCardMapping[] = [
   {
     nodeTypes: ["doc"],
-    domains: ["Product"],
-    recommendedCards: ["marketingCampaignBrief", "launchChecklist", "personaSnapshot"],
+    domains: ["Product", "Tech"],
+    recommendedCards: ["docPage", "releaseNotes"],
   },
   {
     nodeTypes: ["doc"],
     domains: ["Business"],
-    recommendedCards: ["businessCase", "okrCard", "raciMatrix"],
+    recommendedCards: ["docPage", "businessCase", "okrCard", "raciMatrix"],
+  },
+  {
+    nodeTypes: ["doc"],
+    domains: ["Ops"],
+    recommendedCards: ["supportArticle", "postmortemSummary", "releaseNotes"],
+  },
+  {
+    nodeTypes: ["doc"],
+    recommendedCards: ["docPage", "releaseNotes"],
   },
   {
     nodeTypes: ["backend", "requirement"],
