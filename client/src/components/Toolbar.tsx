@@ -252,7 +252,7 @@ export function Toolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Auto Layout</p>
+              <p>Arrange (Auto Layout)</p>
             </TooltipContent>
           </Tooltip>
           

@@ -580,8 +580,9 @@ function applyProcessLayout(
   const avgWidth = sampleDims.reduce((s, d) => s + d.width, 0) / Math.max(1, sampleDims.length);
   const avgHeight = sampleDims.reduce((s, d) => s + d.height, 0) / Math.max(1, sampleDims.length);
 
-  const horizontalGap = Math.max(96, Math.min(280, Math.round(avgWidth * 0.35) + padding));
-  const verticalGap = Math.max(56, Math.min(200, Math.round(avgHeight * 0.20) + padding));
+  // Spread lanes further apart to reduce cross-lane collisions
+  const horizontalGap = Math.max(144, Math.min(360, Math.round(avgWidth * 0.55) + padding));
+  const verticalGap = Math.max(96, Math.min(280, Math.round(avgHeight * 0.35) + padding));
 
   // Infer a coarse role for lane grouping
   type Lane = "policies" | "requirements" | "services" | "data" | "docs" | "other";
@@ -612,22 +613,22 @@ function applyProcessLayout(
   // Precompute base X for each lane to create a left-to-right flow
   // Root near the left; requirements next to root; services further; data furthest; policies align with requirements; docs align with services
   const baseXByLane: Record<Lane, number> = {
-    policies: Math.round(centerX + centerWidth / 2 + horizontalGap),
-    requirements: Math.round(centerX + centerWidth / 2 + horizontalGap),
-    services: Math.round(centerX + centerWidth / 2 + horizontalGap * 2),
-    data: Math.round(centerX + centerWidth / 2 + horizontalGap * 3),
-    docs: Math.round(centerX + centerWidth / 2 + horizontalGap * 2.5),
-    other: Math.round(centerX + centerWidth / 2 + horizontalGap * 2),
+    policies: Math.round(centerX + centerWidth / 2 + horizontalGap * 1.25),
+    requirements: Math.round(centerX + centerWidth / 2 + horizontalGap * 1.5),
+    services: Math.round(centerX + centerWidth / 2 + horizontalGap * 2.75),
+    data: Math.round(centerX + centerWidth / 2 + horizontalGap * 4.0),
+    docs: Math.round(centerX + centerWidth / 2 + horizontalGap * 3.25),
+    other: Math.round(centerX + centerWidth / 2 + horizontalGap * 2.75),
   };
 
   // Baselines: policies at top, then requirements, services (center line), data, docs
   const baselineByLane: Record<Lane, number> = {
-    policies: Math.round(centerY - verticalGap * 2),
-    requirements: Math.round(centerY - verticalGap),
+    policies: Math.round(centerY - verticalGap * 2.5),
+    requirements: Math.round(centerY - verticalGap * 1.5),
     services: Math.round(centerY),
-    data: Math.round(centerY + verticalGap),
-    docs: Math.round(centerY + verticalGap * 2),
-    other: Math.round(centerY + verticalGap),
+    data: Math.round(centerY + verticalGap * 1.5),
+    docs: Math.round(centerY + verticalGap * 2.5),
+    other: Math.round(centerY + verticalGap * 1.0),
   };
 
   // Within each lane, stack nodes vertically around the baseline with consistent spacing
@@ -643,7 +644,9 @@ function applyProcessLayout(
       const dims = getNodeDimensions(n, dimensions);
       const offsetIndex = i - centerIndex;
       const x = bx - Math.round(dims.width / 2);
-      const y = baselineByLane[lane] + Math.round(offsetIndex * (dims.height + Math.max(32, verticalGap - 16)));
+      // Increase intra-lane spacing to reduce vertical overlap within a lane stack
+      const stepY = dims.height + Math.max(64, verticalGap - 8);
+      const y = baselineByLane[lane] + Math.round(offsetIndex * stepY);
       positions[n.id] = { x, y };
     });
   });
