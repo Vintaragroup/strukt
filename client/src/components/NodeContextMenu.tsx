@@ -11,6 +11,7 @@ import {
   Maximize2,
   Minimize2,
   CircleSlash2,
+  Settings2,
 } from "lucide-react";
 
 interface NodeContextMenuProps {
@@ -32,6 +33,8 @@ interface NodeContextMenuProps {
   onExportSubgraphJSON?: () => void;
   onExportSubgraphMarkdown?: () => void;
   onMarkIncorrectSuggestion?: () => void;
+  onAutoCreateForNode?: () => void;
+  onReconfigureFoundation?: () => void;
 }
 
 export function NodeContextMenu({
@@ -53,6 +56,8 @@ export function NodeContextMenu({
   onExportSubgraphJSON,
   onExportSubgraphMarkdown,
   onMarkIncorrectSuggestion,
+  onAutoCreateForNode,
+  onReconfigureFoundation,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +96,26 @@ export function NodeContextMenu({
       <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 truncate">
         {nodeLabel}
       </div>
+
+      {onReconfigureFoundation && (
+        <button
+          onClick={() => handleAction(onReconfigureFoundation)}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
+        >
+          <Settings2 className="w-4 h-4" />
+          <span>Reconfigure foundation…</span>
+        </button>
+      )}
+
+      {onAutoCreateForNode && (
+        <button
+          onClick={() => handleAction(onAutoCreateForNode)}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Auto‑create for this node…</span>
+        </button>
+      )}
 
       {allowCollapse && (
         <button

@@ -594,6 +594,85 @@ export function wouldCreateCycle(
   return hasPathTo(targetId, sourceId);
 }
 
+// Generic cycle check regardless of relationship type
+// Treats all edges as directed (source -> target)
+export function wouldCreateGenericCycle(
+  sourceId: string,
+  targetId: string,
+  edges: Edge[]
+): boolean {
+  const tempEdges = [...edges, { id: `temp-${Date.now()}`, source: sourceId, target: targetId } as Edge];
+  const visited = new Set<string>();
+  function hasPath(from: string, to: string): boolean {
+    if (from === to) return true;
+    if (visited.has(from)) return false;
+    visited.add(from);
+    const nexts = tempEdges.filter(e => e.source === from).map(e => e.target);
+    for (const n of nexts) {
+      if (hasPath(n, to)) return true;
+    }
+    return false;
+  }
+  return hasPath(targetId, sourceId);
+}
+
+// Preview-time connection validation for live feedback
+export function isValidConnectionPreview(
+  sourceId: string | null | undefined,
+  targetId: string | null | undefined,
+  edges: Edge[]
+): { valid: boolean; reason?: string } {
+  if (!sourceId || !targetId) return { valid: false, reason: 'missing-endpoint' };
+  if (sourceId === targetId) return { valid: false, reason: 'self' };
+
+  const dup = edges.some(e => e.source === sourceId && e.target === targetId);
+  if (dup) return { valid: false, reason: 'duplicate' };
+
+  if (wouldCreateGenericCycle(sourceId, targetId, edges)) {
+    return { valid: false, reason: 'cycle' };
+  }
+  return { valid: true };
+}
+
+// Tiered evaluation for preview-time connection feedback
+// Returns status: 'error' (block), 'warn' (allowed but caution), or 'ok'
+export function evaluateConnectionPreview(
+  sourceId: string | null | undefined,
+  targetId: string | null | undefined,
+  edges: Edge[]
+): { status: 'ok' | 'warn' | 'error'; reason?: string; message?: string } {
+  const base = isValidConnectionPreview(sourceId, targetId, edges);
+  if (!base.valid) {
+    const reason = base.reason || 'invalid';
+    const message =
+      reason === 'self'
+        ? 'Cannot connect a node to itself'
+        : reason === 'duplicate'
+        ? 'A connection already exists'
+        : reason === 'cycle'
+        ? 'This would create a cycle'
+        : 'Invalid connection';
+    return { status: 'error', reason, message };
+  }
+
+  if (!sourceId || !targetId) return { status: 'ok' };
+
+  // Warn if reverse edge already exists (would become bidirectional)
+  const reverseExists = edges.some((e) => e.source === targetId && e.target === sourceId);
+  if (reverseExists) {
+    return {
+      status: 'warn',
+      reason: 'reverse-exists',
+      message: 'Reverse link already exists (will become bidirectional)'
+    };
+  }
+
+  // Optional: light warning when connecting to a center/root node
+  // We cannot reliably detect center without nodes context here; skip for now.
+
+  return { status: 'ok' };
+}
+
 // Suggest relationships based on node types and content
 export function suggestRelationships(
   nodes: Node[],

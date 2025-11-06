@@ -1,7 +1,9 @@
 import Ajv from "ajv";
 import type { Target } from "../platforms";
 
-const ajv = new Ajv({ allErrors: true });
+// Enable union types (e.g., type: ["string", "number"]) and keep allErrors for nicer messages.
+// Using strict:"log" avoids throwing on strict schema hints while still surfacing them in dev.
+const ajv = new Ajv({ allErrors: true, allowUnionTypes: true, strict: "log" });
 
 // Simple planner shape: { tasks: string[], notes: string }
 const vscodeSimplePlanSchema = {

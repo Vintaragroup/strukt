@@ -22,7 +22,17 @@ interface EdgeContextMenuProps {
   y: number;
   edgeId: string | null;
   currentRelationshipType?: RelationshipType;
+  isStraight?: boolean;
+  isOrthogonal?: boolean;
+  isDashed?: boolean;
+  arrowMode?: 'none' | 'end' | 'both';
   onChangeRelationshipType: (edgeId: string, type: RelationshipType) => void;
+  onToggleStraighten: (edgeId: string) => void;
+  onToggleOrthogonal: (edgeId: string) => void;
+  onMakeBidirectional: (edgeId: string) => void;
+  onToggleDashed: (edgeId: string) => void;
+  onCycleArrowhead: (edgeId: string) => void;
+  onStartEditLabel: (edgeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   onClose: () => void;
 }
@@ -43,7 +53,17 @@ export function EdgeContextMenu({
   y,
   edgeId,
   currentRelationshipType = "related-to",
+  isStraight = false,
+  isOrthogonal = false,
+  isDashed = false,
+  arrowMode = 'none',
   onChangeRelationshipType,
+  onToggleStraighten,
+  onToggleOrthogonal,
+  onMakeBidirectional,
+  onToggleDashed,
+  onCycleArrowhead,
+  onStartEditLabel,
   onDeleteEdge,
   onClose,
 }: EdgeContextMenuProps) {
@@ -120,6 +140,76 @@ export function EdgeContextMenu({
 
             {/* Separator */}
             <div className="h-px bg-gray-200" />
+
+            {/* Edge Actions */}
+            <div className="py-1">
+              <button
+                onClick={() => {
+                  onStartEditLabel(edgeId);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
+              >
+                <span className="text-gray-700">Edit Label…</span>
+              </button>
+              <button
+                onClick={() => {
+                  onCycleArrowhead(edgeId);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
+                title="Cycle arrowhead: none → end → both"
+              >
+                <span className="text-gray-700">Arrowhead: {arrowMode === 'none' ? 'None' : arrowMode === 'end' ? 'Single (end)' : 'Double'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  onToggleStraighten(edgeId);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
+              >
+                <span className="text-gray-700">{isStraight ? 'Unstraighten' : 'Straighten'} Edge</span>
+                {isStraight && <Check className="w-4 h-4 text-indigo-600" />}
+              </button>
+              <button
+                onClick={() => {
+                  onToggleOrthogonal(edgeId);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
+              >
+                <span className="text-gray-700">{isOrthogonal ? 'Disable' : 'Enable'} Right-angle Routing</span>
+                {isOrthogonal && <Check className="w-4 h-4 text-indigo-600" />}
+              </button>
+              <button
+                onClick={() => {
+                  onToggleDashed(edgeId);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
+              >
+                <span className="text-gray-700">{isDashed ? 'Solid' : 'Dashed'} Line</span>
+                {isDashed && <Check className="w-4 h-4 text-indigo-600" />}
+              </button>
+              <button
+                onClick={() => {
+                  // Disable for hard dependencies to avoid creating immediate cycles
+                  if (currentRelationshipType === 'depends-on' || currentRelationshipType === 'blocks') return;
+                  onMakeBidirectional(edgeId);
+                  setIsOpen(false);
+                }}
+                className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+                  (currentRelationshipType === 'depends-on' || currentRelationshipType === 'blocks')
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+                disabled={currentRelationshipType === 'depends-on' || currentRelationshipType === 'blocks'}
+                title={(currentRelationshipType === 'depends-on' || currentRelationshipType === 'blocks') ? 'Not available for hard dependencies' : undefined}
+              >
+                Make Bidirectional
+              </button>
+            </div>
 
             {/* Delete */}
             <div className="py-1">

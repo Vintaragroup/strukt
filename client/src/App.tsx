@@ -91,8 +91,11 @@ import { WorkspaceHealthPanel } from "./components/WorkspaceHealthPanel";
 import { SnapshotsPanel } from "./components/SnapshotsPanel";
 import { RelationshipsPanel } from "./components/RelationshipsPanel";
 import { DocumentationPreview } from "./components/DocumentationPreview";
+import { FoundationSetupDialog, type FoundationConfig } from "./components/FoundationSetupDialog";
+import { NodeFoundationDialog, type NodeFoundationKind } from "./components/NodeFoundationDialog";
+import type { DocumentationBundle } from "./utils/documentationBundle";
 import { CustomConnectionLine } from "./components/CustomConnectionLine";
-import { setConnectStart } from "./utils/connectionState";
+import { setConnectStart, setShiftPressed } from "./utils/connectionState";
 import { DomainRings } from "./components/DomainRings";
 import { EdgeContextMenu } from "./components/EdgeContextMenu";
 import { ConnectSourcesModal } from "./components/ConnectSourcesModal";
@@ -123,7 +126,7 @@ import {
 import { Template } from "./utils/templates";
 import { calculateAnalytics, getInsights } from "./utils/analytics";
 import { createAutoSnapshot, getSnapshots } from "./utils/snapshots";
-import { RelationshipType, setRelationshipType, getRelationshipLabel } from "./utils/relationships";
+import { RelationshipType, setRelationshipType, getRelationshipLabel, isValidConnectionPreview } from "./utils/relationships";
 import type { DocumentationBundle, DocumentationFlag } from "./utils/documentationBundle";
 import { documentationFlagId } from "./utils/documentationBundle";
 
@@ -886,6 +889,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const [isSnapshotsPanelOpen, setIsSnapshotsPanelOpen] = useState(false);
   const [isRelationshipsPanelOpen, setIsRelationshipsPanelOpen] = useState(false);
   const [isConnectSourcesOpen, setIsConnectSourcesOpen] = useState(false);
+  const [isFoundationDialogOpen, setIsFoundationDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"radial" | "process">("radial");
   const [showDomainRings, setShowDomainRings] = useState(true);
   const [suggestionPanelRefresh, setSuggestionPanelRefresh] = useState(0);
@@ -2673,6 +2677,18 @@ const handleSwitchToWizard = useCallback(
     connectStartInfoRef.current = null;
   }, [reactFlowInstance, launchNodeCreator]);
 
+  // Global Shift key tracking for connection snapping
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => setShiftPressed(!!e.shiftKey);
+    const up = (e: KeyboardEvent) => setShiftPressed(!!e.shiftKey);
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, []);
+
   const handleExpandCard = useCallback((nodeId: string, cardId: string) => {
     const node = nodes.find(n => n.id === nodeId);
     const card = node?.data.cards?.find((c: EditableCardData) => c.id === cardId);
@@ -3790,6 +3806,50 @@ const handleSwitchToWizard = useCallback(
     setIsSaved(false);
   }, [nodes, setNodes]);
 
+  // Edge label editing and style handlers (declared before usage to avoid TDZ)
+  const handleUpdateEdgeLabel = useCallback((edgeId: string, label: string) => {
+    setEdges((eds) => eds.map((e) => e.id === edgeId ? {
+      ...e,
+      data: { ...(e.data || {}), label, editingLabel: false }
+    } : e));
+    setIsSaved(false);
+    if (label && label.trim().length > 0) {
+      toast.success('Label updated');
+    }
+  }, [setEdges]);
+
+  const handleCancelEditEdgeLabel = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.map((e) => e.id === edgeId ? {
+      ...e,
+      data: { ...(e.data || {}), editingLabel: false }
+    } : e));
+  }, [setEdges]);
+
+  const handleStartEditEdgeLabel = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.map((e) => e.id === edgeId ? {
+      ...e,
+      data: { ...(e.data || {}), editingLabel: true }
+    } : e));
+  }, [setEdges]);
+
+  const handleToggleEdgeDashed = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.map((e) => e.id === edgeId ? {
+      ...e,
+      data: { ...(e.data || {}), lineStyle: (e.data?.lineStyle === 'dashed' ? 'solid' : 'dashed') }
+    } : e));
+    toast.success('Edge updated', { description: 'Toggled line style' });
+  }, [setEdges]);
+
+  const handleCycleEdgeArrowhead = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.map((e) => {
+      if (e.id !== edgeId) return e;
+      const current = (e.data?.arrowhead as 'none' | 'end' | 'both') || 'none';
+      const next = current === 'none' ? 'end' : current === 'end' ? 'both' : 'none';
+      return { ...e, data: { ...(e.data || {}), arrowhead: next } };
+    }));
+    toast.success('Edge updated', { description: 'Cycled arrowhead' });
+  }, [setEdges]);
+
   // Add callbacks to edges - Optimized with useMemo for performance
   const edgesWithCallbacks = useMemo(() => {
     return edges
@@ -3815,9 +3875,11 @@ const handleSwitchToWizard = useCallback(
           targetNodeId: edge.target,
           onAddNode: handleAddNodeFromEdge,
           onEdgeContextMenu: onEdgeContextMenuHandler,
+          onUpdateEdgeLabel: handleUpdateEdgeLabel,
+          onCancelEditEdgeLabel: handleCancelEditEdgeLabel,
         },
       }));
-  }, [edges, nodes, handleAddNodeFromEdge, onEdgeContextMenuHandler]);
+  }, [edges, nodes, handleAddNodeFromEdge, onEdgeContextMenuHandler, handleUpdateEdgeLabel, handleCancelEditEdgeLabel]);
 
   const handleCompleteOnboarding = useCallback(() => {
     localStorage.setItem("flowforge-onboarding-seen", "true");
@@ -4176,6 +4238,8 @@ const handleSwitchToWizard = useCallback(
     history.current.addState(nodes, edges);
   }, [nodes, edges, setEdges]);
 
+  
+
   // Drag handlers to prevent errors during drag operations
   const handleNodeDragStart = useCallback((_event: React.MouseEvent, node: Node) => {
     try {
@@ -4242,6 +4306,166 @@ const handleSwitchToWizard = useCallback(
     launchNodeCreator();
   }, [launchNodeCreator]);
 
+  // Auto-create foundation nodes and connections based on user answers
+  const handleApplyFoundationConfig = useCallback(async (config: FoundationConfig) => {
+    try {
+      const existsByLabel = (label: string) => nodes.some(n => (n.data as any)?.label === label);
+      const mkId = () => createAutoNodeId();
+      const mkNode = (label: string, type: "frontend" | "backend" | "requirement" | "doc", summary?: string) => ({
+        id: mkId(),
+        type: "custom" as const,
+        position: { x: 0, y: 0 },
+        data: {
+          label,
+          summary,
+          type,
+          tags: ["foundation"],
+        },
+      });
+
+      // Decide backend/data approach details
+      const pref = config.confidence === "beginner" ? "beginner" : (config.approach || "simple");
+
+      // Create or reuse the Foundation anchor node
+      const foundationLabel = "Foundation";
+      const hasFoundation = existsByLabel(foundationLabel);
+
+      const authLabel = config.distribution === "marketplace" ? "User Authentication" : "Authentication";
+      const onboardingLabel = config.distribution === "marketplace" ? "User Onboarding" : "Onboarding";
+      const feLabel = "Frontend App";
+      const apiLabel = "Backend API";
+      const dataLabel = "Data Storage";
+      const mgmtLabel = "Data Management";
+
+      const summaries: Record<string, string> = {
+        [authLabel]: pref === "aws" ? "AWS Cognito (OIDC), sessions, roles" : pref === "scalable" ? "OIDC (Keycloak/Cognito), RBAC, rate limits" : "Auth0/Supabase Auth, sessions, roles",
+        [onboardingLabel]: "Signup, welcome tour, profile setup",
+        [feLabel]: "UI, routing, auth guard, telemetry",
+        [apiLabel]: pref === "aws" ? "API Gateway + Lambda" : pref === "scalable" ? "Service layer, domain modules, queue workers" : "REST API (Express/Fastify)",
+        [dataLabel]: pref === "aws" ? "DynamoDB + S3" : pref === "scalable" ? "Postgres/Aurora + object store" : "Postgres + Prisma",
+        [mgmtLabel]: pref === "aws" ? "IaC (CDK), IAM, backups" : pref === "scalable" ? "Migrations, seeds, indexes, backups" : "Migrations with Prisma, seed, backups",
+      };
+
+      // Build nodes if not present already
+      const toCreate = [
+        hasFoundation ? null : mkNode(
+          foundationLabel,
+          "doc",
+          `Anchor for core architecture and setup — distribution: ${config.distribution}; confidence: ${config.confidence}${config.confidence !== 'beginner' ? `; approach: ${config.approach}` : ''}`
+        ),
+        existsByLabel(feLabel) ? null : mkNode(feLabel, "frontend", summaries[feLabel]),
+        existsByLabel(apiLabel) ? null : mkNode(apiLabel, "backend", summaries[apiLabel]),
+        existsByLabel(authLabel) ? null : mkNode(authLabel, "backend", summaries[authLabel]),
+        existsByLabel(onboardingLabel) ? null : mkNode(onboardingLabel, "requirement", summaries[onboardingLabel]),
+        existsByLabel(dataLabel) ? null : mkNode(dataLabel, "backend", summaries[dataLabel]),
+        existsByLabel(mgmtLabel) ? null : mkNode(mgmtLabel, "backend", summaries[mgmtLabel]),
+      ].filter(Boolean) as Node[];
+
+      if (toCreate.length === 0) {
+        // Nothing new to add; still ensure associations from Foundation exist
+        const idByExistingLabel: Record<string, string> = {};
+        nodes.forEach((n) => {
+          const label = (n.data as any)?.label;
+          if (label) idByExistingLabel[label] = n.id;
+        });
+        const edgeExists = (fromLabel: string, toLabel: string) =>
+          edges.some((e) => e.source === idByExistingLabel[fromLabel] && e.target === idByExistingLabel[toLabel]);
+        const assocCandidates = [feLabel, apiLabel, authLabel, onboardingLabel, dataLabel, mgmtLabel];
+        const foundationId = idByExistingLabel[foundationLabel];
+        let added = 0;
+        if (foundationId) {
+          const newAssoc: Edge[] = [];
+          assocCandidates.forEach((lab) => {
+            const targetId = idByExistingLabel[lab];
+            if (targetId && !edgeExists(foundationLabel, lab)) {
+              newAssoc.push({
+                id: `e-${foundationId}-${targetId}-${Date.now().toString(36)}`,
+                source: foundationId,
+                target: targetId,
+                type: 'custom' as const,
+                data: { relationshipType: 'related-to' },
+              });
+              added++;
+            }
+          });
+          if (newAssoc.length > 0) {
+            const centerId = centerNodeIdRef.current || 'center';
+            const next = updateEdgesWithOptimalHandles(nodes as any, [...edges, ...newAssoc], centerId);
+            setEdges(next);
+          }
+        }
+        toast.info(added > 0 ? `Linked foundation to ${added} node${added > 1 ? 's' : ''}` : "Foundation already exists");
+        setIsFoundationDialogOpen(false);
+        return;
+      }
+
+      // Map labels to ids to wire edges
+      const nextNodes = [...nodes, ...toCreate];
+      const idByLabel: Record<string, string> = {};
+      nextNodes.forEach((n) => {
+        const label = (n.data as any)?.label;
+        if (label) idByLabel[label] = n.id;
+      });
+
+      const mkEdge = (fromLabel: string, toLabel: string, relationship: RelationshipType = 'depends-on') => ({
+        id: `e-${idByLabel[fromLabel]}-${idByLabel[toLabel]}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`,
+        source: idByLabel[fromLabel],
+        target: idByLabel[toLabel],
+        type: 'custom' as const,
+        data: { relationshipType: relationship },
+      });
+
+      const newEdges: Edge[] = [];
+      const edgeExists = (fromLabel: string, toLabel: string) =>
+        edges.some((e) => e.source === idByLabel[fromLabel] && e.target === idByLabel[toLabel]);
+
+      if (idByLabel[feLabel] && idByLabel[apiLabel]) newEdges.push(mkEdge(feLabel, apiLabel, 'depends-on'));
+      if (idByLabel[apiLabel] && idByLabel[dataLabel]) newEdges.push(mkEdge(apiLabel, dataLabel, 'depends-on'));
+      if (idByLabel[feLabel] && idByLabel[authLabel]) newEdges.push(mkEdge(feLabel, authLabel, 'depends-on'));
+      if (idByLabel[apiLabel] && idByLabel[authLabel]) newEdges.push(mkEdge(apiLabel, authLabel, 'depends-on'));
+      if (idByLabel[feLabel] && idByLabel[onboardingLabel]) newEdges.push(mkEdge(feLabel, onboardingLabel, 'related-to'));
+      if (idByLabel[onboardingLabel] && idByLabel[apiLabel]) newEdges.push(mkEdge(onboardingLabel, apiLabel, 'depends-on'));
+      if (idByLabel[apiLabel] && idByLabel[mgmtLabel]) newEdges.push(mkEdge(apiLabel, mgmtLabel, 'related-to'));
+
+      // Associate all core nodes to the Foundation anchor
+      if (idByLabel[foundationLabel]) {
+        [feLabel, apiLabel, authLabel, onboardingLabel, dataLabel, mgmtLabel].forEach((lab) => {
+          if (idByLabel[lab] && !edgeExists(foundationLabel, lab)) {
+            newEdges.push(mkEdge(foundationLabel, lab, 'related-to'));
+          }
+        });
+      }
+
+      const centerId = centerNodeIdRef.current || 'center';
+      const nextEdges = updateEdgesWithOptimalHandles(nextNodes as any, [...edges, ...newEdges], centerId);
+
+      // Select the Foundation node to orient the user
+      const selectedNextNodes = nextNodes.map((n) => {
+        const label = (n.data as any)?.label;
+        return { ...n, selected: label === foundationLabel };
+      });
+
+      setNodes(selectedNextNodes);
+      setEdges(nextEdges);
+      setIsFoundationDialogOpen(false);
+      setIsSaved(false);
+
+      // Run layout for a clean placement
+      await applyLayoutAndRelax(selectedNextNodes, { padding: 12, maxPasses: 10, fit: true, fixedIds: [centerId] });
+
+      // Helpful nudge for beginners
+      if (config.confidence === 'beginner') {
+        toast.success('Foundation created', { description: 'Anchor node placed with core architecture. Open Documentation Preview to scaffold prompts.' });
+        setIsDocumentationPreviewOpen(true);
+      } else {
+        toast.success('Foundation created', { description: 'Foundation and core nodes added and associated.' });
+      }
+    } catch (error) {
+      console.error('Failed to create foundation', error);
+      toast.error('Could not create foundation');
+    }
+  }, [nodes, edges, setNodes, setEdges, setIsSaved, applyLayoutAndRelax]);
+
   const handleContextMenuSelectAll = useCallback(() => {
     setNodes((nds) =>
       nds.map((node) => ({
@@ -4277,6 +4501,144 @@ const handleSwitchToWizard = useCallback(
       description: "Removed selected nodes",
     });
   }, [nodes, setNodes, setEdges, isCenterNode]);
+
+  // Node-specific foundation dialog state
+  const [isNodeFoundationDialogOpen, setIsNodeFoundationDialogOpen] = useState(false);
+  const [nodeFoundationTargetId, setNodeFoundationTargetId] = useState<string | null>(null);
+  const [nodeFoundationKind, setNodeFoundationKind] = useState<NodeFoundationKind>("auth");
+
+  const detectNodeFoundationKind = useCallback((node: Node): NodeFoundationKind | null => {
+    const label = String(node?.data?.label || "").toLowerCase();
+    const type = String(node?.data?.type || "").toLowerCase();
+    if (/auth/.test(label)) return "auth";
+    if (/onboarding/.test(label)) return "onboarding";
+    if (/frontend/.test(label) || type === "frontend") return "frontend";
+    if (/backend|api/.test(label) || type === "backend") return "backend";
+    if (/data|database|storage/.test(label)) return "data";
+    return null;
+  }, []);
+
+  const openAutoCreateForNode = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const kind = detectNodeFoundationKind(node);
+    if (!kind) {
+      toast.info("Auto‑create is not available for this node type yet");
+      return;
+    }
+    setNodeFoundationTargetId(nodeId);
+    setNodeFoundationKind(kind);
+    setIsNodeFoundationDialogOpen(true);
+  }, [nodes, detectNodeFoundationKind]);
+
+  const handleApplyNodeFoundation = useCallback((config: { provider: "auth0"|"supabase"|"keycloak"|"cognito"; mfa: boolean; rolesModel: "roles"|"groups"|"both"; }) => {
+    try {
+      if (!nodeFoundationTargetId) return;
+      const target = nodes.find(n => n.id === nodeFoundationTargetId);
+      if (!target) return;
+
+      // Only 'auth' supported for now
+      const labelOf = (n: Node) => String(n?.data?.label || "");
+      const targetLabel = labelOf(target);
+
+      const existsByLabel = (label: string) => nodes.some(n => (n.data as any)?.label === label);
+      const mkId = () => createAutoNodeId();
+      const mkNode = (label: string, type: "frontend" | "backend" | "requirement" | "doc", summary?: string, extraTags: string[] = []) => ({
+        id: mkId(),
+        type: "custom" as const,
+        position: { x: 0, y: 0 },
+        data: {
+          label,
+          summary,
+          type,
+          tags: ["foundation", nodeFoundationKind, ...extraTags],
+        },
+      });
+
+      const authReqLabel = "Auth Requirements";
+      const mfaPolicyLabel = "MFA Policy";
+      const roleModelLabel = "Role & Permissions Model";
+      const pwdPolicyLabel = "Password Policy";
+      const oidcLabel = "OIDC Provider";
+      const sessionLabel = "Session Management";
+      const auditLabel = "Audit Logging";
+      const rateLimitLabel = "Rate Limiting";
+
+      const providerSummary =
+        config.provider === "auth0" ? "Auth0 tenant, apps, rules, hooks" :
+        config.provider === "supabase" ? "Supabase Auth, RLS policies, JWT" :
+        config.provider === "keycloak" ? "Keycloak realm, clients, roles, mappers" :
+        "AWS Cognito user pool, app clients, triggers";
+
+      const toCreate: Node[] = [
+        existsByLabel(authReqLabel) ? null : mkNode(authReqLabel, "requirement", "OIDC, RBAC, sessions, rate limits"),
+        existsByLabel(mfaPolicyLabel) ? null : mkNode(mfaPolicyLabel, "requirement", config.mfa ? "MFA required for all users" : "MFA optional for high-risk flows"),
+        existsByLabel(roleModelLabel) ? null : mkNode(roleModelLabel, "requirement", rolesModelSummary(config.rolesModel)),
+        existsByLabel(pwdPolicyLabel) ? null : mkNode(pwdPolicyLabel, "requirement", "Length, complexity, rotation exceptions"),
+        existsByLabel(oidcLabel) ? null : mkNode(oidcLabel, "backend", providerSummary, [config.provider]),
+        existsByLabel(sessionLabel) ? null : mkNode(sessionLabel, "backend", "Session store, refresh tokens, logout"),
+        existsByLabel(auditLabel) ? null : mkNode(auditLabel, "backend", "Auth-related audit events and trails"),
+        existsByLabel(rateLimitLabel) ? null : mkNode(rateLimitLabel, "backend", "Per-IP and per-user limits; burst protection"),
+      ].filter(Boolean) as Node[];
+
+      const nextNodes = [...nodes, ...toCreate];
+      const idByLabel: Record<string, string> = {};
+      nextNodes.forEach(n => {
+        const label = (n.data as any)?.label;
+        if (label) idByLabel[label] = n.id;
+      });
+
+      const mkEdge = (fromId: string, toId: string, relationship: RelationshipType = 'related-to') => ({
+        id: `e-${fromId}-${toId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`,
+        source: fromId,
+        target: toId,
+        type: 'custom' as const,
+        data: { relationshipType: relationship },
+      });
+
+      const findIdByLabel = (label: string) => idByLabel[label];
+      const targetId = target.id;
+
+      const newEdges: Edge[] = [];
+      // Target auth node depends on provider and session services
+      if (findIdByLabel(oidcLabel)) newEdges.push(mkEdge(targetId, findIdByLabel(oidcLabel)!, 'depends-on'));
+      if (findIdByLabel(sessionLabel)) newEdges.push(mkEdge(targetId, findIdByLabel(sessionLabel)!, 'depends-on'));
+
+      // Implement requirement links from services
+      if (findIdByLabel(authReqLabel) && findIdByLabel(oidcLabel)) newEdges.push(mkEdge(findIdByLabel(oidcLabel)!, findIdByLabel(authReqLabel)!, 'implements'));
+      if (findIdByLabel(authReqLabel) && findIdByLabel(sessionLabel)) newEdges.push(mkEdge(findIdByLabel(sessionLabel)!, findIdByLabel(authReqLabel)!, 'implements'));
+      if (findIdByLabel(authReqLabel) && findIdByLabel(rateLimitLabel)) newEdges.push(mkEdge(findIdByLabel(rateLimitLabel)!, findIdByLabel(authReqLabel)!, 'implements'));
+
+      // Documents/implements specifics
+      if (findIdByLabel(mfaPolicyLabel) && findIdByLabel(oidcLabel)) newEdges.push(mkEdge(findIdByLabel(oidcLabel)!, findIdByLabel(mfaPolicyLabel)!, 'implements'));
+      if (findIdByLabel(roleModelLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(roleModelLabel)!, 'implements'));
+      if (findIdByLabel(pwdPolicyLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(pwdPolicyLabel)!, 'implements'));
+      if (findIdByLabel(auditLabel) && targetId) newEdges.push(mkEdge(findIdByLabel(auditLabel)!, targetId, 'documents'));
+
+      const centerId = centerNodeIdRef.current || 'center';
+      const nextEdges = updateEdgesWithOptimalHandles(nextNodes as any, [...edges, ...newEdges], centerId);
+
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      setIsSaved(false);
+      setIsNodeFoundationDialogOpen(false);
+
+      applyLayoutAndRelax(nextNodes, { padding: 12, maxPasses: 10, fit: true, fixedIds: [centerId] });
+      toast.success("Auth scaffolding created", { description: `${targetLabel} now has requirements and services.` });
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to auto‑create for node");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, nodeFoundationTargetId]);
+
+  function rolesModelSummary(kind: "roles"|"groups"|"both"): string {
+    switch (kind) {
+      case "roles": return "RBAC with role assignments and scopes";
+      case "groups": return "Group-based access with membership policies";
+      case "both": return "Hybrid: roles within groups; scoped permissions";
+    }
+  }
 
   // Export handlers
   const handleExportPNG = useCallback(async () => {
@@ -5105,7 +5467,9 @@ const handleSwitchToWizard = useCallback(
               const th = connection.targetHandle;
               if (!/^(top|right|bottom|left)-target$/.test(String(th))) return false;
             }
-            return true;
+            // Live rules: no self, no duplicate, no generic cycle
+            const res = isValidConnectionPreview(connection.source, connection.target, edges);
+            return !!res.valid;
           }}
           onSelectionChange={handleSelectionChange}
           onMove={handleMove}
@@ -5501,6 +5865,13 @@ const handleSwitchToWizard = useCallback(
           allowDuplicate={!isCenterNode(activeContextNode)}
           allowDelete={!isCenterNode(activeContextNode)}
           onClose={handleCloseNodeContextMenu}
+          onReconfigureFoundation={
+            (Array.isArray(activeContextNode.data?.tags) && activeContextNode.data!.tags.includes('foundation'))
+              ? () => {
+                  setIsFoundationDialogOpen(true);
+                }
+              : undefined
+          }
           onToggleCollapse={
             !isCenterNode(activeContextNode)
               ? () => handleToggleNodeCollapse(activeContextNode.id)
@@ -5531,6 +5902,11 @@ const handleSwitchToWizard = useCallback(
               ? () => handleMarkIncorrectSuggestion(activeContextNode.id)
               : undefined
           }
+          onAutoCreateForNode={(() => {
+            const kind = detectNodeFoundationKind(activeContextNode);
+            if (!kind) return undefined;
+            return () => openAutoCreateForNode(activeContextNode.id);
+          })()}
           onExportJSON={() => handleExportNodeJSON(activeContextNode.id)}
           onExportMarkdown={() => handleExportNodeMarkdown(activeContextNode.id)}
           onExportSubgraphJSON={
@@ -5560,6 +5936,7 @@ const handleSwitchToWizard = useCallback(
         onImport={() => setIsImportModalOpen(true)}
         onExportBatch={handleExportBatch}
         onExportCanvas={handleExportPNG}
+        onCreateFoundation={() => setIsFoundationDialogOpen(true)}
       />
 
       {/* Edge Context Menu */}
@@ -5569,7 +5946,46 @@ const handleSwitchToWizard = useCallback(
           y={edgeContextMenu.position.y}
           edgeId={edgeContextMenu.edgeId}
           currentRelationshipType={edgeContextMenu.relationshipType}
+          isStraight={edges.find(e => e.id === edgeContextMenu.edgeId)?.data?.straight === true}
+          isOrthogonal={edges.find(e => e.id === edgeContextMenu.edgeId)?.data?.orthogonal === true}
+          isDashed={edges.find(e => e.id === edgeContextMenu.edgeId)?.data?.lineStyle === 'dashed'}
+          arrowMode={(edges.find(e => e.id === edgeContextMenu.edgeId)?.data?.arrowhead as any) || 'none'}
           onChangeRelationshipType={handleChangeRelationshipType}
+          onToggleStraighten={(edgeId) => {
+            setEdges((eds) => eds.map(e => e.id === edgeId ? { ...e, data: { ...(e.data || {}), straight: !e.data?.straight } } : e));
+            toast.success('Edge updated', { description: 'Toggled straighten' });
+          }}
+          onToggleOrthogonal={(edgeId) => {
+            setEdges((eds) => eds.map(e => e.id === edgeId ? { ...e, data: { ...(e.data || {}), orthogonal: !e.data?.orthogonal, straight: e.data?.orthogonal ? e.data?.straight : false } } : e));
+            toast.success('Edge updated', { description: 'Toggled right-angle routing' });
+          }}
+          onMakeBidirectional={(edgeId) => {
+            setEdges((eds) => {
+              const original = eds.find(e => e.id === edgeId);
+              if (!original) return eds;
+              const relType = (original.data?.relationshipType as any) || 'related-to';
+              if (relType === 'depends-on' || relType === 'blocks') {
+                // skip for hard dependencies
+                return eds;
+              }
+              const exists = eds.some(e => e.source === original.target && e.target === original.source);
+              if (exists) return eds;
+              const newEdge = {
+                id: `e${original.target}-${original.source}-${Date.now().toString(36)}`,
+                source: original.target,
+                target: original.source,
+                type: 'custom' as const,
+                data: { ...(original.data || {}) },
+              };
+              const centerId = centerNodeIdRef.current || 'center';
+              const next = [...eds, newEdge];
+              return updateEdgesWithOptimalHandles(nodes, next, centerId);
+            });
+            toast.success('Made bidirectional');
+          }}
+          onToggleDashed={handleToggleEdgeDashed}
+          onCycleArrowhead={handleCycleEdgeArrowhead}
+          onStartEditLabel={handleStartEditEdgeLabel}
           onDeleteEdge={handleDeleteEdge}
           onClose={handleCloseEdgeContextMenu}
         />
@@ -5701,7 +6117,36 @@ const handleSwitchToWizard = useCallback(
         onFlagNoteChange={handleDocumentationFlagNoteChange}
         onDownloadMarkdown={handleDownloadDocumentationMarkdown}
         onDownloadBundle={handleDownloadDocumentationBundle}
+        onLoadSampleBundle={(sample: DocumentationBundle) => {
+          try {
+            setDocumentationBundle(sample);
+            // Reset flags when loading a new sample for clarity
+            setDocumentationFlags({});
+            toast.success("Loaded sample documentation", { description: sample.workspace.name });
+          } catch (err) {
+            console.error('Failed to load sample bundle', err);
+            toast.error('Failed to load sample');
+          }
+        }}
       />
+
+      {/* Foundation setup dialog */}
+      <FoundationSetupDialog
+        open={isFoundationDialogOpen}
+        onOpenChange={setIsFoundationDialogOpen}
+        onApply={handleApplyFoundationConfig}
+      />
+
+      {/* Node foundation dialog (per-node auto‑create) */}
+      {isNodeFoundationDialogOpen && nodeFoundationTargetId && (
+        <NodeFoundationDialog
+          open={isNodeFoundationDialogOpen}
+          onOpenChange={setIsNodeFoundationDialogOpen}
+          kind={nodeFoundationKind}
+          nodeLabel={String(nodes.find(n => n.id === nodeFoundationTargetId)?.data?.label || "Selected node")}
+          onApply={handleApplyNodeFoundation}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { memo } from "react";
 import { ConnectionLineComponentProps, getBezierPath, Position, useReactFlow } from "@xyflow/react";
-import { getConnectStart } from "../utils/connectionState";
+import { getConnectStart, isShiftPressed, setHoveredTargetHandle, clearHoveredTargetHandle } from "../utils/connectionState";
+import { evaluateConnectionPreview } from "../utils/relationships";
 
 const OUTSET = 6; // outward nudge so the preview line starts/ends at the dot center
 
@@ -14,7 +15,8 @@ export const CustomConnectionLine = memo(({
   toPosition,
   connectionStatus,
 }: ConnectionLineComponentProps) => {
-  const { getViewport } = useReactFlow();
+  const instance = useReactFlow();
+  const { getViewport, screenToFlowPosition } = instance;
   const zoom = getViewport()?.zoom ?? 1;
   const outset = OUTSET / (zoom || 1);
   let sX = fromX;
@@ -29,7 +31,6 @@ export const CustomConnectionLine = memo(({
       const rect = el.getBoundingClientRect();
       // center in screen coords
       const centerScreen = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      const { screenToFlowPosition } = useReactFlow();
       const centerFlow = screenToFlowPosition(centerScreen);
       sX = centerFlow.x;
       sY = centerFlow.y;
@@ -104,6 +105,33 @@ export const CustomConnectionLine = memo(({
       tX = clamped.x;
       tY = clamped.y;
     }
+
+    // Find nearest handle and snap if within radius
+    const handles = Array.from(nodeEl.querySelectorAll('[data-handleid]')) as HTMLElement[];
+    let nearest: { el: HTMLElement; dist: number; center: { x: number; y: number } } | null = null;
+    for (const h of handles) {
+      const hr = h.getBoundingClientRect();
+      const cx = hr.left + hr.width / 2;
+      const cy = hr.top + hr.height / 2;
+      const d = Math.hypot(tScr.x - cx, tScr.y - cy);
+      if (!nearest || d < nearest.dist) {
+        nearest = { el: h, dist: d, center: { x: cx, y: cy } };
+      }
+    }
+    const SNAP_RADIUS = 24; // px in screen space
+    if (nearest && nearest.dist <= SNAP_RADIUS) {
+      // Highlight and snap
+      setHoveredTargetHandle(nearest.el);
+      const centerFlow = screenToFlow(nearest.center);
+      tX = centerFlow.x;
+      tY = centerFlow.y;
+    } else {
+      // Clear highlight if outside radius
+      clearHoveredTargetHandle();
+    }
+  }
+  else {
+    clearHoveredTargetHandle();
   }
 
   const [path] = getBezierPath({
@@ -115,17 +143,87 @@ export const CustomConnectionLine = memo(({
     targetPosition: targetPos,
   });
 
-  const color = connectionStatus === 'valid' ? '#6366f1' : '#94a3b8';
+  // If Shift is held, snap the preview to 45° increments for cleaner connections
+  // Skip if we already snapped to a handle (since tX/tY was set to exact center)
+  if (isShiftPressed()) {
+    const dx = (tX ?? 0) - (sX ?? 0);
+    const dy = (tY ?? 0) - (sY ?? 0);
+    const len = Math.hypot(dx, dy) || 1;
+    let angle = Math.atan2(dy, dx);
+    const snap = Math.PI / 4; // 45°
+    angle = Math.round(angle / snap) * snap;
+    const ndx = Math.cos(angle) * len;
+    const ndy = Math.sin(angle) * len;
+    tX = sX + ndx;
+    tY = sY + ndy;
+  }
+
+  const [snappedPath] = getBezierPath({
+    sourceX: sX,
+    sourceY: sY,
+    sourcePosition: fromPosition,
+    targetX: tX,
+    targetY: tY,
+    targetPosition: targetPos,
+  });
+
+  // Evaluate tiered status (ok/warn/error) for richer feedback
+  let tierColor = '#94a3b8';
+  let reasonMessage: string | undefined;
+  try {
+    const startInfo = getConnectStart();
+    const sourceId = startInfo?.nodeId ?? null;
+    const targetId = nodeEl?.getAttribute('data-id') ?? null;
+    // Access current edges from instance if available
+  const edges = typeof instance?.getEdges === 'function' ? instance.getEdges() : [];
+    const tier = evaluateConnectionPreview(sourceId, targetId, edges as any);
+    if (tier.status === 'error') {
+      tierColor = '#ef4444';
+      reasonMessage = tier.message;
+    } else if (tier.status === 'warn') {
+      tierColor = '#f59e0b';
+      reasonMessage = tier.message;
+    } else {
+      tierColor = '#10b981';
+    }
+  } catch {
+    // Fallback to provided status when evaluation fails
+    tierColor = connectionStatus === 'valid' ? '#10b981' : connectionStatus === 'invalid' ? '#ef4444' : '#94a3b8';
+  }
 
   return (
     <g>
       <path
-        d={path}
-        stroke={color}
+        d={snappedPath}
+        stroke={tierColor}
         strokeWidth={3}
         fill="none"
         strokeLinecap="round"
       />
+      {reasonMessage && (
+        <g>
+          <rect
+            x={(sX + tX) / 2 - 120}
+            y={(sY + tY) / 2 - 20}
+            rx={6}
+            ry={6}
+            width={240}
+            height={28}
+            fill="#111827"
+            opacity={0.9}
+          />
+          <text
+            x={(sX + tX) / 2}
+            y={(sY + tY) / 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#fff"
+            fontSize={12}
+          >
+            {reasonMessage}
+          </text>
+        </g>
+      )}
     </g>
   );
 });

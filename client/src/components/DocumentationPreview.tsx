@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -9,6 +9,7 @@ import { Separator } from "./ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Switch } from "./ui/switch";
+import { Input } from "./ui/input";
 import { toast } from "sonner";
 import {
   Flag,
@@ -21,6 +22,10 @@ import {
   FileText,
   Info,
   Wand2,
+  Keyboard as KeyboardIcon,
+  Settings2,
+  Lock,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "./ui/utils";
 import type { DocumentationBundle, DocumentationFlag } from "@/utils/documentationBundle";
@@ -32,6 +37,8 @@ import {
 import { DELIMS, PLATFORM_HEADERS, type Target } from "@/platforms";
 import { validate as validateOutput, detectVSCodeShape } from "@/utils/validators";
 import { useUIPreferences } from "@/store/useUIPreferences";
+import { SAMPLE_BUNDLES } from "@/fixtures/sampleBundles";
+import { track, getAnonId } from "@/utils/telemetry";
 
 type GeneratorTarget = DocumentationGeneratorTarget;
 
@@ -44,6 +51,7 @@ interface DocumentationPreviewProps {
   onFlagNoteChange: (flagId: string, note: string) => void;
   onDownloadMarkdown: () => void;
   onDownloadBundle: () => void;
+  onLoadSampleBundle?: (bundle: DocumentationBundle) => void;
 }
 
 const GENERATOR_TABS: Array<{
@@ -87,11 +95,24 @@ export function DocumentationPreview({
   onFlagNoteChange,
   onDownloadMarkdown,
   onDownloadBundle,
+  onLoadSampleBundle,
 }: DocumentationPreviewProps) {
   const [activeGenerator, setActiveGenerator] = useState<GeneratorTarget>("lovable");
   const [showRules, setShowRules] = useState(false);
   const { beginnerMode, setBeginnerMode } = useUIPreferences();
   const [regenKey, setRegenKey] = useState(0);
+  const [shortcutsEnabled, setShortcutsEnabled] = useState(true);
+  // Beta gating state
+  const [betaAllowed, setBetaAllowed] = useState<boolean>(() => {
+    // Evaluate access from localStorage on first render
+    const flag = (import.meta as any).env?.VITE_BETA_DOCS_PREVIEW;
+    const invite = localStorage.getItem("docs_invite_token") || "";
+    const expected = (import.meta as any).env?.VITE_BETA_INVITE || "";
+    if (!flag || flag === "false" || flag === "0") return true;
+    if (!invite) return false;
+    return expected ? invite === expected : true;
+  });
+  const [inviteInput, setInviteInput] = useState("");
   const [resultByTarget, setResultByTarget] = useState<Record<GeneratorTarget, string>>({
     "lovable": "",
     "base44": "",
@@ -102,6 +123,7 @@ export function DocumentationPreview({
   // Global Beginner mode toggle: applies across all targets without forcing a tab switch
   const handleBeginnerToggle = (checked: boolean) => {
     setBeginnerMode(checked);
+    track("docs_preview_beginner_toggle", { checked, target: activeGenerator });
   };
 
   const mapTarget = (t: GeneratorTarget): Target => (t === "vscode-agent" ? "vscode" : (t as Target));
@@ -157,6 +179,8 @@ export function DocumentationPreview({
     setResultByTarget((prev) => ({ ...prev, [activeGenerator]: val }));
   };
 
+  // coachCopyAllPayload and handler moved below beginnerDerived
+
   const downloadBlob = (content: string, filename: string, type = "application/json") => {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
@@ -173,9 +197,11 @@ export function DocumentationPreview({
     if (vscodeShape.shape === "tasks") {
       const pretty = JSON.stringify(vscodeShape.parsed, null, 2);
       downloadBlob(pretty, "tasks.json");
+      track("docs_preview_download_vscode", { shape: "tasks" });
     } else if (vscodeShape.shape === "simple") {
       const pretty = JSON.stringify(vscodeShape.parsed, null, 2);
       downloadBlob(pretty, "plan.json");
+      track("docs_preview_download_vscode", { shape: "simple" });
     }
   };
 
@@ -184,9 +210,38 @@ export function DocumentationPreview({
       const parsed = JSON.parse(result);
       const pretty = JSON.stringify(parsed, null, 2);
       handleResultChange(pretty);
+      track("docs_preview_prettify_json", { ok: true });
     } catch {
       toast.error("Invalid JSON", { description: "The result is not valid JSON." });
+      track("docs_preview_prettify_json", { ok: false });
     }
+  };
+
+  // Result helpers
+  const handleCopyResult = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result);
+      toast.success("Copied", { description: "Result copied to clipboard." });
+      track("docs_preview_copy_result", { target: activeGenerator });
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+
+  const handleStripCodeFencesClick = () => {
+    if (!result) return;
+    const next = stripCodeFences(result);
+    if (next !== result) {
+      handleResultChange(next);
+      toast.success("Removed code fences");
+      track("docs_preview_strip_fences", { target: activeGenerator });
+    }
+  };
+
+  const handleClearResult = () => {
+    handleResultChange("");
+    track("docs_preview_clear_result", { target: activeGenerator });
   };
 
   // Quick-fix helpers per platform
@@ -274,6 +329,25 @@ export function DocumentationPreview({
     } as const;
     handleResultChange(JSON.stringify(tasks, null, 2));
   };
+
+  // Persist results by target
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("docs_result_store_v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          setResultByTarget((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("docs_result_store_v1", JSON.stringify(resultByTarget));
+    } catch {}
+  }, [resultByTarget]);
 
   const quickFixLovable = () => {
     if (/```/.test(result)) {
@@ -381,13 +455,92 @@ export function DocumentationPreview({
     return { who, what, why, journey, features, layers };
   }, [bundle, regenKey]);
 
+  // Build Coach "Copy all" payload once for reuse (button + shortcut)
+  const coachCopyAllPayload = useMemo(() => {
+    return (
+      `WHO: ${beginnerDerived.who}\n` +
+      `WHAT: ${beginnerDerived.what}\n` +
+      `WHY: ${beginnerDerived.why}` +
+      `\n\nUSER JOURNEY:\n${beginnerDerived.journey.map((s, i) => `${i + 1}) ${s}`).join("\n")}` +
+      `\n\nFEATURE BREAKDOWN:\n${beginnerDerived.features.join("\n")}` +
+      `\n\nLet’s build in layers:\n${beginnerDerived.layers.map((l, i) => `${i + 1}) ${l}`).join("\n")}\nUse real content. Keep edits scoped. Don’t touch out-of-scope areas.`
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beginnerDerived.who, beginnerDerived.what, beginnerDerived.why, beginnerDerived.journey.join("|"), beginnerDerived.features.join("|"), beginnerDerived.layers.join("|")]);
+
+  const handleCopyAllCoach = () => {
+    handleCopyText(coachCopyAllPayload, "All steps copied");
+    track("docs_preview_copy_all", { target: activeGenerator });
+  };
+
   const handleRegenerateCoach = () => {
     // Force re-derivation from current bundle context (fast, client-side only)
     setRegenKey((k) => k + 1);
     toast.success("Regenerated from workspace context", {
       description: "Guided steps recomputed from the latest context.",
     });
+    track("docs_preview_regenerate_coach", { target: activeGenerator });
   };
+
+  // Keyboard shortcuts: scoped to dialog when open and enabled
+  useEffect(() => {
+    if (!open || !shortcutsEnabled) return;
+    const isTypingTarget = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || el.isContentEditable;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+      const meta = e.metaKey || (navigator.platform.includes("Win") && e.ctrlKey);
+      // Cmd+Shift+R: Regenerate coach
+      if (meta && e.shiftKey && (e.key === "R" || e.key === "r")) {
+        e.preventDefault();
+        handleRegenerateCoach();
+        return;
+      }
+      // Cmd+Shift+C: Copy all guided steps
+      if (meta && e.shiftKey && (e.key === "C" || e.key === "c")) {
+        e.preventDefault();
+        handleCopyAllCoach();
+        return;
+      }
+      // Cmd+Shift+P: Copy prompt
+      if (meta && e.shiftKey && (e.key === "P" || e.key === "p")) {
+        e.preventDefault();
+        handleCopyPrompt();
+        return;
+      }
+      // Cmd+Shift+B: Toggle Beginner mode
+      if (meta && e.shiftKey && (e.key === "B" || e.key === "b")) {
+        e.preventDefault();
+        handleBeginnerToggle(!beginnerMode);
+        return;
+      }
+      // Cmd+/ : Toggle Platform rules
+      if (meta && (e.key === "/")) {
+        e.preventDefault();
+        setShowRules((v) => !v);
+        return;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, shortcutsEnabled, beginnerMode, handleCopyAllCoach, prompt]);
+
+  // Beta access: capture invite from URL once and persist
+  useEffect(() => {
+    const flag = (import.meta as any).env?.VITE_BETA_DOCS_PREVIEW;
+    if (!flag || flag === "false" || flag === "0") return; // no gating
+    const url = new URL(window.location.href);
+    const invite = url.searchParams.get("invite");
+    if (invite) {
+      localStorage.setItem("docs_invite_token", invite);
+      const expected = (import.meta as any).env?.VITE_BETA_INVITE || "";
+      setBetaAllowed(expected ? invite === expected : true);
+      track("docs_preview_invite_detected", { ok: expected ? invite === expected : true });
+    }
+  }, []);
 
   const flaggedList = useMemo(() => {
     return Object.values(flagged).sort((a, b) => a.label.localeCompare(b.label));
@@ -400,10 +553,16 @@ export function DocumentationPreview({
       toast.success("Prompt copied", {
         description: "Paste it into your chosen assistant.",
       });
+      track("docs_preview_copy_prompt", {
+        target: activeGenerator,
+        promptOk: promptValidation.ok,
+        issues: promptValidation.ok ? 0 : promptValidation.reasons.length,
+      });
     } catch (error) {
       toast.error("Copy failed", {
         description: "Could not copy prompt to clipboard.",
       });
+      track("docs_preview_copy_prompt_error");
     }
   };
 
@@ -422,6 +581,26 @@ export function DocumentationPreview({
     } else {
       onFlagChange(flag.id, flag);
     }
+  };
+
+  // In-app feedback: open a prefilled GitHub issue with context
+  const openFeedback = () => {
+    const repo = (import.meta as any).env?.VITE_FEEDBACK_REPO || "Vintaragroup/strukt";
+    const title = encodeURIComponent(`Docs Preview feedback: ${activeGenerator}`);
+    const bodyRaw = [
+      `Anon ID: ${getAnonId()}`,
+      `Target: ${activeGenerator}`,
+      `Beginner mode: ${beginnerMode ? "on" : "off"}`,
+      `Prompt validation: ${promptValidation.ok ? "ok" : "issues"}${promptValidation.ok ? "" : ` — ${promptValidation.reasons.join("; ")}`}`,
+      result.trim().length > 0
+        ? `Result validation: ${resultValidation.ok ? "ok" : `issues — ${(resultValidation.reasons || []).join("; ")}`}`
+        : "Result validation: n/a",
+      "",
+      "Describe your feedback here...",
+    ].join("\n");
+    const url = `https://github.com/${repo}/issues/new?title=${title}&body=${encodeURIComponent(bodyRaw)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    track("docs_preview_feedback_open", { target: activeGenerator });
   };
 
   const renderNode = (node: DocumentationBundle["nodes"][number]) => {
@@ -652,6 +831,53 @@ export function DocumentationPreview({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-[min(96vw,1100px)] sm:max-w-[1100px] max-h-[85vh] bg-white p-0  flex flex-col">
+        {/* Beta gating lock screen */}
+        {(() => {
+          const flag = (import.meta as any).env?.VITE_BETA_DOCS_PREVIEW;
+          const gated = Boolean(flag && flag !== "false" && flag !== "0");
+          if (gated && !betaAllowed) {
+            return (
+              <div className="flex-1 min-h-0 overflow-auto">
+                <div className="p-8 h-full flex flex-col items-center justify-center text-center gap-4">
+                  <div className="flex items-center gap-2 text-slate-800">
+                    <Lock className="w-5 h-5 text-slate-600" />
+                    <span className="text-lg font-semibold">Documentation preview (beta)</span>
+                  </div>
+                  <p className="text-sm text-slate-600 max-w-md">
+                    Access is currently limited. Use an invite link with <code>?invite=CODE</code> or paste your invite code below to unlock.
+                  </p>
+                  <div className="flex items-center gap-2 w-full max-w-sm">
+                    <Input
+                      placeholder="Enter invite code"
+                      value={inviteInput}
+                      onChange={(e) => setInviteInput(e.target.value)}
+                    />
+                    <Button
+                      onClick={() => {
+                        const code = inviteInput.trim();
+                        if (!code) return;
+                        localStorage.setItem("docs_invite_token", code);
+                        const expected = (import.meta as any).env?.VITE_BETA_INVITE || "";
+                        const ok = expected ? code === expected : true;
+                        setBetaAllowed(ok);
+                        toast[ok ? "success" : "error"](ok ? "Beta unlocked" : "Invalid invite code");
+                        track("docs_preview_invite_submit", { ok });
+                      }}
+                    >
+                      Unlock
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-500">Tip: You can also open with an invite link like <code>?invite=your-code</code>.</p>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
+        {/* End beta gate */}
+
+        {(!((import.meta as any).env?.VITE_BETA_DOCS_PREVIEW && !betaAllowed)) && (
+        <>
         <DialogHeader className="sticky top-0 z-10 px-6 pt-6 pb-4 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
           <DialogTitle className="text-xl font-semibold flex items-center gap-2">
             <FileText className="w-5 h-5 text-indigo-500" />
@@ -691,6 +917,33 @@ export function DocumentationPreview({
                       <Download className="w-4 h-4" />
                       JSON bundle
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <Sparkles className="w-4 h-4" /> Load sample
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Sample bundles</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {SAMPLE_BUNDLES.map((s) => (
+                          <DropdownMenuItem
+                            key={s.id}
+                            onClick={() => {
+                              if (onLoadSampleBundle) {
+                                onLoadSampleBundle(s.bundle);
+                                toast.success("Sample loaded", { description: s.label });
+                                track("docs_preview_load_sample", { id: s.id, label: s.label });
+                              } else {
+                                toast.info("Sample handler not wired in parent");
+                              }
+                            }}
+                          >
+                            {s.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
@@ -726,7 +979,10 @@ export function DocumentationPreview({
 
                     <Tabs
                       value={activeGenerator}
-                      onValueChange={(value) => setActiveGenerator(value as GeneratorTarget)}
+                      onValueChange={(value) => {
+                        setActiveGenerator(value as GeneratorTarget);
+                        track("docs_preview_switch_target", { target: value });
+                      }}
                       className="space-y-3"
                     >
                       <TabsList
@@ -784,7 +1040,10 @@ export function DocumentationPreview({
                                       variant="ghost"
                                       size="sm"
                                       className="h-8 px-2 text-xs"
-                                      onClick={() => setShowRules((v) => !v)}
+                                      onClick={() => {
+                                        setShowRules((v) => !v);
+                                        track("docs_preview_toggle_rules");
+                                      }}
                                     >
                                       Platform rules
                                     </Button>
@@ -852,6 +1111,46 @@ export function DocumentationPreview({
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>
+                                    {/* Shortcuts / Settings dropdown */}
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs col-span-2 gap-1">
+                                          <KeyboardIcon className="w-3.5 h-3.5" /> Shortcuts
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="min-w-[260px]">
+                                        <DropdownMenuLabel className="flex items-center gap-2">
+                                          <Settings2 className="w-3.5 h-3.5" /> Settings
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setShortcutsEnabled((v) => !v);
+                                            track("docs_preview_toggle_shortcuts");
+                                          }}
+                                        >
+                                          {shortcutsEnabled ? "Disable" : "Enable"} keyboard shortcuts
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuLabel>Cheat sheet</DropdownMenuLabel>
+                                        <div className="px-3 py-2 text-[11px] leading-5 text-slate-700 space-y-1">
+                                          <div>Cmd+Shift+R — Regenerate coach</div>
+                                          <div>Cmd+Shift+C — Copy all guided steps</div>
+                                          <div>Cmd+Shift+P — Copy prompt</div>
+                                          <div>Cmd+Shift+B — Toggle Beginner mode</div>
+                                          <div>Cmd+/ — Toggle Platform rules</div>
+                                        </div>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 px-2 text-xs col-span-2 gap-1"
+                                      onClick={openFeedback}
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" /> Send feedback
+                                    </Button>
                                   </div>
                                 </div>
                               )}
@@ -886,15 +1185,7 @@ export function DocumentationPreview({
                                           <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() =>
-                                              handleCopyText(
-                                                `WHO: ${beginnerDerived.who}\nWHAT: ${beginnerDerived.what}\nWHY: ${beginnerDerived.why}` +
-                                                  `\n\nUSER JOURNEY:\n${beginnerDerived.journey.map((s, i) => `${i + 1}) ${s}`).join("\n")}` +
-                                                  `\n\nFEATURE BREAKDOWN:\n${beginnerDerived.features.join("\n")}` +
-                                                  `\n\nLet’s build in layers:\n${beginnerDerived.layers.map((l, i) => `${i + 1}) ${l}`).join("\n")}\nUse real content. Keep edits scoped. Don’t touch out-of-scope areas.`,
-                                                "All steps copied"
-                                              )
-                                            }
+                                            onClick={handleCopyAllCoach}
                                           >
                                             Copy all
                                           </Button>
@@ -1070,6 +1361,23 @@ Use real content. Keep edits scoped. Don’t touch out-of-scope areas.`}</pre>
                                   className="min-h-[160px] font-mono text-xs"
                                 />
 
+                                {/* Generic result actions */}
+                                {result.trim().length > 0 && (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Button type="button" size="sm" variant="outline" onClick={handleCopyResult} className="gap-2">
+                                      <Copy className="w-4 h-4" /> Copy result
+                                    </Button>
+                                    {/```/.test(result) && (
+                                      <Button type="button" size="sm" variant="ghost" onClick={handleStripCodeFencesClick}>
+                                        Remove code fences
+                                      </Button>
+                                    )}
+                                    <Button type="button" size="sm" variant="ghost" onClick={handleClearResult}>
+                                      Clear
+                                    </Button>
+                                  </div>
+                                )}
+
                                 {currentTarget === "vscode" && result.trim().length > 0 && (
                                   <div className="flex flex-wrap items-center gap-2">
                                     <Button
@@ -1155,6 +1463,19 @@ Use real content. Keep edits scoped. Don’t touch out-of-scope areas.`}</pre>
                                           <Wand2 className="w-4 h-4" /> Remove code fences / scaffold
                                         </Button>
                                       )}
+                                      {/* Copy issues summary */}
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          const summary = resultValidation.reasons.join("\n");
+                                          handleCopyText(summary, "Issues copied");
+                                          track("docs_preview_copy_issues", { target: activeGenerator, count: resultValidation.reasons.length });
+                                        }}
+                                      >
+                                        Copy issues
+                                      </Button>
                                     </div>
                                   </div>
                                 )}
@@ -1213,9 +1534,42 @@ Use real content. Keep edits scoped. Don’t touch out-of-scope areas.`}</pre>
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500">Generating documentation bundle…</div>
+            <div className="p-8 text-center text-slate-500 flex flex-col items-center gap-3">
+              <div>Generating documentation bundle…</div>
+              <div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Sparkles className="w-4 h-4" /> Load sample bundle
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center">
+                    <DropdownMenuLabel>Sample bundles</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {SAMPLE_BUNDLES.map((s) => (
+                      <DropdownMenuItem
+                        key={s.id}
+                        onClick={() => {
+                          if (onLoadSampleBundle) {
+                            onLoadSampleBundle(s.bundle);
+                            toast.success("Sample loaded", { description: s.label });
+                            track("docs_preview_load_sample", { id: s.id, label: s.label });
+                          } else {
+                            toast.info("Sample handler not wired in parent");
+                          }
+                        }}
+                      >
+                        {s.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           )}
         </div>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );

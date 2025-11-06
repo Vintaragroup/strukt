@@ -16,6 +16,7 @@ import {
   Download,
   FileDown,
 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface CanvasContextMenuProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ interface CanvasContextMenuProps {
   onImport?: () => void;
   onExportBatch?: () => void;
   onExportCanvas?: () => void;
+  onCreateFoundation?: () => void;
 }
 
 export function CanvasContextMenu({
@@ -45,6 +47,7 @@ export function CanvasContextMenu({
   onImport,
   onExportBatch,
   onExportCanvas,
+  onCreateFoundation,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +140,16 @@ export function CanvasContextMenu({
         <span>Add Node</span>
         <span className="ml-auto text-xs text-gray-400">⌘N</span>
       </button>
+
+      {onCreateFoundation && (
+        <button
+          onClick={() => handleAction(onCreateFoundation)}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Auto‑create foundation…</span>
+        </button>
+      )}
 
       <button
         onClick={() => handleAction(onFitView)}
