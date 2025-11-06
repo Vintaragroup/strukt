@@ -565,97 +565,98 @@ function applyProcessLayout(
   const centerNode = nodes.find((n) => n.id === centerNodeId);
   if (!centerNode) return nodes;
 
-  const otherNodes = nodes.filter((n) => n.id !== centerNodeId);
+  // Respect user-pinned nodes in process layout as well
+  const isPinned = (n: Node) => Boolean((n as any)?.data?.pinned === true);
+
+  const movable = nodes.filter((n) => n.id !== centerNodeId && !isPinned(n));
+  if (movable.length === 0) return nodes;
 
   const { width: centerWidth, height: centerHeight } = getNodeDimensions(centerNode, dimensions);
-  const measurements = otherNodes.map((node) => ({
-    node,
-    dims: getNodeDimensions(node, dimensions),
-  }));
-
-  const maxWidth = measurements.reduce((acc, entry) => Math.max(acc, entry.dims.width), DEFAULT_NODE_WIDTH);
-  const maxHeight = measurements.reduce((acc, entry) => Math.max(acc, entry.dims.height), DEFAULT_NODE_HEIGHT);
-
-  const avgWidth =
-    measurements.reduce((sum, entry) => sum + entry.dims.width, 0) /
-    Math.max(1, measurements.length);
-  const avgHeight =
-    measurements.reduce((sum, entry) => sum + entry.dims.height, 0) /
-    Math.max(1, measurements.length);
-
-  const horizontalGap = Math.max(
-    72,
-    Math.min(220, Math.round(avgWidth * 0.28) + padding)
-  );
-  const verticalGap = Math.max(
-    64,
-    Math.min(220, Math.round(avgHeight * 0.22) + padding)
-  );
-
-  const columns = Math.max(2, Math.ceil(Math.sqrt(Math.max(otherNodes.length, 1))));
-  const totalRows = Math.ceil(otherNodes.length / columns);
-
-  const columnWidths = Array.from({ length: columns }, () => 0);
-  const rowHeights = Array.from({ length: totalRows }, () => 0);
-
-  measurements.forEach((entry, index) => {
-    const col = index % columns;
-    const row = Math.floor(index / columns);
-    columnWidths[col] = Math.max(columnWidths[col], entry.dims.width);
-    rowHeights[row] = Math.max(rowHeights[row], entry.dims.height);
-  });
-
-  const totalWidth =
-    columnWidths.reduce((sum, width) => sum + width, 0) +
-    Math.max(0, columns - 1) * horizontalGap;
-  const totalHeight =
-    rowHeights.reduce((sum, height) => sum + height, 0) +
-    Math.max(0, totalRows - 1) * verticalGap;
-
   const centerX = centerNode.position.x + centerWidth / 2;
   const centerY = centerNode.position.y + centerHeight / 2;
 
-  const baseX = Math.round(centerX + centerWidth / 2 + horizontalGap);
-  const baseY = Math.round(centerY - totalHeight / 2);
+  // Measure a typical node for spacing heuristics
+  const sampleDims = movable.map((n) => getNodeDimensions(n, dimensions));
+  const avgWidth = sampleDims.reduce((s, d) => s + d.width, 0) / Math.max(1, sampleDims.length);
+  const avgHeight = sampleDims.reduce((s, d) => s + d.height, 0) / Math.max(1, sampleDims.length);
 
-  const columnOffsets = columnWidths.map((_, index) =>
-    columnWidths.slice(0, index).reduce((sum, width) => sum + width, 0) +
-    horizontalGap * index
-  );
-  const rowOffsets = rowHeights.map((_, index) =>
-    rowHeights.slice(0, index).reduce((sum, height) => sum + height, 0) +
-    verticalGap * index
-  );
+  const horizontalGap = Math.max(96, Math.min(280, Math.round(avgWidth * 0.35) + padding));
+  const verticalGap = Math.max(56, Math.min(200, Math.round(avgHeight * 0.20) + padding));
 
-  const result = nodes.map((node) => {
-    if (node.id === centerNodeId) {
-      return node;
-    }
+  // Infer a coarse role for lane grouping
+  type Lane = "policies" | "requirements" | "services" | "data" | "docs" | "other";
+  const roleOf = (n: Node): Lane => {
+    const t = String(n?.data?.type || "").toLowerCase();
+    const label = String(n?.data?.label || n?.data?.title || n.id).toLowerCase();
+    const has = (re: RegExp) => re.test(t) || re.test(label);
+    if (has(/policy|polic(y|ies)/)) return "policies";
+    if (has(/requirement|spec|acceptance/)) return "requirements";
+    if (has(/database|db|storage|cache|queue|topic|warehouse|data/)) return "data";
+    if (has(/doc|documentation|note|audit|readme/)) return "docs";
+    if (has(/service|backend|frontend|api|integration|session|provider|gateway|rate/)) return "services";
+    return "other";
+  };
 
-    const index = otherNodes.findIndex((n) => n.id === node.id);
-    if (index === -1) return node;
+  // Assign nodes into lanes
+  const lanesOrder: Lane[] = ["policies", "requirements", "services", "data", "docs", "other"];
+  const laneNodes: Record<Lane, Node[]> = {
+    policies: [],
+    requirements: [],
+    services: [],
+    data: [],
+    docs: [],
+    other: [],
+  };
+  movable.forEach((n) => laneNodes[roleOf(n)].push(n));
 
-    const row = Math.floor(index / columns);
-    const col = index % columns;
-    const dims = measurements[index]?.dims ?? getNodeDimensions(node, dimensions);
+  // Precompute base X for each lane to create a left-to-right flow
+  // Root near the left; requirements next to root; services further; data furthest; policies align with requirements; docs align with services
+  const baseXByLane: Record<Lane, number> = {
+    policies: Math.round(centerX + centerWidth / 2 + horizontalGap),
+    requirements: Math.round(centerX + centerWidth / 2 + horizontalGap),
+    services: Math.round(centerX + centerWidth / 2 + horizontalGap * 2),
+    data: Math.round(centerX + centerWidth / 2 + horizontalGap * 3),
+    docs: Math.round(centerX + centerWidth / 2 + horizontalGap * 2.5),
+    other: Math.round(centerX + centerWidth / 2 + horizontalGap * 2),
+  };
 
-    const x =
-      baseX +
-      (columnOffsets[col] ?? 0) +
-      Math.max(0, (columnWidths[col] - dims.width) / 2);
-    const y =
-      baseY +
-      (rowOffsets[row] ?? 0) +
-      Math.max(0, (rowHeights[row] - dims.height) / 2);
+  // Baselines: policies at top, then requirements, services (center line), data, docs
+  const baselineByLane: Record<Lane, number> = {
+    policies: Math.round(centerY - verticalGap * 2),
+    requirements: Math.round(centerY - verticalGap),
+    services: Math.round(centerY),
+    data: Math.round(centerY + verticalGap),
+    docs: Math.round(centerY + verticalGap * 2),
+    other: Math.round(centerY + verticalGap),
+  };
 
-    return {
-      ...node,
-      position: {
-        x: Math.round(x),
-        y: Math.round(y),
-      },
-    };
+  // Within each lane, stack nodes vertically around the baseline with consistent spacing
+  const positions: Record<string, { x: number; y: number }> = {};
+  lanesOrder.forEach((lane) => {
+    const list = laneNodes[lane];
+    if (!list.length) return;
+    const bx = baseXByLane[lane];
+    // Sort to keep deterministic placement (by label)
+    const sorted = sortNodesForRing(list);
+    const centerIndex = (sorted.length - 1) / 2;
+    sorted.forEach((n, i) => {
+      const dims = getNodeDimensions(n, dimensions);
+      const offsetIndex = i - centerIndex;
+      const x = bx - Math.round(dims.width / 2);
+      const y = baselineByLane[lane] + Math.round(offsetIndex * (dims.height + Math.max(32, verticalGap - 16)));
+      positions[n.id] = { x, y };
+    });
   });
+
+  // Apply positions for movable nodes; keep center and pinned untouched
+  const result = nodes.map((node) => {
+    if (node.id === centerNodeId) return node;
+    if (isPinned(node)) return node;
+    const next = positions[node.id];
+    if (!next) return node;
+    return { ...node, position: { x: Math.round(next.x), y: Math.round(next.y) } };
+  });
+
   return result;
 }
 
