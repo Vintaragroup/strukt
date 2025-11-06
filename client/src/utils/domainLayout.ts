@@ -639,16 +639,58 @@ function applyProcessLayout(
     const bx = baseXByLane[lane];
     // Sort to keep deterministic placement (by label)
     const sorted = sortNodesForRing(list);
-    const centerIndex = (sorted.length - 1) / 2;
-    sorted.forEach((n, i) => {
-      const dims = getNodeDimensions(n, dimensions);
-      const offsetIndex = i - centerIndex;
-      const x = bx - Math.round(dims.width / 2);
-      // Increase intra-lane spacing to reduce vertical overlap within a lane stack
-      const stepY = dims.height + Math.max(64, verticalGap - 8);
-      const y = baselineByLane[lane] + Math.round(offsetIndex * stepY);
-      positions[n.id] = { x, y };
-    });
+    // Allow 2 columns in dense lanes to reduce vertical crowding
+    const maxRowsPerCol = 3; // compact, but spreads vertically with larger step
+    let desiredCols = Math.ceil(sorted.length / maxRowsPerCol);
+    desiredCols = Math.max(1, Math.min(2, desiredCols));
+
+    // Compute safe inner column X step so we don't collide with the next lane
+    const laneIdx = lanesOrder.indexOf(lane);
+    const nextLane = laneIdx >= 0 && laneIdx < lanesOrder.length - 1 ? lanesOrder[laneIdx + 1] : null;
+    const neighborGap = nextLane ? (baseXByLane[nextLane] - bx) : Infinity;
+    const conservativeInnerStep = Math.max(
+      Math.round(avgWidth * 1.2),
+      Math.round(horizontalGap * 0.75)
+    );
+    const maxInnerStep = Number.isFinite(neighborGap)
+      ? Math.max(0, Math.round(neighborGap - avgWidth - 64))
+      : conservativeInnerStep;
+    const innerColStep = Math.min(conservativeInnerStep, maxInnerStep);
+    if (innerColStep <= 0) desiredCols = 1;
+
+    // Per-column placement
+    const stepYBase = Math.max(64, verticalGap - 8);
+    const positionsInLane: Record<string, { x: number; y: number }> = {};
+    if (desiredCols === 1) {
+      const centerIndex = (sorted.length - 1) / 2;
+      sorted.forEach((n, i) => {
+        const dims = getNodeDimensions(n, dimensions);
+        const offsetIndex = i - centerIndex;
+        const x = bx - Math.round(dims.width / 2);
+        const stepY = dims.height + stepYBase;
+        const y = baselineByLane[lane] + Math.round(offsetIndex * stepY);
+        positionsInLane[n.id] = { x, y };
+      });
+    } else {
+      // Two columns: fill left column first, then right column
+      const colCount = 2;
+      for (let col = 0; col < colCount; col++) {
+        const startIdx = col * maxRowsPerCol;
+        const endIdx = Math.min(sorted.length, startIdx + maxRowsPerCol);
+        const colItems = sorted.slice(startIdx, endIdx);
+        if (colItems.length === 0) continue;
+        const rows = colItems.length;
+        const colCenterIdx = (rows - 1) / 2;
+        colItems.forEach((n, r) => {
+          const dims = getNodeDimensions(n, dimensions);
+          const x = bx - Math.round(dims.width / 2) + col * innerColStep;
+          const stepY = dims.height + stepYBase;
+          const y = baselineByLane[lane] + Math.round((r - colCenterIdx) * stepY);
+          positionsInLane[n.id] = { x, y };
+        });
+      }
+    }
+    Object.assign(positions, positionsInLane);
   });
 
   // Apply positions for movable nodes; keep center and pinned untouched

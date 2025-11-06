@@ -2273,8 +2273,8 @@ const handleSwitchToWizard = useCallback(
             lastRadialBaseRef.current = null;
           }
           applyLayoutAndRelax(layoutedNodes, {
-            padding: viewMode === 'process' ? Math.max(relaxPadding, 24) : relaxPadding,
-            maxPasses: viewMode === 'process' ? 14 : 10,
+            padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
+            maxPasses: viewMode === 'process' ? 18 : 10,
             fit: true,
             fixedIds: [centerId, ...Array.from(pinnedRef.current)],
           }).then(() => {
@@ -3750,11 +3750,11 @@ const handleSwitchToWizard = useCallback(
     // Enable smooth transitions
     setIsAutoLayouting(true);
     if (process.env.NODE_ENV !== 'production') {
-      console.debug('[layout] calling relax', { fit: true, padding: viewMode === 'process' ? Math.max(relaxPadding, 24) : relaxPadding, pinned: Array.from(pinnedRef.current) });
+      console.debug('[layout] calling relax', { fit: true, padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding, pinned: Array.from(pinnedRef.current) });
     }
     await applyLayoutAndRelax(layoutedNodes, {
-      padding: viewMode === 'process' ? Math.max(relaxPadding, 24) : relaxPadding,
-      maxPasses: viewMode === 'process' ? 14 : 10,
+      padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
+      maxPasses: viewMode === 'process' ? 18 : 10,
       fit: true,
       fixedIds: [centerId, ...Array.from(pinnedRef.current)],
     });
