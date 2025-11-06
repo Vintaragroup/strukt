@@ -1,0 +1,41 @@
+{
+  "name": "marketing-brief",
+  "context": {
+    "node": {
+      "id": "node-marketing-001",
+      "label": "Growth Campaign North America",
+      "type": "requirement",
+      "domain": "Business",
+      "summary": "Launch a cross-channel activation focused on re-engaging dormant self-serve accounts in North America by pairing refreshed onboarding content with targeted lifecycle messaging and sales-assisted offers.",
+      "tags": ["marketing", "campaign", "seo", "lifecycle"],
+      "intent": {
+        "idea": "Combine lifecycle messaging and refreshed SEO content to boost inbound demos.",
+        "coreOutcome": "Increase qualified pipeline by 20% in the SMB segment.",
+        "primaryAudience": "Growth marketing and lifecycle teams."
+      }
+    },
+    "card": {
+      "id": "card-marketing-001",
+      "title": "North America Growth Campaign Brief",
+      "description": "Snapshot of campaign goals, audience, channels, and KPIs.",
+      "templateId": "marketingCampaignBrief",
+      "sections": [
+        { "title": "Objective" },
+        { "title": "Target Audience" },
+        { "title": "Key Message" },
+        { "title": "Channels" },
+        { "title": "Timeline" },
+        { "title": "KPIs" }
+      ],
+      "checklist": []
+    }
+  },
+  "expect": {
+    "minAccuracy": 72,
+    "minKbSections": 3,
+    "minFragmentSections": 1,
+    "expectedPrdIds": ["content_seo_strategy_v1", "marketing_ops_utm_taxonomy_v1"],
+    "requireFactors": ["KB sections blended", "Fragment context applied"],
+    "allowFallback": false
+  }
+}

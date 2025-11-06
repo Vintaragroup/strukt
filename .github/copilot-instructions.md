@@ -13,48 +13,55 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-The system implements a specialized node-based project management platform with several key business domains:
+Core Business Logic Architecture:
 
-## Core Domain Management
-- Domain-aware node organization using radial layout algorithm
-- Custom domain configurations for Business, Product, Tech, Data/AI, and Operations
-- Intelligent node placement with department inference rules
-- Auto-scaling radius calculations based on node density
-Importance Score: 95
+1. AI Content Generation Pipeline
+- Specialized node suggestion system with domain context awareness 
+- Multi-stage template composition with progressive fallback
+- Custom scoring algorithms for content relevance
+- Token budget management and context injection
+File: server/src/services/GenerationService.ts
 
-## Relationship Engine 
-- Domain-specific relationship types management (depends-on, implements, documents)
-- Critical path analysis for dependency chains
-- Relationship suggestion engine based on node types
-- Circular dependency detection with domain context
-File: server/src/utils/relationships.ts
-Importance Score: 90
-
-## AI Integration System
-- Domain-specific prompt engineering for architecture suggestions
-- Context-aware API integration recommendations
-- Template-based card composition with context inheritance
-- Knowledge base integration for domain-specific content
-File: server/src/services/ai/provider.ts
-Importance Score: 85
-
-## Template Management
-- Domain-specific template configurations
-- Template inheritance and composition rules
+2. Knowledge Base Management
+- Domain-specific template matching and retrieval
+- Fragment prioritization based on workspace context
+- Custom recommendation engine with weighted scoring
 - Category-based template organization
-- Template validation and enrichment logic
-File: server/src/services/cards/templatePlanner.ts
-Importance Score: 75
-
-## Knowledge Base Service
-- Advanced pattern matching for software architecture templates
-- Domain-specific scoring system for template relevance
-- Fragment prioritization logic for architecture components
-- Domain and node type detection algorithms
 File: server/src/services/KBService.ts
-Importance Score: 90
 
-The system's core value lies in its domain-aware organization and relationship management capabilities, with specialized layouts and suggestions based on business context. AI integration provides intelligent recommendations while maintaining domain-specific rules and relationships.
+3. Domain Layout System
+- Radial organization based on business domains
+- Specialized positioning for Business/Tech/Operations nodes
+- Relationship-aware node placement
+- Domain boundary management
+File: client/src/utils/domainLayout.ts
+
+4. Documentation Generation
+- Multi-target content generation pipeline
+- Domain-specific card template composition
+- Accuracy scoring and staleness detection
+- Hierarchical content organization
+File: client/src/components/DocumentationPreview.tsx
+
+5. Workspace Health Analysis
+- Documentation freshness scoring
+- Relationship density calculations
+- Node connectivity assessment
+- Custom health metrics aggregation
+File: client/src/components/WorkspaceHealthPanel.tsx
+
+Key Integration Points:
+- Context injection between workspace structure and AI prompts
+- Template matching between knowledge base and node types
+- Health metrics feedback into suggestion generation
+- Domain categorization influencing layout decisions
+
+The system implements an AI-assisted software architecture documentation platform with:
+- Domain-driven node organization
+- Intelligent template matching
+- Multi-stage content generation
+- Sophisticated health tracking
+- Context-aware suggestions
 
 $END$
 

@@ -66,6 +66,19 @@ npm run dev
 - **Server**: http://localhost:5050
 - **Mongo Express** (if using Docker): http://localhost:8081
 
+### Platform prompts and validation
+
+We generate platform‑tailored prompts and validate outputs inline in the Documentation Preview UI.
+
+- Rules per platform: see `docs/PLATFORM_RULES.md`
+- Local evaluation (table of pass/fail):
+
+```bash
+npm run eval
+```
+
+This loads bundles under `eval/bundles/` and validates outputs for Lovable, Base 44, Claude, and VS Code Agent. See `docs/PLATFORM_EVAL.md` to add bundles or extend validation.
+
 ## Project Structure
 
 ```

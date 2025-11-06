@@ -19,6 +19,10 @@ class ResponseCache {
     this.store.set(key, { value, expiresAt: Date.now() + ttlMs });
   }
 
+  delete(key: string): void {
+    this.store.delete(key);
+  }
+
   clear(): void {
     this.store.clear();
   }

@@ -1,0 +1,40 @@
+{
+  "name": "backend-tech-spec",
+  "context": {
+    "node": {
+      "id": "node-backend-001",
+      "label": "Payments Gateway API",
+      "type": "backend",
+      "domain": "Tech",
+      "summary": "Design a resilient payments gateway service that brokers secure requests between client applications and downstream processors, enforces compliance rules, and exposes observability signals for finance stakeholders. The solution must handle regional routing, idempotent retries, and real-time fraud telemetry while fitting into our existing platform controls.",
+      "tags": ["payments", "api", "observability", "compliance"],
+      "intent": {
+        "coreOutcome": "Deliver a developer-friendly API surface that supports regional payment methods.",
+        "primaryRisk": "Missing compliance guardrails for new settlement partners.",
+        "primaryAudience": "Internal platform engineers and regional go-to-market teams."
+      }
+    },
+    "card": {
+      "id": "card-backend-001",
+      "title": "Payments Gateway Technical Specification",
+      "description": "Technical narrative for the new payments gateway service.",
+      "templateId": "technicalSpec",
+      "sections": [
+        { "title": "Overview" },
+        { "title": "Architecture" },
+        { "title": "Interfaces" },
+        { "title": "Dependencies" },
+        { "title": "Testing & Validation" }
+      ],
+      "checklist": []
+    }
+  },
+  "expect": {
+    "minAccuracy": 78,
+    "minKbSections": 4,
+    "minFragmentSections": 1,
+    "expectedPrdIds": ["backend_api_service_v1", "backend_fastapi_service_v1"],
+    "requireFactors": ["KB sections blended", "Blended insights from"],
+    "allowFallback": false
+  }
+}

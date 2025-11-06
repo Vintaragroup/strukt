@@ -22,6 +22,8 @@ function Switch({
         data-slot="switch-thumb"
         className={cn(
           "bg-card dark:data-[state=unchecked]:bg-card-foreground dark:data-[state=checked]:bg-primary-foreground pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0",
+          // Ensure the thumb (circle) is outlined in slate when toggle is off, while preserving size to avoid layout shift
+          "border data-[state=checked]:border-transparent data-[state=unchecked]:border-slate-400",
         )}
       />
     </SwitchPrimitive.Root>

@@ -1,0 +1,78 @@
+Prompt 1.
+
+Gold asset understanding program that allows for blockchain attachment and blockchain trading. We’ll emphasise regulatory reporting, risk controls, and transparent monetisation levers. Expect the follow-up questions to cover risk, reporting, and monetisation levers. We’re tuning this for financial stewards balancing growth and controls. Tone stays measured, trustworthy, and regulatory-savvy. We'll tie every lever to compliant growth and keep auditors, investors, and customers at ease.
+
+Key answers
+What does success look like for this initiative?
+Lift clean-claim accuracy to 99%, clear denials within 48 hours, and keep audit exceptions below 0.5%. Track reviewer caseload, escalation lag, and payer feedback so finance and compliance stay confident.
+What is the must-have user journey for the first release?
+1. Billing lead opens the calm workspace and sees prioritized claims with stress-level check-ins. 2. Assistant surfaces payer rules, prior notes, and compliance nudges while playing a grounding cue. 3. They reconcile the claim, log any escalations, and trigger automated audit trails. 4. The system celebrates progress, schedules the next focus block, and records clean-claim metrics for finance.
+Are there preferred platforms, languages, or tools?
+React + TypeScript calm-mode UI with accessible, low-light components. Node/NestJS services that expose FEMA, FHIR/Epic, NetSuite, and county record adapters behind a GraphQL gateway. Postgres + S3 audit pipeline with immutable logs, SOC2/HIPAA guardrails, and PagerDuty/Grafana observability. Offline-first sync for field volunteers and encrypted storage for trauma debrief notes.
+Which regulatory or audit reports do you need to produce?
+Map required filings—cadence, owners, datasets—so compliance artefacts can be automated.
+How will this experience drive revenue or cost savings?
+Explain the monetisation or savings levers, target KPIs, and how you’ll validate them in early releases.
+What telemetry or data sources do we need instrumented from day one?
+Use the metrics that prove this is working so we can wire telemetry and health checks into the blueprint from day one.
+What data or expertise will power AI or automation features?
+Combine historical records, expert-reviewed exemplars, and a feedback loop from live usage so the AI behind “Gold asset understanding program that allows for blockchain attachment and blockchain trading. We’ll emphasise regulatory reporting, risk controls, and transparent monetisation levers. Expect the follow-up questions to cover risk, reporting, and monetisation levers. We’re tuning this for financial stewards balancing growth and controls. Tone stays measured, trustworthy, and regulatory-savvy. We'll tie every lever to compliant growth and keep auditors, investors, and customers at ease.” keeps getting better.
+What rollout or change management support will users need?
+Outline the champions, training assets, comms cadence, and feedback channels required to shift teams onto the new workflow.
+Which metrics will prove this experience is working?
+Instrument the signals financial stewards balancing growth and controls rely on—confidence boosts, risk alerts, and proof the experience is working.
+
+
+Prompt 2
+Prompt summary
+simple task generator that understands your daily tasks adapts and gamifies them. We’ll emphasise gamified reinforcement loops such as streaks, achievements, and team challenges.
+
+Key answers
+What does success look like for this initiative?
+Maintain a 70% completed-run rate for focus timers, keep streaks alive for 10 consecutive days, and boost developer delight scores by 15%. Track streak breaks, timer interruptions, and celebratory feedback.
+What is the must-have user journey for the first release?
+1. Developer selects a mission and fires up the retro timer. 2. Immersive cues keep focus while the countdown runs. 3. Completion triggers streak bonuses, playful sounds, and sharable highlights. 4. The session logs metrics, nudges the next focus block, and celebrates progress.
+Are there preferred platforms, languages, or tools?
+Modular React frontend with component library, Node/Express API, and a managed database (Postgres or Dynamo) to stay flexible.
+How do you plan to acquire or activate users in the beginning?
+Start with founder-led outreach, layer in targeted content/SEO around the core pain, and offer workshops or webinars to convert prospects.
+Do you have a target launch date or milestone?
+Pilot within 6 weeks, beta rollout by the end of the quarter, and GA release aligned with the next industry event.
+What telemetry or data sources do we need instrumented from day one?
+Use the metrics that prove this is working so we can wire telemetry and health checks into the blueprint from day one.
+What data or expertise will power AI or automation features?
+Combine historical records, expert-reviewed exemplars, and a feedback loop from live usage so the AI behind “simple task generator that understands your daily tasks adapts and gamifies them. We’ll emphasise gamified reinforcement loops such as streaks, achievements, and team challenges.” keeps getting better.
+What rollout or change management support will users need?
+Outline the champions, training assets, comms cadence, and feedback channels required to shift teams onto the new workflow.
+Which metrics will prove this experience is working?
+Track timer completion rate, streak health, and developer mood shifts so you can prove the retro timer works.
+Referenced guidance
+Relevant PRDs: Account-Based Marketing (ABM) Program PRD, AI/ML Feature PRD
+Supporting fragments: onboarding_flow, kpi_set, kpi_set
+
+
+
+Prompt 3.
+
+Simple timer applications that is tailored to ADD people who have difficulty completing tasks. We’ll emphasise tight time-boxing mechanics, visual countdown states, and completed-run history to keep developers on track, and clear productivity metrics and celebratory moments that reinforce healthy habits. Expect the follow-up questions to cover habits and change management. We’re tuning this for makers craving flow and sustainable momentum. Tone stays motivating, optimistic, and accountable. We'll cheer the wins, track the streaks, and keep the rituals flexible enough to stick.
+
+Key answers
+What does success look like for this initiative?
+Maintain a 70% completed-run rate for focus timers, keep streaks alive for 10 consecutive days, and boost developer delight scores by 15%. Track streak breaks, timer interruptions, and celebratory feedback.
+What is the must-have user journey for the first release?
+1. Developer selects a mission and fires up the retro timer. 2. Immersive cues keep focus while the countdown runs. 3. Completion triggers streak bonuses, playful sounds, and sharable highlights. 4. The session logs metrics, nudges the next focus block, and celebrates progress.
+Are there preferred platforms, languages, or tools?
+React with a retro-styled component system, WebSockets for live countdowns, and a Node/Prisma backend that syncs streak data across devices.
+What should the experience feel like for your audience?
+Lean into playful tension: dynamic lighting, countdown pulses, and microcopy that turns each task into a celebratory quest.
+How will you reinforce positive habits or behaviour change?
+Design streak rules, boss-battle milestones, team leaderboards, and surprise rewards to keep momentum.
+What telemetry or data sources do we need instrumented from day one?
+Use the metrics that prove this is working so we can wire telemetry and health checks into the blueprint from day one.
+What data or expertise will power AI or automation features?
+Combine historical records, expert-reviewed exemplars, and a feedback loop from live usage so the AI behind “Simple timer applications that is tailored to ADD people who have difficulty completing tasks. We’ll emphasise tight time-boxing mechanics, visual countdown states, and completed-run history to keep developers on track, and clear productivity metrics and celebratory moments that reinforce healthy habits. Expect the follow-up questions to cover habits and change management. We’re tuning this for makers craving flow and sustainable momentum. Tone stays motivating, optimistic, and accountable. We'll cheer the wins, track the streaks, and keep the rituals flexible enough to stick.” keeps getting better.
+What rollout or change management support will users need?
+Outline the champions, training assets, comms cadence, and feedback channels required to shift teams onto the new workflow.
+Which metrics will prove this experience is working?
+Track timer completion rate, streak health, and developer mood shifts so you can prove the retro timer works.
+

@@ -1,60 +1,61 @@
 ---
-description: Handles core AI content generation pipeline including context injection, template matching, and generation queue management
+description: Handles AI content generation pipeline including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-## Context Injection Service
-- Analyzes workspace state and injects relevant context into AI prompts
-- Maps domain types to specialized prompt templates
-- Handles template inheritance and composition
-- File: `server/src/services/ContextInjector.ts`
-Importance Score: 85
+Core Generation Components:
 
-## Generation Queue Management
-- Prioritizes generation requests based on user context and template complexity  
-- Handles concurrent generation with circuit breaker patterns
-- Implements backpressure for large batch requests
-- File: `server/src/services/GenerationQueue.ts`
-Importance Score: 90
+1. Context Injection System
+Importance Score: 90/100
+- Intelligent workspace context analyzer 
+- Maps node relationships into structured prompt contexts
+- Domain classification with archetype detection
+- PRD template blending system
+- Context type validation and scoring
+File: `server/src/services/ContextInjector.ts`
 
-## Template Matching System
-- Matches content requirements to specialized templates
-- Scores template relevance based on node type and domain
-- Handles template inheritance and composition
-- File: `server/src/services/cards/templatePlanner.ts`
-Importance Score: 85
+2. Template Matching Engine 
+Importance Score: 85/100
+- Multi-stage template composition with progressive relaxation
+- Fragment prioritization based on domain context
+- Custom scoring algorithm for PRD template matching
+- Domain-specific filtering and recommendation system
+File: `server/src/services/cards/cardComposer.ts`
 
-## Knowledge Integration
-- Integrates domain knowledge into generation context
-- Maintains generation history for improved suggestions
-- Handles specialized template fragment selection
-- File: `server/src/services/KBService.ts`
-Importance Score: 80
+3. Generation Queue Management
+Importance Score: 80/100
+- Asynchronous generation pipeline with state management
+- Smart batching of related generation requests
+- Circuit breaker pattern for AI provider stability
+- Generation history tracking with failure recovery
+File: `server/src/services/GenerationQueue.ts`
 
-## Generation Pipeline Workflows
-- Orchestrates multi-stage content generation
-- Handles specialized Q&A interaction patterns
-- Manages preview and editing workflows
-- Files: 
-  - `client/src/components/AIEnrichmentModal.tsx`
-  - `client/src/services/ai/suggestions.ts`
-Importance Score: 90
+4. Knowledge Integration
+Importance Score: 75/100
+- Domain-aware template matching
+- Multi-faceted search with weighted relevance
+- Category/tag-based recommendation engine
+- Semantic similarity matching for templates
+Files: 
+- `server/src/services/KBService.ts`
+- `server/src/services/ai/wizard.ts`
 
-## AI Response Processing
-- Normalizes AI responses into domain-specific formats
-- Handles specialized content transformation rules
-- Manages response validation and cleanup
-- File: `server/src/services/ai/normalize.ts` 
-Importance Score: 85
+5. Normalization Pipeline
+Importance Score: 70/100
+- Content standardization across different AI providers
+- Schema validation and type enforcement
+- Quality scoring system for generated content
+- Auto-correction for common AI output issues
+File: `server/src/services/ai/normalize.ts`
 
-## Feedback Integration
-- Captures user feedback on generated content
-- Integrates feedback into future generations
-- Maintains feedback history for quality improvement
-- File: `server/src/services/ai/feedback.ts`
-Importance Score: 75
+The system implements a sophisticated AI generation pipeline focused on:
+- Contextual awareness through workspace analysis
+- Intelligent template matching and composition
+- Robust queue management and error handling
+- Knowledge base integration for improved quality
+- Content normalization and validation
 
 $END$
 

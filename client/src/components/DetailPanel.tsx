@@ -10,7 +10,7 @@ import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import { Checkbox } from "./ui/checkbox";
 import { Bold, Italic, List, Link2, Code, ListOrdered } from "lucide-react";
-import { EditableCardData, TodoItem } from "./EditableCard";
+import { EditableCardData, TodoItem, CardSection } from "./EditableCard";
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -58,6 +58,29 @@ export function DetailPanel({ isOpen, onClose, card, onUpdate, color = "teal" }:
       ...card, 
       todos: [...(card.todos || []), newTodo] 
     });
+  };
+
+  const handleSectionTitleChange = (sectionId: string, title: string) => {
+    const updated = (card.sections || []).map((section) =>
+      section.id === sectionId ? { ...section, title } : section
+    );
+    onUpdate({ ...card, sections: updated });
+  };
+
+  const handleSectionBodyChange = (sectionId: string, body: string) => {
+    const updated = (card.sections || []).map((section) =>
+      section.id === sectionId ? { ...section, body } : section
+    );
+    onUpdate({ ...card, sections: updated });
+  };
+
+  const handleAddSection = () => {
+    const newSection: CardSection = {
+      id: `section-${Date.now()}`,
+      title: "New Section",
+      body: "",
+    };
+    onUpdate({ ...card, sections: [...(card.sections || []), newSection] });
   };
 
   return (
@@ -112,7 +135,7 @@ export function DetailPanel({ isOpen, onClose, card, onUpdate, color = "teal" }:
                   className="min-h-[300px] resize-none border-0 p-0 bg-transparent focus-visible:ring-0"
                   placeholder="Start typing..."
                 />
-              ) : (
+              ) : card.type === "todo" || card.type === "checklist" ? (
                 <div className="space-y-3">
                   {card.todos?.map((todo) => (
                     <div key={todo.id} className="flex items-start gap-3">
@@ -138,6 +161,38 @@ export function DetailPanel({ isOpen, onClose, card, onUpdate, color = "teal" }:
                     + Add item
                   </button>
                 </div>
+              ) : card.sections && card.sections.length > 0 ? (
+                <div className="space-y-6">
+                  {card.sections.map((section) => (
+                    <div key={section.id} className="space-y-2">
+                      <Input
+                        value={section.title}
+                        onChange={(e) => handleSectionTitleChange(section.id, e.target.value)}
+                        className="border-0 px-0 text-base font-semibold text-gray-800 bg-transparent focus-visible:ring-0"
+                        placeholder="Section title"
+                      />
+                      <Textarea
+                        value={section.body}
+                        onChange={(e) => handleSectionBodyChange(section.id, e.target.value)}
+                        className="min-h-[160px] resize-none border border-gray-200 rounded-lg bg-white focus-visible:ring-1 focus-visible:ring-teal-400"
+                        placeholder="Write section details..."
+                      />
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleAddSection}
+                    className="w-full text-left text-sm text-gray-400 hover:text-gray-600 py-2"
+                  >
+                    + Add section
+                  </button>
+                </div>
+              ) : (
+                <Textarea
+                  value={card.content || ""}
+                  onChange={(e) => onUpdate({ ...card, content: e.target.value })}
+                  className="min-h-[300px] resize-none border-0 p-0 bg-transparent focus-visible:ring-0"
+                  placeholder="Document details..."
+                />
               )}
             </div>
           </div>

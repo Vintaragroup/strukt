@@ -1,5 +1,15 @@
 import { Node } from "@xyflow/react";
 
+export interface DocumentationReviewItem {
+  nodeId: string;
+  nodeLabel: string;
+  cardId: string;
+  cardTitle: string;
+  status: "fresh" | "fallback" | "stale" | "unknown";
+  score: number | null;
+  needsReview: boolean;
+}
+
 export interface AnalyticsData {
   totalNodes: number;
   nodesByType: { type: string; count: number; percentage: number }[];
@@ -15,6 +25,23 @@ export interface AnalyticsData {
     totalConnections: number;
     averageConnectionsPerNode: number;
     mostConnectedNode: string | null;
+  };
+  documentationHealth: {
+    totalCards: number;
+    statusCounts: {
+      fresh: number;
+      fallback: number;
+      stale: number;
+      unknown: number;
+    };
+    needsReviewCount: number;
+    averageAccuracy: number | null;
+    reviewQueue: DocumentationReviewItem[];
+  };
+  relationshipHealth: {
+    orphanNodes: Array<{ id: string; label: string; type?: string }>;
+    lowConnectivityNodes: Array<{ id: string; label: string; connections: number }>;
+    edgeDensity: number;
   };
 }
 
@@ -61,6 +88,17 @@ export function calculateAnalytics(
     "In Progress": 0,
     Completed: 0,
   };
+  const documentationStatusCounts = {
+    fresh: 0,
+    fallback: 0,
+    stale: 0,
+    unknown: 0,
+  };
+  let documentationNeedsReview = 0;
+  let totalAccuracyScore = 0;
+  let accuracySampleCount = 0;
+  let totalCards = 0;
+  const reviewQueue: DocumentationReviewItem[] = [];
 
   regularNodes.forEach((node) => {
     if ((node.data as any)?.todos && Array.isArray((node.data as any).todos)) {
@@ -77,6 +115,46 @@ export function calculateAnalytics(
     } else {
       statusCount["Not Started"]++;
     }
+
+    const nodeData = node.data as any;
+    const nodeLabel: string =
+      (nodeData?.label as string) ||
+      (nodeData?.title as string) ||
+      node.id;
+    const cards = Array.isArray(nodeData?.cards) ? (nodeData.cards as any[]) : [];
+
+    cards.forEach((card: any, index: number) => {
+      totalCards += 1;
+      const accuracy = card?.metadata?.accuracy;
+      let status: "fresh" | "fallback" | "stale" | "unknown" = "unknown";
+      if (accuracy?.status === "fresh" || accuracy?.status === "fallback" || accuracy?.status === "stale") {
+        status = accuracy.status;
+      }
+      documentationStatusCounts[status] += 1;
+
+      const score = typeof accuracy?.score === "number" ? accuracy.score : null;
+      if (score !== null) {
+        totalAccuracyScore += score;
+        accuracySampleCount += 1;
+      }
+
+      const needsReview = Boolean(accuracy?.needsReview) || status === "stale";
+      if (needsReview) {
+        documentationNeedsReview += 1;
+      }
+
+      if (needsReview || status === "fallback") {
+        reviewQueue.push({
+          nodeId: node.id,
+          nodeLabel,
+          cardId: typeof card?.id === "string" ? card.id : `${node.id}-${index}`,
+          cardTitle: typeof card?.title === "string" ? card.title : "Untitled card",
+          status,
+          score,
+          needsReview,
+        });
+      }
+    });
   });
 
   const nodesByStatus = Object.entries(statusCount).map(([status, count]) => ({
@@ -125,6 +203,30 @@ export function calculateAnalytics(
 
   const averageConnectionsPerNode =
     totalNodes > 0 ? totalConnections / totalNodes : 0;
+  const orphanNodes = regularNodes
+    .filter((node) => (connectionCount[node.id] || 0) === 0)
+    .map((node) => ({
+      id: node.id,
+      label:
+        ((node.data as any)?.label as string) ||
+        ((node.data as any)?.title as string) ||
+        node.id,
+      type: (node.data as any)?.type as string | undefined,
+    }));
+  const lowConnectivityNodes = regularNodes
+    .filter((node) => (connectionCount[node.id] || 0) === 1)
+    .map((node) => ({
+      id: node.id,
+      label:
+        ((node.data as any)?.label as string) ||
+        ((node.data as any)?.title as string) ||
+        node.id,
+      connections: connectionCount[node.id] || 0,
+    }));
+  const edgeDensity =
+    totalNodes > 1
+      ? Math.min(totalConnections / (totalNodes * (totalNodes - 1)), 1)
+      : 0;
 
   return {
     totalNodes,
@@ -141,6 +243,19 @@ export function calculateAnalytics(
       totalConnections,
       averageConnectionsPerNode,
       mostConnectedNode,
+    },
+    documentationHealth: {
+      totalCards,
+      statusCounts: documentationStatusCounts,
+      needsReviewCount: documentationNeedsReview,
+      averageAccuracy:
+        accuracySampleCount > 0 ? totalAccuracyScore / accuracySampleCount : null,
+      reviewQueue,
+    },
+    relationshipHealth: {
+      orphanNodes,
+      lowConnectivityNodes,
+      edgeDensity,
     },
   };
 }

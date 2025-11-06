@@ -41,6 +41,8 @@ import {
   CircleDot,
   ArrowRight,
   FileCode,
+  FileText,
+  HeartPulse,
 } from "lucide-react";
 import { AlignmentType } from "../utils/alignment";
 import { ExportMenu } from "./ExportMenu";
@@ -74,6 +76,8 @@ interface ToolbarProps {
   onViewModeChange?: (mode: "radial" | "process") => void;
   onStartWizard?: () => void;
   onSpecContext?: () => void;
+  onDocumentationPreview?: () => void;
+  onWorkspaceHealth?: () => void;
 }
 
 export function Toolbar({
@@ -105,6 +109,8 @@ export function Toolbar({
   viewMode = "radial",
   onViewModeChange,
   onSpecContext,
+  onDocumentationPreview,
+  onWorkspaceHealth,
 }: ToolbarProps) {
   const showAlignmentTools = selectedNodeCount >= 2;
   
@@ -194,6 +200,42 @@ export function Toolbar({
               </TooltipTrigger>
               <TooltipContent>
                 <p>AI Builder</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {onDocumentationPreview && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onDocumentationPreview}
+                  className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+                >
+                  <FileText className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Documentation</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {onWorkspaceHealth && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onWorkspaceHealth}
+                  className="h-8 w-8 hover:bg-gray-100 text-gray-700"
+                >
+                  <HeartPulse className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Workspace Health</p>
               </TooltipContent>
             </Tooltip>
           )}

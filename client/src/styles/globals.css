@@ -390,3 +390,10 @@ html {
 .react-flow__node-center {
   z-index: 1 !important;
 }
+
+/* Modal scrollbar styling */
+.modal-scroll { scrollbar-width: thin; scrollbar-gutter: stable both-edges; }
+.modal-scroll::-webkit-scrollbar { width: 10px; }
+.modal-scroll::-webkit-scrollbar-track { background: transparent; }
+.modal-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.6); border-radius: 8px; }
+.modal-scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.75); }

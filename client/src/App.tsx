@@ -28,7 +28,21 @@ import { captureNodeDimensions as measureNodes } from "@/utils/measure";
 import seed from "./fixtures/collision_seed.json";
 import { alignNodes, distributeNodes, AlignmentType } from "./utils/alignment";
 import { HistoryManager } from "./utils/history";
-import { exportToPNG, exportToSVG, exportToMarkdown, downloadMarkdown, exportNodeAsJSON, exportNodeAsMarkdown, copyNodeToClipboard, exportBatchAsJSON, exportBatchAsMarkdown, exportSubgraphAsJSON, exportSubgraphAsMarkdown } from "./utils/export";
+import {
+  exportToPNG,
+  exportToSVG,
+  exportToMarkdown,
+  downloadMarkdown,
+  exportNodeAsJSON,
+  exportNodeAsMarkdown,
+  copyNodeToClipboard,
+  exportBatchAsJSON,
+  exportBatchAsMarkdown,
+  exportSubgraphAsJSON,
+  exportSubgraphAsMarkdown,
+  buildWorkspaceDocumentationBundle,
+  downloadDocumentationBundle,
+} from "./utils/export";
 import { importNodeFromJSON, importMultipleNodesFromJSON } from "./utils/import";
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react';
 
@@ -44,7 +58,7 @@ import { IdeaKickoffDialog, type IdeaKickoffValues } from "./components/IdeaKick
 import { StartWizard } from "./components/StartWizard";
 import { SuggestionPanel } from "./components/SuggestionPanel";
 import type { SuggestedNode } from "./types/ai";
-import { EditableCardData, CardType } from "./components/EditableCard";
+import { EditableCardData, CardType, CardSection, TodoItem } from "./components/EditableCard";
 import { CARD_TEMPLATES, type NodeCardTemplateId } from "./config/nodeCardRegistry";
 import { CustomEdge } from "./components/CustomEdge";
 import { DragPreviewOverlay } from "./components/DragPreviewOverlay";
@@ -73,8 +87,10 @@ import { TemplateGallery } from "./components/TemplateGallery";
 import { SaveTemplateDialog } from "./components/SaveTemplateDialog";
 import { MinimapPanel } from "./components/MinimapPanel";
 import { AnalyticsModal } from "./components/AnalyticsModal";
+import { WorkspaceHealthPanel } from "./components/WorkspaceHealthPanel";
 import { SnapshotsPanel } from "./components/SnapshotsPanel";
 import { RelationshipsPanel } from "./components/RelationshipsPanel";
+import { DocumentationPreview } from "./components/DocumentationPreview";
 import { CustomConnectionLine } from "./components/CustomConnectionLine";
 import { setConnectStart } from "./utils/connectionState";
 import { DomainRings } from "./components/DomainRings";
@@ -108,14 +124,130 @@ import { Template } from "./utils/templates";
 import { calculateAnalytics, getInsights } from "./utils/analytics";
 import { createAutoSnapshot, getSnapshots } from "./utils/snapshots";
 import { RelationshipType, setRelationshipType, getRelationshipLabel } from "./utils/relationships";
+import type { DocumentationBundle, DocumentationFlag } from "./utils/documentationBundle";
+import { documentationFlagId } from "./utils/documentationBundle";
 
-const DEFAULT_WORKSPACE_ID = import.meta.env.VITE_DEFAULT_WORKSPACE_ID || "000000000000000000000001";
+const DEFAULT_WORKSPACE_ID = import.meta.env.VITE_DEFAULT_WORKSPACE_ID || "";
 const USE_MOCK_SUGGESTIONS = import.meta.env.VITE_MOCK_AI_SUGGESTIONS !== "false";
 const WORKSPACE_ID_STORAGE_KEY = "flowforge-active-workspace-id";
 const WORKSPACE_NAME_STORAGE_KEY = "flowforge-active-workspace-name";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+const VALID_CARD_TYPES: CardType[] = ["text", "todo", "markdown", "checklist", "brief", "spec"];
 
 const createAutoNodeId = () => `auto-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
+const createAutoCardId = () => `card-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
+
+const sanitizeCardSections = (sections: any): CardSection[] | undefined => {
+  if (!Array.isArray(sections)) return undefined;
+  const sanitized = sections
+    .map((section) => {
+      if (!section || typeof section !== "object") return null;
+      const id =
+        typeof section.id === "string" && section.id.trim().length > 0
+          ? section.id
+          : createAutoCardId();
+      const title =
+        typeof section.title === "string" && section.title.trim().length > 0
+          ? section.title
+          : "Section";
+      const body = typeof section.body === "string" ? section.body : "";
+      return { id, title, body };
+    })
+    .filter(Boolean) as CardSection[];
+  return sanitized.length ? sanitized : undefined;
+};
+
+const sanitizeTodoItems = (todos: any): TodoItem[] | undefined => {
+  if (!Array.isArray(todos)) return undefined;
+  const sanitized = todos
+    .map((todo) => {
+      if (!todo || typeof todo !== "object") return null;
+      const id =
+        typeof todo.id === "string" && todo.id.trim().length > 0
+          ? todo.id
+          : createAutoCardId();
+      const text = typeof todo.text === "string" ? todo.text : "";
+      const completed = Boolean(todo.completed);
+      return { id, text, completed };
+    })
+    .filter(Boolean) as TodoItem[];
+  return sanitized.length ? sanitized : undefined;
+};
+
+const sanitizeCardMetadata = (metadata: any): EditableCardData["metadata"] | undefined => {
+  if (!metadata || typeof metadata !== "object") return undefined;
+  const safe: EditableCardData["metadata"] = {};
+  if (typeof metadata.templateId === "string") safe.templateId = metadata.templateId;
+  if (typeof metadata.templateName === "string") safe.templateName = metadata.templateName;
+  if (typeof metadata.generatedAt === "string") safe.generatedAt = metadata.generatedAt;
+  if (metadata.generatedBy === "ai" || metadata.generatedBy === "template" || metadata.generatedBy === "user") {
+    safe.generatedBy = metadata.generatedBy;
+  }
+  if (Array.isArray(metadata.tags)) {
+    safe.tags = metadata.tags.filter((tag: any) => typeof tag === "string");
+  }
+  if (Array.isArray(metadata.suggestedPrdTemplates)) {
+    safe.suggestedPrdTemplates = metadata.suggestedPrdTemplates.filter(
+      (id: any) => typeof id === "string"
+    );
+  }
+  if (typeof metadata.reason === "string") safe.reason = metadata.reason;
+  if (typeof metadata.description === "string") safe.description = metadata.description;
+  if (typeof metadata.prdTemplateId === "string") safe.prdTemplateId = metadata.prdTemplateId;
+  if (Array.isArray(metadata.warnings)) {
+    safe.warnings = metadata.warnings.filter((value: any) => typeof value === "string");
+  }
+  if (metadata.accuracy && typeof metadata.accuracy === "object") {
+    const acc = metadata.accuracy as any;
+    const accuracy: EditableCardData["metadata"]["accuracy"] = {
+      score: typeof acc.score === "number" ? acc.score : 0,
+      status: acc.status === "fresh" || acc.status === "fallback" || acc.status === "stale" ? acc.status : "fresh",
+    };
+    if (Array.isArray(acc.factors)) {
+      accuracy.factors = acc.factors.filter((value: any) => typeof value === "string");
+    }
+    if (typeof acc.lastGeneratedAt === "string") accuracy.lastGeneratedAt = acc.lastGeneratedAt;
+    if (typeof acc.qualityConfidence === "number") accuracy.qualityConfidence = acc.qualityConfidence;
+    if (typeof acc.needsReview === "boolean") accuracy.needsReview = acc.needsReview;
+    safe.accuracy = accuracy;
+  }
+  return Object.keys(safe).length ? safe : undefined;
+};
+
+const sanitizeCard = (raw: any): EditableCardData | null => {
+  if (!raw || typeof raw !== "object") return null;
+  const type: CardType = VALID_CARD_TYPES.includes(raw.type) ? raw.type : "text";
+  const id =
+    typeof raw.id === "string" && raw.id.trim().length > 0 ? raw.id : createAutoCardId();
+  const title =
+    typeof raw.title === "string" && raw.title.trim().length > 0 ? raw.title : "Untitled Card";
+
+  const sanitized: EditableCardData = {
+    id,
+    title,
+    type,
+  };
+
+  if (typeof raw.content === "string") {
+    sanitized.content = raw.content;
+  }
+  const todos = sanitizeTodoItems(raw.todos);
+  if (todos) sanitized.todos = todos;
+  const sections = sanitizeCardSections(raw.sections);
+  if (sections) sanitized.sections = sections;
+  const metadata = sanitizeCardMetadata(raw.metadata);
+  if (metadata) sanitized.metadata = metadata;
+
+  return sanitized;
+};
+
+const sanitizeCards = (cards: any): EditableCardData[] | undefined => {
+  if (!Array.isArray(cards)) return undefined;
+  const sanitized = cards
+    .map(sanitizeCard)
+    .filter(Boolean) as EditableCardData[];
+  return sanitized.length ? sanitized : undefined;
+};
 
 const buildAutoTags = (base: string[], value: string): string[] => {
   const normalizedBase = base.map((tag) => tag.toLowerCase());
@@ -181,6 +313,7 @@ type SerializableWorkspaceNode = {
     preferredWidth?: number;
     maxNodeHeight?: number;
     maxNodeWidth?: number;
+    cards?: EditableCardData[];
   };
 };
 
@@ -266,7 +399,7 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         tags: Array.isArray(nodeData.tags) ? nodeData.tags : [],
         stackHint: nodeData.stackHint,
         type: workspaceNode.type,
-        cards: [],
+        cards: sanitizeCards(nodeData.cards) ?? [],
         ...(preferredHeight ? { preferredHeight } : {}),
         ...(preferredWidth ? { preferredWidth } : {}),
         ...(maxNodeHeight ? { maxNodeHeight } : {}),
@@ -339,6 +472,7 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
     typeof data.maxNodeWidth === "number" && Number.isFinite(data.maxNodeWidth)
       ? data.maxNodeWidth
       : undefined;
+  const cards = sanitizeCards(data.cards);
 
   return {
     id: node.id,
@@ -356,6 +490,7 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       preferredWidth,
       maxNodeHeight,
       maxNodeWidth,
+      cards,
     },
   };
 }
@@ -417,7 +552,8 @@ const edgeTypes: EdgeTypes = {
 
 const LAYOUT_VERSION_KEY = "flowforge-layout-version";
 const CURRENT_LAYOUT_VERSION = "radial-v2";
-const RESET_WORKSPACE_ON_LOAD = (import.meta as any)?.env?.VITE_RESET_WORKSPACE_ON_LOAD !== "false";
+const RESET_WORKSPACE_ON_LOAD =
+  (import.meta as any)?.env?.VITE_RESET_WORKSPACE_ON_LOAD === "true";
 
 const haveDimensionsChanged = (prev = {}, next = {}) => {
   const prevKeys = Object.keys(prev);
@@ -681,7 +817,7 @@ function FlowCanvas() {
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<{ nodeId: string; card: EditableCardData } | null>(null);
   const [activeCardGeneration, setActiveCardGeneration] = useState<{ nodeId: string; cardId: string } | null>(null);
-  const [saveLoadMode, setSaveLoadMode] = useState<"save" | "load">("save");
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<Workspace[]>([]);
   const [workspaceName, setWorkspaceName] = useState(() => {
     if (typeof window === "undefined") return "My Workspace";
     return localStorage.getItem(WORKSPACE_NAME_STORAGE_KEY) || "My Workspace";
@@ -743,6 +879,10 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+  const [isWorkspaceHealthPanelOpen, setIsWorkspaceHealthPanelOpen] = useState(false);
+  const [isDocumentationPreviewOpen, setIsDocumentationPreviewOpen] = useState(false);
+  const [documentationBundle, setDocumentationBundle] = useState<DocumentationBundle | null>(null);
+  const [documentationFlags, setDocumentationFlags] = useState<Record<string, DocumentationFlag>>({});
   const [isSnapshotsPanelOpen, setIsSnapshotsPanelOpen] = useState(false);
   const [isRelationshipsPanelOpen, setIsRelationshipsPanelOpen] = useState(false);
   const [isConnectSourcesOpen, setIsConnectSourcesOpen] = useState(false);
@@ -750,6 +890,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const [showDomainRings, setShowDomainRings] = useState(true);
   const [suggestionPanelRefresh, setSuggestionPanelRefresh] = useState(0);
   const [isSuggestionPanelOpen, setIsSuggestionPanelOpen] = useState(false);
+  const historyManager = useRef(new HistoryManager(50));
   const centerNodeIdRef = useRef<string>("center");
   const isCenterNode = useCallback(
     (node: { id?: string; type?: string } | null | undefined) =>
@@ -757,6 +898,12 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
     []
   );
   const autoBlueprintNodeMapRef = useRef<Record<string, string>>({});
+
+  const workspaceDisplayName =
+    workspaceName && workspaceName.trim().length > 0 ? workspaceName.trim() : "Untitled Workspace";
+  const workspaceFileSlug = workspaceDisplayName.replace(/\s+/g, "-").toLowerCase();
+  const analytics = useMemo(() => calculateAnalytics(nodes, edges), [nodes, edges]);
+  const analyticsInsights = useMemo(() => getInsights(analytics), [analytics]);
 
   const centerNodeData = useMemo<CenterNodeData | undefined>(() => {
     const center = nodes.find((n) => n && (n.type === "center" || n.id === centerNodeIdRef.current));
@@ -808,6 +955,58 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       launch: centerNodeData?.launchScope?.trim(),
     };
   }, [centerNodeData]);
+
+  const applyWorkspace = useCallback(
+    (workspace: Workspace) => {
+      const resolvedId = workspace._id || DEFAULT_WORKSPACE_ID;
+      const resolvedName = workspace.name || "My Workspace";
+
+      setWorkspaceId(resolvedId);
+      setWorkspaceName(resolvedName);
+      lastPersistedWorkspaceNameRef.current = resolvedName;
+
+      let flowNodes = toFlowNodes((workspace.nodes as unknown as SerializableWorkspaceNode[]) || []);
+      const centerFromNodes = flowNodes.find((node) => node?.type === "center");
+      centerNodeIdRef.current = centerFromNodes?.id ?? "center";
+
+      let nodeIdSet = new Set(flowNodes.map((node) => node.id));
+      let flowEdges = toFlowEdges((workspace.edges as unknown as SerializableWorkspaceEdge[]) || [], nodeIdSet);
+
+      if (RESET_WORKSPACE_ON_LOAD && flowNodes.length > 1) {
+        const centerNode =
+          flowNodes.find((node) => node?.type === "center") ??
+          toFlowNodes([DEFAULT_WORKSPACE_NODE as SerializableWorkspaceNode]).find((node) => node?.type === "center");
+        flowNodes = centerNode ? [centerNode] : [];
+        flowEdges = [];
+      }
+
+      if (flowNodes.length === 0) {
+        flowNodes = toFlowNodes([DEFAULT_WORKSPACE_NODE as SerializableWorkspaceNode]);
+      }
+
+      nodeIdSet = new Set(flowNodes.map((node) => node.id));
+      flowEdges = toFlowEdges((workspace.edges as unknown as SerializableWorkspaceEdge[]) || [], nodeIdSet);
+
+      setEdges(flowEdges);
+      setNodes(flowNodes as any);
+      historyManager.current.initialize({ nodes: flowNodes, edges: flowEdges });
+      setCanUndo(historyManager.current.canUndo());
+      setCanRedo(historyManager.current.canRedo());
+
+      const baselineSnapshot = buildWorkspaceUpdatePayload(resolvedName, flowNodes, flowEdges);
+      lastPersistSnapshotRef.current = JSON.stringify(baselineSnapshot);
+      setIsSaved(true);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, resolvedId);
+        localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, resolvedName);
+      }
+
+      setWorkspaceLoadError(null);
+      setIsWorkspaceReady(true);
+    },
+    [setWorkspaceId, setWorkspaceName, setEdges, setNodes, setCanUndo, setCanRedo, setIsSaved, setWorkspaceLoadError, setIsWorkspaceReady]
+  );
 
   const handleBlueprintEnrichment = useCallback(() => {
     const order: AutoBlueprintKind[] = ["launch", "outcome", "persona", "risk"];
@@ -927,69 +1126,26 @@ const handleSwitchToWizard = useCallback(
       const storedId = typeof window !== "undefined" ? localStorage.getItem(WORKSPACE_ID_STORAGE_KEY) : null;
       const storedName = typeof window !== "undefined" ? localStorage.getItem(WORKSPACE_NAME_STORAGE_KEY) : null;
 
-      const workspaces = await workspacesAPI.list();
-      const byId = storedId ? workspaces.find((workspace) => workspace._id === storedId) : undefined;
-      const byName = storedName ? workspaces.find((workspace) => workspace.name === storedName) : undefined;
-
-      let active: Workspace | undefined = byId || byName;
-      if (!active && workspaces.length > 0) {
-        active = workspaces[0];
-      }
-
-      if (!active) {
-        const existingNames = new Set(workspaces.map((workspace) => workspace.name));
-        const name = generateWorkspaceName(existingNames);
-        active = await workspacesAPI.create(buildDefaultWorkspacePayload(name));
-      }
-
-      if (!active) {
-        throw new Error("Workspace bootstrap returned no workspace");
-      }
-
-      const resolvedId = active._id || DEFAULT_WORKSPACE_ID;
-      const resolvedName = active.name || "My Workspace";
-      setWorkspaceId(resolvedId);
-      setWorkspaceName(resolvedName);
-      lastPersistedWorkspaceNameRef.current = resolvedName;
-      let flowNodes = toFlowNodes((active.nodes as unknown as SerializableWorkspaceNode[]) || []);
-      const centerFromNodes = flowNodes.find((node) => node?.type === "center");
-      if (centerFromNodes?.id) {
-        centerNodeIdRef.current = centerFromNodes.id;
-      } else {
-        centerNodeIdRef.current = "center";
-      }
-      let nodeIdSet = new Set(flowNodes.map((node) => node.id));
-      let flowEdges = toFlowEdges((active.edges as unknown as SerializableWorkspaceEdge[]) || [], nodeIdSet);
-
-      if (RESET_WORKSPACE_ON_LOAD && flowNodes.length > 1) {
-        const centerNode =
-          flowNodes.find((node) => node?.type === "center") ??
-          toFlowNodes([DEFAULT_WORKSPACE_NODE as SerializableWorkspaceNode]).find((node) => node?.type === "center");
-        flowNodes = centerNode ? [centerNode] : [];
-        nodeIdSet = new Set(flowNodes.map((node) => node.id));
-        flowEdges = [];
-      }
-
-      if (flowNodes.length === 0) {
-        flowNodes = toFlowNodes([DEFAULT_WORKSPACE_NODE as SerializableWorkspaceNode]);
-        nodeIdSet = new Set(flowNodes.map((node) => node.id));
-      }
-      setEdges(flowEdges);
-      setNodes(flowNodes as any);
-      historyManager.current.initialize({ nodes: flowNodes, edges: flowEdges });
-      setCanUndo(historyManager.current.canUndo());
-      setCanRedo(historyManager.current.canRedo());
-
-      const baselineSnapshot = buildWorkspaceUpdatePayload(resolvedName, flowNodes, flowEdges);
-      lastPersistSnapshotRef.current = JSON.stringify(baselineSnapshot);
-      setIsSaved(true);
-
       if (typeof window !== "undefined") {
-        localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, resolvedId);
-        localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, resolvedName);
+        if (storedId) localStorage.removeItem(WORKSPACE_ID_STORAGE_KEY);
+        if (storedName) localStorage.removeItem(WORKSPACE_NAME_STORAGE_KEY);
       }
+
+      const workspaces = await workspacesAPI.list();
+      setAvailableWorkspaces(workspaces);
+
+      let initialWorkspace: Workspace | undefined =
+        workspaces.find((entry) => entry._id === (storedId || DEFAULT_WORKSPACE_ID)) ??
+        workspaces.find((entry) => entry.name === storedName) ??
+        workspaces[0];
+
+      if (initialWorkspace) {
+        applyWorkspace(initialWorkspace);
+      } else {
+        setIsWorkspaceReady(true);
+      }
+
       setWorkspaceLoadError(null);
-      setIsWorkspaceReady(true);
     } catch (error) {
       console.error("Failed to bootstrap workspace", error);
       if (!workspaceLoadError) {
@@ -1000,7 +1156,7 @@ const handleSwitchToWizard = useCallback(
       setWorkspaceLoadError("failed");
       setIsWorkspaceReady(true);
     }
-  }, [isWorkspaceReady, workspaceLoadError]);
+  }, [applyWorkspace, isWorkspaceReady, setAvailableWorkspaces, workspaceLoadError]);
 
   useEffect(() => {
     bootstrapWorkspace();
@@ -1008,7 +1164,7 @@ const handleSwitchToWizard = useCallback(
 
   const persistWorkspace = useCallback(
     async (options?: { renameTo?: string; toastOnSuccess?: boolean; force?: boolean }) => {
-      if (!isWorkspaceReady || !workspaceId) {
+      if (!isWorkspaceReady) {
         return;
       }
 
@@ -1025,7 +1181,11 @@ const handleSwitchToWizard = useCallback(
         edges: payload.edges,
       });
 
-      if (!options?.force && !options?.renameTo && snapshot === lastPersistSnapshotRef.current) {
+      if (!workspaceId && snapshot === lastPersistSnapshotRef.current) {
+        return;
+      }
+
+      if (!options?.force && !options?.renameTo && snapshot === lastPersistSnapshotRef.current && workspaceId) {
         return;
       }
 
@@ -1038,13 +1198,25 @@ const handleSwitchToWizard = useCallback(
         lastPersistedWorkspaceNameRef.current || workspaceName;
 
       try {
-        const updated = await workspacesAPI.update(previousName, payload);
+        let updated: Workspace
+        if (!workspaceId) {
+          const created = await workspacesAPI.create({
+            name: desiredName,
+            nodes: payload.nodes as any,
+            edges: payload.edges as any,
+          })
+          updated = created
+          setWorkspaceId(created._id)
+        } else {
+          updated = await workspacesAPI.update(previousName, payload)
+          setWorkspaceId(updated?._id || workspaceId)
+        }
         lastPersistSnapshotRef.current = snapshot;
         setIsSaved(true);
         setWorkspaceLoadError(null);
 
         const resolvedName = updated?.name || desiredName;
-        const resolvedId = updated?._id || workspaceId;
+        const resolvedId = updated?._id || workspaceId || "";
 
         if (options?.renameTo) {
           setWorkspaceName(resolvedName);
@@ -1056,6 +1228,22 @@ const handleSwitchToWizard = useCallback(
          localStorage.setItem(WORKSPACE_NAME_STORAGE_KEY, resolvedName);
          localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, resolvedId);
        }
+
+        setAvailableWorkspaces((prev) => {
+          const normalized: Workspace = {
+            ...(updated ?? {
+              _id: resolvedId,
+              name: resolvedName,
+              nodes: payload.nodes as any,
+              edges: payload.edges as any,
+            }),
+            _id: resolvedId,
+            name: resolvedName,
+            updatedAt: updated?.updatedAt ?? new Date().toISOString(),
+          };
+          const key = normalized._id ?? normalized.name;
+          return [normalized, ...prev.filter((workspace) => (workspace._id ?? workspace.name) !== key)];
+        });
 
         if (options?.toastOnSuccess) {
           toast.success("Workspace saved", {
@@ -1076,7 +1264,7 @@ const handleSwitchToWizard = useCallback(
         isPersistingWorkspaceRef.current = false;
       }
     },
-    [edges, isWorkspaceReady, nodes, workspaceId, workspaceName]
+    [edges, isWorkspaceReady, nodes, setAvailableWorkspaces, workspaceId, workspaceName]
   );
 
   const handleGenerateCardContent = useCallback(
@@ -1317,7 +1505,6 @@ const handleSwitchToWizard = useCallback(
   }, [nodes, selectedNodeId]);
 
   const reactFlowInstance = useReactFlow();
-  const historyManager = useRef(new HistoryManager(50));
   const isUndoRedoAction = useRef(false);
   // Track connection lifecycle to decide between edge vs new node
   const connectStartInfoRef = useRef<{ nodeId: string | null; handleId?: string | null } | null>(null);
@@ -3480,16 +3667,36 @@ const handleSwitchToWizard = useCallback(
     [persistWorkspace]
   );
 
-  const handleLoad = useCallback((id: string) => {
-    toast.success("Workspace loaded", {
-      description: "Your workspace has been restored",
-    });
-    setIsSaved(true);
-    setWorkspaceId(id);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, id);
-    }
-  }, []);
+  const handleLoad = useCallback(
+    async (workspace: Workspace) => {
+      const targetName = workspace.name;
+      if (!targetName) {
+        toast.error("Cannot load workspace", {
+          description: "Selected workspace does not have a valid name.",
+        });
+        return;
+      }
+
+      try {
+        const latest = await workspacesAPI.get(targetName, { forceRefresh: true });
+        applyWorkspace(latest);
+        setAvailableWorkspaces((prev) => {
+          const key = latest._id ?? latest.name;
+          return [latest, ...prev.filter((entry) => (entry._id ?? entry.name) !== key)];
+        });
+        toast.success("Workspace loaded", {
+          description: `Switched to "${latest.name}"`,
+        });
+      } catch (error) {
+        const message = getErrorMessage(error) ?? "Unable to load the selected workspace.";
+        toast.error("Failed to load workspace", {
+          description: message,
+        });
+        throw error;
+      }
+    },
+    [applyWorkspace, setAvailableWorkspaces]
+  );
 
   const handleAutoLayout = useCallback(async () => {
     let layoutedNodes;
@@ -4079,7 +4286,7 @@ const handleSwitchToWizard = useCallback(
       const transform: [number, number, number] = [viewport.x, viewport.y, viewport.zoom];
       
       await exportToPNG(nodesBounds, transform, {
-        fileName: `${workspaceName.replace(/\s+/g, '-').toLowerCase()}.png`,
+        fileName: `${workspaceFileSlug}.png`,
         backgroundColor: '#f9fafb',
         imageWidth: 2400,
         imageHeight: 1600,
@@ -4093,7 +4300,7 @@ const handleSwitchToWizard = useCallback(
         description: "Could not export canvas as PNG",
       });
     }
-  }, [nodes, reactFlowInstance, workspaceName]);
+  }, [nodes, reactFlowInstance, workspaceFileSlug]);
 
   const handleExportSVG = useCallback(async () => {
     try {
@@ -4102,7 +4309,7 @@ const handleSwitchToWizard = useCallback(
       const transform: [number, number, number] = [viewport.x, viewport.y, viewport.zoom];
       
       await exportToSVG(nodesBounds, transform, {
-        fileName: `${workspaceName.replace(/\s+/g, '-').toLowerCase()}.svg`,
+        fileName: `${workspaceFileSlug}.svg`,
         backgroundColor: '#f9fafb',
         imageWidth: 2400,
         imageHeight: 1600,
@@ -4116,12 +4323,12 @@ const handleSwitchToWizard = useCallback(
         description: "Could not export canvas as SVG",
       });
     }
-  }, [nodes, reactFlowInstance, workspaceName]);
+  }, [nodes, reactFlowInstance, workspaceFileSlug]);
 
   const handleExportMarkdown = useCallback(() => {
     try {
-      const markdown = exportToMarkdown(nodes, edges, workspaceName);
-      downloadMarkdown(markdown, `${workspaceName.replace(/\s+/g, '-').toLowerCase()}-docs.md`);
+      const markdown = exportToMarkdown(nodes, edges, workspaceDisplayName);
+      downloadMarkdown(markdown, `${workspaceFileSlug}-docs.md`);
       
       toast.success("Exported as Markdown", {
         description: "Documentation generated successfully",
@@ -4131,7 +4338,130 @@ const handleSwitchToWizard = useCallback(
         description: "Could not generate markdown documentation",
       });
     }
-  }, [nodes, edges, workspaceName]);
+  }, [nodes, edges, workspaceDisplayName, workspaceFileSlug]);
+
+  const handleOpenDocumentationPreview = useCallback(() => {
+    try {
+      const bundle = buildWorkspaceDocumentationBundle(nodes, edges, workspaceDisplayName);
+      setDocumentationBundle(bundle);
+      setIsDocumentationPreviewOpen(true);
+      setDocumentationFlags((prev) => {
+        if (!prev || Object.keys(prev).length === 0) {
+          return prev;
+        }
+        const validIds = new Set<string>();
+        bundle.nodes.forEach((node) => {
+          validIds.add(documentationFlagId("node", node.id));
+          node.cards.forEach((card, cardIndex) => {
+            validIds.add(documentationFlagId("card", node.id, card.id));
+            card.sections?.forEach((section, sectionIndex) => {
+              validIds.add(
+                documentationFlagId("section", node.id, card.id, section.id ?? String(sectionIndex))
+              );
+            });
+            card.todos?.forEach((todo, todoIndex) => {
+              validIds.add(
+                documentationFlagId("todo", node.id, card.id, todo.id ?? String(todoIndex))
+              );
+            });
+          });
+        });
+        if (validIds.size === Object.keys(prev).length) {
+          return prev;
+        }
+        const next: Record<string, DocumentationFlag> = {};
+        Object.entries(prev).forEach(([flagId, flag]) => {
+          if (validIds.has(flagId)) {
+            next[flagId] = flag;
+          }
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to build documentation bundle", error);
+      toast.error("Documentation unavailable", {
+        description: "Could not build documentation bundle. Try again after refreshing your workspace.",
+      });
+    }
+  }, [nodes, edges, workspaceDisplayName]);
+
+  const handleDownloadDocumentationMarkdown = useCallback(() => {
+    if (!documentationBundle) {
+      toast.info("No documentation yet", {
+        description: "Open the preview to generate the bundle before downloading.",
+      });
+      return;
+    }
+
+    try {
+      downloadMarkdown(documentationBundle.markdown, `${workspaceFileSlug}-docs.md`);
+      toast.success("Markdown downloaded", {
+        description: "Documentation saved locally.",
+      });
+    } catch (error) {
+      console.error("Failed to download markdown", error);
+      toast.error("Download failed", {
+        description: "Could not save documentation markdown.",
+      });
+    }
+  }, [documentationBundle, workspaceFileSlug]);
+
+  const handleDownloadDocumentationBundle = useCallback(() => {
+    if (!documentationBundle) {
+      toast.info("No documentation yet", {
+        description: "Open the preview to generate the bundle before downloading.",
+      });
+      return;
+    }
+
+    try {
+      downloadDocumentationBundle(documentationBundle, `${workspaceFileSlug}-bundle.json`);
+      toast.success("Bundle downloaded", {
+        description: "Structured documentation exported as JSON.",
+      });
+    } catch (error) {
+      console.error("Failed to download documentation bundle", error);
+      toast.error("Download failed", {
+        description: "Could not save documentation bundle.",
+      });
+    }
+  }, [documentationBundle, workspaceFileSlug]);
+
+  const handleDocumentationFlagChange = useCallback((flagId: string, value: DocumentationFlag | null) => {
+    setDocumentationFlags((prev) => {
+      if (value === null) {
+        if (!prev[flagId]) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[flagId];
+        return next;
+      }
+      return {
+        ...prev,
+        [flagId]: value,
+      };
+    });
+  }, []);
+
+  const handleDocumentationFlagNoteChange = useCallback((flagId: string, note: string) => {
+    setDocumentationFlags((prev) => {
+      const existing = prev[flagId];
+      if (!existing) {
+        return prev;
+      }
+      if (existing.note === note) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [flagId]: {
+          ...existing,
+          note,
+        },
+      };
+    });
+  }, []);
 
   // Individual node export handlers
   const handleExportNodeJSON = useCallback((nodeId: string) => {
@@ -4904,11 +5234,9 @@ const handleSwitchToWizard = useCallback(
           launchNodeCreator({ forceWizard: true });
         }}
         onSave={() => {
-          setSaveLoadMode("save");
           setIsSaveLoadDialogOpen(true);
         }}
         onLoad={() => {
-          setSaveLoadMode("load");
           setIsSaveLoadDialogOpen(true);
         }}
         onUndo={handleUndo}
@@ -4930,9 +5258,11 @@ const handleSwitchToWizard = useCallback(
         onSearch={() => setIsSearchPanelOpen(true)}
         onAnalytics={() => setIsAnalyticsModalOpen(true)}
         onRelationships={() => setIsRelationshipsPanelOpen(true)}
+        onWorkspaceHealth={() => setIsWorkspaceHealthPanelOpen(true)}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSpecContext={() => setIsSpecContextDialogOpen(true)}
+        onDocumentationPreview={handleOpenDocumentationPreview}
       />
 
       <FloatingFormatToolbar isVisible={isEditingText} />
@@ -5079,6 +5409,9 @@ const handleSwitchToWizard = useCallback(
         onClose={() => setIsSaveLoadDialogOpen(false)}
         onSave={handleSave}
         onLoad={handleLoad}
+        workspaces={availableWorkspaces}
+        activeWorkspaceId={workspaceId}
+        initialName={workspaceName}
       />
 
       <UserSettingsDialog
@@ -5326,8 +5659,8 @@ const handleSwitchToWizard = useCallback(
       <AnalyticsModal
         open={isAnalyticsModalOpen}
         onOpenChange={setIsAnalyticsModalOpen}
-        analytics={calculateAnalytics(nodes, edges)}
-        insights={getInsights(calculateAnalytics(nodes, edges))}
+        analytics={analytics}
+        insights={analyticsInsights}
       />
 
       {/* Snapshots Panel */}
@@ -5349,6 +5682,25 @@ const handleSwitchToWizard = useCallback(
         onFocusNode={handleNodeFocus}
         onUpdateEdge={handleUpdateEdgeRelationship}
         onCreateEdge={handleCreateRelationshipEdge}
+      />
+
+      <WorkspaceHealthPanel
+        open={isWorkspaceHealthPanelOpen}
+        onOpenChange={setIsWorkspaceHealthPanelOpen}
+        analytics={analytics}
+        onFocusNode={handleNodeFocus}
+        workspaceName={workspaceDisplayName}
+      />
+
+      <DocumentationPreview
+        open={isDocumentationPreviewOpen}
+        onClose={() => setIsDocumentationPreviewOpen(false)}
+        bundle={documentationBundle}
+        flagged={documentationFlags}
+        onFlagChange={handleDocumentationFlagChange}
+        onFlagNoteChange={handleDocumentationFlagNoteChange}
+        onDownloadMarkdown={handleDownloadDocumentationMarkdown}
+        onDownloadBundle={handleDownloadDocumentationBundle}
       />
     </div>
   );

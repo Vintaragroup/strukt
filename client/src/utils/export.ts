@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { Node, Edge, getNodesBounds, getViewportForBounds } from '@xyflow/react';
+import type { DocumentationBundle } from "@/utils/documentationBundle";
+import { buildDocumentationBundle } from "@/utils/documentationBundle";
 
 const CENTER_ID_FALLBACKS = new Set(['center', 'center-node']);
 
@@ -103,112 +105,34 @@ export async function exportToSVG(
 /**
  * Generate markdown documentation from nodes
  */
+export function buildWorkspaceDocumentationBundle(
+  nodes: Node[],
+  edges: Edge[],
+  workspaceName: string = 'My Workspace'
+): DocumentationBundle {
+  const centerNode = nodes.find((node) => node.type === 'center');
+  const workspaceSummary =
+    typeof centerNode?.data?.summary === 'string' && centerNode.data.summary.trim().length > 0
+      ? centerNode.data.summary
+      : typeof centerNode?.data?.description === 'string' && centerNode.data.description.trim().length > 0
+        ? centerNode.data.description
+        : undefined;
+
+  return buildDocumentationBundle({
+    workspaceName,
+    workspaceSummary,
+    nodes,
+    edges,
+  });
+}
+
 export function exportToMarkdown(
   nodes: Node[],
   edges: Edge[],
   workspaceName: string = 'My Workspace'
 ): string {
-  let markdown = `# ${workspaceName}\n\n`;
-  markdown += `*Generated from FlowForge on ${new Date().toLocaleDateString()}*\n\n`;
-  markdown += `---\n\n`;
-
-  // Find the center node
-  const centerNode = nodes.find(n => n.type === 'center');
-  if (centerNode) {
-    markdown += `## ${centerNode.data.label}\n\n`;
-    if (centerNode.data.description) {
-      markdown += `${centerNode.data.description}\n\n`;
-    }
-    if (centerNode.data.link) {
-      markdown += `🔗 [Link](${centerNode.data.link})\n\n`;
-    }
-    markdown += `---\n\n`;
-  }
-
-  // Group nodes by type
-  const nodesByType: Record<string, Node[]> = {
-    frontend: [],
-    backend: [],
-    requirement: [],
-    doc: [],
-    root: [],
-  };
-
-  nodes.forEach(node => {
-    if (node.type === 'custom' && node.data.type) {
-      const type = node.data.type;
-      if (nodesByType[type]) {
-        nodesByType[type].push(node);
-      }
-    }
-  });
-
-  // Export each type
-  const typeNames: Record<string, string> = {
-    root: 'Core Features',
-    frontend: 'Frontend Components',
-    backend: 'Backend Services',
-    requirement: 'Requirements',
-    doc: 'Documentation',
-  };
-
-  Object.entries(nodesByType).forEach(([type, typeNodes]) => {
-    if (typeNodes.length === 0) return;
-
-    markdown += `## ${typeNames[type]}\n\n`;
-
-    typeNodes.forEach(node => {
-      markdown += `### ${node.data.label}\n\n`;
-
-      if (node.data.summary) {
-        markdown += `${node.data.summary}\n\n`;
-      }
-
-      if (node.data.tags && node.data.tags.length > 0) {
-        markdown += `**Tags:** ${node.data.tags.map((tag: string) => `\`${tag}\``).join(', ')}\n\n`;
-      }
-
-      // Export cards if present
-      if (node.data.cards && node.data.cards.length > 0) {
-        node.data.cards.forEach((card: any) => {
-          markdown += `#### ${card.title}\n\n`;
-
-          if (card.type === 'text' && card.content) {
-            markdown += `${card.content}\n\n`;
-          }
-
-          if (card.type === 'todo' && card.todos && card.todos.length > 0) {
-            card.todos.forEach((todo: any) => {
-              const checkbox = todo.completed ? '[x]' : '[ ]';
-              markdown += `- ${checkbox} ${todo.text}\n`;
-            });
-            markdown += `\n`;
-          }
-        });
-      }
-
-      // Find connected nodes
-      const connectedEdges = edges.filter(
-        e => e.source === node.id || e.target === node.id
-      );
-
-      if (connectedEdges.length > 0) {
-        markdown += `**Connected to:**\n`;
-        connectedEdges.forEach(edge => {
-          const connectedNodeId = edge.source === node.id ? edge.target : edge.source;
-          const connectedNode = nodes.find(n => n.id === connectedNodeId);
-          if (connectedNode && !isCenterNode(connectedNode)) {
-            markdown += `- ${connectedNode.data.label}\n`;
-          }
-        });
-        markdown += `\n`;
-      }
-
-      markdown += `---\n\n`;
-    });
-  });
-
-  return markdown;
+  const bundle = buildWorkspaceDocumentationBundle(nodes, edges, workspaceName);
+  return bundle.markdown;
 }
 
 /**
@@ -216,6 +140,20 @@ export function exportToMarkdown(
  */
 export function downloadMarkdown(content: string, fileName: string = 'flowforge-documentation.md'): void {
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+export function downloadDocumentationBundle(
+  bundle: DocumentationBundle,
+  fileName: string = 'flowforge-documentation-bundle.json'
+): void {
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = fileName;

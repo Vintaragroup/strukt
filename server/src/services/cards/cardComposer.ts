@@ -71,7 +71,15 @@ export interface ComposeResult {
     kbFragments?: Array<{ id: string; type: string }>
     matchStage?: string
     attempts?: Array<{ stage: string; matches: number; description: string }>
-    intent?: NodeCardContext['intent']
+    intent?: NodeCardContext['node']['intent']
+    coverage?: {
+      templatedSections: number
+      kbSectionsApplied: number
+      fragmentSectionsApplied: number
+      metadataSectionsApplied: number
+      prdBlendCount: number
+    }
+    candidates?: Array<{ id: string; name: string; score: number }>
   }
 }
 
@@ -123,6 +131,106 @@ function markdownList(items: string[]): string {
   return items.map((item) => `- ${item}`).join('\n')
 }
 
+function formatType(type: string | undefined): string {
+  if (!type) return 'Requirement'
+  return type
+    .split(/[-_\s]+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function describeDomain(domain?: string): string {
+  if (!domain) return 'the overall program'
+  const formatted = domain.replace(/-/g, ' ')
+  return `the ${formatted} domain`
+}
+
+function extractKeywords(...values: Array<string | undefined | null>): Set<string> {
+  const keywords = new Set<string>()
+  for (const value of values) {
+    if (!value) continue
+    const lower = value.toLowerCase()
+    lower
+      .replace(/[^a-z0-9\s]+/g, ' ')
+      .split(/\s+/)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 2)
+      .forEach((part) => keywords.add(part))
+  }
+  return keywords
+}
+
+function sharedKeywordCount(a: Set<string>, b: Set<string>): number {
+  let count = 0
+  for (const value of a) {
+    if (b.has(value)) count += 1
+  }
+  return count
+}
+
+function buildFallbackPersonalisation(
+  context: NodeCardContext,
+  section: CardContentSection,
+  index: number
+): string | null {
+  const pieces: string[] = []
+  const label = context.node.label
+  const typeName = formatType(context.node.type)
+  const domainDesc = describeDomain(context.node.domain)
+
+  if (index === 0) {
+    pieces.push(`**${label} overview.** Position this ${typeName.toLowerCase()} as the anchor for ${domainDesc}.`)
+    if (context.node.summary) {
+      pieces.push(`Core intent: ${context.node.summary}`)
+    }
+    if (context.node.intent?.coreOutcome) {
+      pieces.push(`Target outcome: ${context.node.intent.coreOutcome}`)
+    }
+  } else {
+    pieces.push(`Tailor ${section.title} deliverables directly to **${label}**, making sure they reinforce ${domainDesc}.`)
+  }
+
+  if (context.node.tags?.length) {
+    pieces.push(`Emphasise tagged themes: ${context.node.tags.slice(0, 4).join(', ')}.`)
+  }
+
+  if (typeof context.node.intent?.primaryRisk === 'string' && context.node.intent.primaryRisk.trim().length > 0) {
+    pieces.push(`Account for the primary risk: ${context.node.intent.primaryRisk}.`)
+  }
+
+  if (pieces.length === 0) {
+    return null
+  }
+
+  return pieces.join(' ')
+}
+
+function personaliseFallbackSections(
+  context: NodeCardContext,
+  sections: CardContentSection[],
+  usedFallback: boolean
+): CardContentSection[] {
+  if (!usedFallback || !Array.isArray(sections) || sections.length === 0) {
+    return sections
+  }
+
+  const labelLower = context.node.label.toLowerCase()
+
+  return sections.map((section, index) => {
+    let body = section.body || ''
+    const intro = buildFallbackPersonalisation(context, section, index)
+
+    if (intro && !body.toLowerCase().includes(labelLower)) {
+      body = `${intro}\n\n${body}`
+    }
+
+    return {
+      ...section,
+      body,
+    }
+  })
+}
+
 function tokenizeIntent(value?: string): string[] {
   if (!value) return []
   const trimmed = value.trim().toLowerCase()
@@ -148,27 +256,55 @@ type KBDraft = {
   prdTemplateId?: string
 }
 
+type SectionContribution = {
+  body: string
+  source: 'existing' | 'kb-prd' | 'fragment' | 'metadata'
+  prdId?: string
+  prdName?: string
+  fragmentId?: string
+  fragmentType?: string
+  sectionTitle?: string
+}
+
+type SectionAggregate = {
+  title: string
+  description?: string
+  canonical?: string
+  hints: string[]
+  keywords: Set<string>
+  bodies: SectionContribution[]
+}
+
 async function buildKBDraft(
   context: NodeCardContext,
   template: ServerCardTemplate | undefined
 ): Promise<KBDraft | null> {
+  const intentTokens = new Set<string>()
+  const tagTokens = new Set<string>((context.node.tags ?? []).map((tag) => tag.toLowerCase()))
+
+  if (context.node.metadata?.blueprintAutoKind) {
+    tagTokens.add(String(context.node.metadata.blueprintAutoKind).toLowerCase())
+  }
+
+  const collectIntent = (value?: string) => {
+    tokenizeIntent(value).forEach((token) => {
+      intentTokens.add(token)
+      tagTokens.add(token)
+    })
+  }
+
+  const nodeIntent = context.node.intent ?? {}
+  collectIntent(nodeIntent.primaryAudience)
+  collectIntent(nodeIntent.coreOutcome)
+  collectIntent(nodeIntent.launchScope)
+  collectIntent(nodeIntent.primaryRisk)
+  collectIntent(nodeIntent.idea)
+  collectIntent(nodeIntent.problem)
+
   const filters = {
     node_types: [context.node.type],
     domains: context.node.domain ? [context.node.domain] : [],
-    tags: (() => {
-      const base = new Set<string>((context.node.tags ?? []).map((tag) => tag.toLowerCase()))
-      if (context.node.metadata?.blueprintAutoKind) {
-        base.add(String(context.node.metadata.blueprintAutoKind).toLowerCase())
-      }
-      const intent = context.intent ?? {}
-      tokenizeIntent(intent.primaryAudience).forEach((token) => base.add(token))
-      tokenizeIntent(intent.coreOutcome).forEach((token) => base.add(token))
-      tokenizeIntent(intent.launchScope).forEach((token) => base.add(token))
-      tokenizeIntent(intent.primaryRisk).forEach((token) => base.add(token))
-      tokenizeIntent(intent.idea).forEach((token) => base.add(token))
-      tokenizeIntent(intent.problem).forEach((token) => base.add(token))
-      return Array.from(base)
-    })(),
+    tags: Array.from(tagTokens),
   }
 
   const composed = await kbService.compose(filters)
@@ -176,85 +312,235 @@ async function buildKBDraft(
     return null
   }
 
-  const primary = composed.prds[0]
-  const kbSections = primary.sections ?? []
-  const usedSectionIndices = new Set<number>()
-
-  const baseSections: Array<{ title: string; description?: string; body: string }> = []
+  const topPrds = composed.prds.slice(0, Math.min(3, composed.prds.length))
   const targetHints = template?.id ? CARD_SECTION_HINTS[template.id] ?? [] : []
+  const templateSections = context.card.sections ?? []
 
-  const findMatchingSection = (canonical: string | undefined, fallbackTitle: string): { body: string; index: number | null } => {
-    if (canonical) {
-      const hintMatchIndex = kbSections.findIndex(
-        (section, idx) => !usedSectionIndices.has(idx) && (section.key?.toLowerCase() === canonical || canonicalKeyFromTitle(section.title) === canonical)
-      )
-      if (hintMatchIndex !== -1) {
-        usedSectionIndices.add(hintMatchIndex)
-        return { body: kbSections[hintMatchIndex].content ?? '', index: hintMatchIndex }
-      }
-    }
+  const aggregates: SectionAggregate[] = []
+  const canonicalMap = new Map<string, SectionAggregate>()
+  const titleMap = new Map<string, SectionAggregate>()
+  const prdUsage = new Set<string>()
 
-    const fallbackMatchIndex = kbSections.findIndex(
-      (section, idx) => !usedSectionIndices.has(idx) && section.title?.toLowerCase().includes(fallbackTitle.toLowerCase())
-    )
-    if (fallbackMatchIndex !== -1) {
-      usedSectionIndices.add(fallbackMatchIndex)
-      return { body: kbSections[fallbackMatchIndex].content ?? '', index: fallbackMatchIndex }
-    }
-
-    const firstUnused = kbSections.findIndex((_, idx) => !usedSectionIndices.has(idx))
-    if (firstUnused !== -1) {
-      usedSectionIndices.add(firstUnused)
-      return { body: kbSections[firstUnused].content ?? '', index: firstUnused }
-    }
-
-    return { body: '', index: null }
+  const normaliseCanonical = (value?: string): string | undefined => {
+    if (!value) return undefined
+    const canonical = canonicalKeyFromTitle(value)
+    return canonical ? canonical.toLowerCase() : value.toLowerCase()
   }
 
-  const templateSections = context.card.sections ?? []
+  const registerAggregate = (aggregate: SectionAggregate) => {
+    aggregates.push(aggregate)
+    if (aggregate.canonical) {
+      const canonicalKey = aggregate.canonical.toLowerCase()
+      if (!canonicalMap.has(canonicalKey)) {
+        canonicalMap.set(canonicalKey, aggregate)
+      }
+      const synonyms = SECTION_SYNONYMS[canonicalKey] ?? []
+      synonyms.forEach((synonym) => {
+        const key = synonym.toLowerCase()
+        if (!canonicalMap.has(key)) {
+          canonicalMap.set(key, aggregate)
+        }
+      })
+    }
+    aggregate.hints.forEach((hint) => {
+      const key = hint.toLowerCase()
+      if (!canonicalMap.has(key)) {
+        canonicalMap.set(key, aggregate)
+      }
+    })
+    titleMap.set(aggregate.title.toLowerCase(), aggregate)
+  }
+
+  const createAggregate = (title: string, canonicalGuess?: string, description?: string): SectionAggregate => {
+    const canonical = normaliseCanonical(canonicalGuess)
+    const synonyms = canonical ? SECTION_SYNONYMS[canonical] ?? [] : []
+    const hints = new Set<string>()
+    if (canonical) hints.add(canonical)
+    synonyms.forEach((synonym) => hints.add(synonym.toLowerCase()))
+    const keywords = extractKeywords(title, description, ...synonyms)
+    intentTokens.forEach((token) => keywords.add(token))
+    const aggregate: SectionAggregate = {
+      title,
+      description,
+      canonical: canonical ?? canonicalGuess,
+      hints: Array.from(hints),
+      keywords,
+      bodies: [],
+    }
+    registerAggregate(aggregate)
+    return aggregate
+  }
+
+  const locateAggregate = (canonicalGuess?: string, fallbackTitle?: string): SectionAggregate | undefined => {
+    const canonical = normaliseCanonical(canonicalGuess)
+    if (canonical && canonicalMap.has(canonical)) {
+      return canonicalMap.get(canonical)
+    }
+    if (fallbackTitle) {
+      const titleKey = fallbackTitle.toLowerCase()
+      if (titleMap.has(titleKey)) {
+        return titleMap.get(titleKey)
+      }
+      const derived = normaliseCanonical(fallbackTitle)
+      if (derived && canonicalMap.has(derived)) {
+        return canonicalMap.get(derived)
+      }
+    }
+    return undefined
+  }
+
+  const ensureAggregate = (title: string, canonicalGuess?: string, description?: string): SectionAggregate => {
+    return locateAggregate(canonicalGuess, title) ?? createAggregate(title, canonicalGuess, description)
+  }
+
+  const addContribution = (
+    canonicalGuess: string | undefined,
+    fallbackTitle: string,
+    body: string,
+    source: SectionContribution['source'],
+    meta: Omit<SectionContribution, 'body' | 'source'>
+  ) => {
+    const trimmed = body.trim()
+    if (!trimmed) return
+    const aggregate = ensureAggregate(fallbackTitle, canonicalGuess, meta.sectionTitle)
+    extractKeywords(fallbackTitle).forEach((keyword) => aggregate.keywords.add(keyword))
+    aggregate.bodies.push({
+      body: trimmed,
+      source,
+      ...meta,
+    })
+  }
+
+  const scoreAggregate = (
+    aggregate: SectionAggregate,
+    candidateCanonical: string | undefined,
+    candidateKeywords: Set<string>
+  ): number => {
+    let score = 0
+    if (candidateCanonical && aggregate.canonical) {
+      if (candidateCanonical.toLowerCase() === aggregate.canonical.toLowerCase()) {
+        score += 12
+      }
+    }
+    if (candidateCanonical && aggregate.hints.some((hint) => hint === candidateCanonical.toLowerCase())) {
+      score += 6
+    }
+    if (candidateCanonical && aggregate.keywords.has(candidateCanonical.toLowerCase())) {
+      score += 2
+    }
+    const shared = sharedKeywordCount(aggregate.keywords, candidateKeywords)
+    if (shared > 0) {
+      score += Math.min(6, shared * 2)
+    }
+    if (!aggregate.bodies.some((entry) => entry.source === 'kb-prd')) {
+      score += 2
+    } else {
+      score -= aggregate.bodies.filter((entry) => entry.source === 'kb-prd').length
+    }
+    return score
+  }
+
   templateSections.forEach((section, index) => {
     const hint = targetHints[index]
     const canonical =
       canonicalKeyFromTitle(section.title) ??
       canonicalKeyFromTitle(section.description) ??
+      canonicalKeyFromTitle(hint) ??
       hint
-    const fallbackTitle = hint ?? section.title
-    const match = findMatchingSection(canonical, fallbackTitle || section.title)
-    baseSections.push({
+    const synonyms = canonical ? SECTION_SYNONYMS[canonical] ?? [] : []
+    const hints = new Set<string>()
+    if (hint) hints.add(hint.toLowerCase())
+    if (canonical) hints.add(canonical.toLowerCase())
+    synonyms.forEach((synonym) => hints.add(synonym.toLowerCase()))
+    const keywords = extractKeywords(section.title, section.description, hint, ...synonyms)
+    intentTokens.forEach((token) => keywords.add(token))
+
+    const aggregate: SectionAggregate = {
       title: section.title,
       description: section.description,
-      body: match.body,
-    })
+      canonical: canonical,
+      hints: Array.from(hints),
+      keywords,
+      bodies: [],
+    }
+
+    if (section.body?.trim()) {
+      aggregate.bodies.push({
+        body: section.body.trim(),
+        source: 'existing',
+        sectionTitle: section.title,
+      })
+    }
+
+    registerAggregate(aggregate)
   })
 
-  // Add leftover KB sections that were not mapped if template had no sections
-  if (baseSections.length === 0) {
-    kbSections.forEach((section, idx) => {
-      baseSections.push({
-        title: section.title || `Section ${idx + 1}`,
-        body: section.content ?? '',
-      })
-    })
-  } else {
-    kbSections.forEach((section, idx) => {
-      if (!usedSectionIndices.has(idx)) {
-        baseSections.push({
-          title: section.title || `Additional Context ${idx + 1}`,
-          body: section.content ?? '',
-        })
+  for (const prd of topPrds) {
+    const sections = prd.sections ?? []
+    sections.forEach((section, idx) => {
+      const body = section.content?.trim()
+      if (!body) return
+      const fallbackTitle = section.title || `Section ${idx + 1}`
+      const canonical =
+        canonicalKeyFromTitle(section.key) ??
+        canonicalKeyFromTitle(section.title) ??
+        section.key?.toLowerCase()
+      const candidateKeywords = extractKeywords(section.title, section.key)
+
+      let bestAggregate: SectionAggregate | undefined
+      let bestScore = -Infinity
+      for (const aggregate of aggregates) {
+        const score = scoreAggregate(aggregate, canonical, candidateKeywords)
+        if (score > bestScore) {
+          bestScore = score
+          bestAggregate = aggregate
+        }
       }
+
+      const targetAggregate =
+        bestAggregate && (bestScore > 0 || !bestAggregate.bodies.length)
+          ? bestAggregate
+          : ensureAggregate(fallbackTitle, canonical, section.title)
+
+      targetAggregate.bodies.push({
+        body,
+        source: 'kb-prd',
+        prdId: prd.id,
+        prdName: prd.name,
+        sectionTitle: fallbackTitle,
+      })
+      prdUsage.add(prd.id)
     })
+  }
+
+  if (!aggregates.length) {
+    // No template sections existed; seed using PRD order.
+    for (const prd of topPrds) {
+      (prd.sections ?? []).forEach((section, idx) => {
+        const fallbackTitle = section.title || `Section ${idx + 1}`
+        const canonical =
+          canonicalKeyFromTitle(section.key) ??
+          canonicalKeyFromTitle(section.title) ??
+          section.key?.toLowerCase()
+        const aggregate = ensureAggregate(fallbackTitle, canonical, section.title)
+        if (!aggregate.bodies.some((entry) => entry.prdId === prd.id && entry.sectionTitle === fallbackTitle)) {
+          const body = section.content?.trim()
+          if (body) {
+            aggregate.bodies.push({
+              body,
+              source: 'kb-prd',
+              prdId: prd.id,
+              prdName: prd.name,
+              sectionTitle: fallbackTitle,
+            })
+            prdUsage.add(prd.id)
+          }
+        }
+      })
+    }
   }
 
   const checklistSet = new Set<string>(context.card.checklist ?? [])
-  const extraSectionsMap = new Map<string, string[]>()
-
-  const appendSectionContent = (title: string, body: string) => {
-    if (!body?.trim()) return
-    const entries = extraSectionsMap.get(title) ?? []
-    entries.push(body)
-    extraSectionsMap.set(title, entries)
-  }
 
   for (const fragment of composed.fragments) {
     switch (fragment.type) {
@@ -270,7 +556,13 @@ async function buildKBDraft(
       case 'kpi_set': {
         const items = Array.isArray(fragment.content) ? fragment.content : []
         if (items.length) {
-          appendSectionContent('Key Metrics', markdownList(items))
+          addContribution(
+            'kpis',
+            'Key Metrics',
+            markdownList(items),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
@@ -291,7 +583,13 @@ async function buildKBDraft(
           parts.push(`**Mitigations**\n${markdownList(value.mitigations)}`)
         }
         if (parts.length) {
-          appendSectionContent('Risks & Mitigations', parts.join('\n\n'))
+          addContribution(
+            'risks',
+            'Risks & Mitigations',
+            parts.join('\n\n'),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
@@ -323,9 +621,15 @@ async function buildKBDraft(
         if (value?.slo) {
           parts.push(`**SLO:** ${value.slo}`)
         }
-        const title = fragment.id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
         if (parts.length) {
-          appendSectionContent(title, parts.join('\n\n'))
+          const title = fragment.id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+          addContribution(
+            'interfaces',
+            title,
+            parts.join('\n\n'),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
@@ -344,23 +648,38 @@ async function buildKBDraft(
           }
         }
         if (parts.length) {
-          appendSectionContent('Guidelines', parts.join('\n\n'))
+          addContribution(
+            'governance',
+            'Guidelines',
+            parts.join('\n\n'),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
       case 'decision_matrix': {
         const items = Array.isArray(fragment.content) ? fragment.content : []
         if (items.length) {
-          appendSectionContent('Decision Considerations', markdownList(items))
+          addContribution(
+            'decision',
+            'Decision Considerations',
+            markdownList(items),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
       case 'template': {
         const value = fragment.content as { sections?: string[] }
         if (value?.sections?.length) {
-          appendSectionContent(
+          addContribution(
+            'template',
             'Template Structure',
-            value.sections.map((sectionTitle, idx) => `${idx + 1}. ${sectionTitle}`).join('\n')
+            value.sections.map((sectionTitle, idx) => `${idx + 1}. ${sectionTitle}`).join('\n'),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
           )
         }
         break
@@ -370,38 +689,76 @@ async function buildKBDraft(
         const items = Array.isArray(fragment.content) ? fragment.content : []
         if (items.length) {
           const title = fragment.type === 'onboarding_flow' ? 'Onboarding Flow' : 'Experience States'
-          appendSectionContent(title, markdownList(items.map(String)))
+          addContribution(
+            fragment.type === 'onboarding_flow' ? 'personas' : 'operations',
+            title,
+            markdownList(items.map(String)),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
       default: {
         if (Array.isArray(fragment.content) && fragment.content.length) {
-          appendSectionContent('Additional Context', markdownList(fragment.content))
+          addContribution(
+            undefined,
+            'Additional Context',
+            markdownList(fragment.content),
+            'fragment',
+            { fragmentId: fragment.id, fragmentType: fragment.type }
+          )
         }
         break
       }
     }
   }
 
-  const addMetadataSection = (title: string, items: string[] | undefined, formatter: (values: string[]) => string = markdownList) => {
+  const addMetadataSection = (title: string, items: string[] | undefined, canonicalGuess?: string) => {
     if (!items?.length) return
-    appendSectionContent(title, formatter(items))
-  }
-
-  addMetadataSection('Recommended Tags', primary.tags)
-  addMetadataSection('Technical Stack', primary.stack_keywords)
-  addMetadataSection('Risk Profile', primary.risk_profile)
-  addMetadataSection('Key Metrics', primary.kpi_examples)
-
-  const extraSections: Array<{ title: string; body: string }> = []
-  for (const [title, bodies] of extraSectionsMap.entries()) {
-    extraSections.push({
+    addContribution(
+      canonicalGuess,
       title,
-      body: bodies.join('\n\n'),
-    })
+      markdownList(items),
+      'metadata',
+      { sectionTitle: title }
+    )
   }
 
-  const sections = [...baseSections, ...extraSections]
+  const primaryPrd = topPrds[0]
+  addMetadataSection('Recommended Tags', primaryPrd?.tags)
+  addMetadataSection('Technical Stack', primaryPrd?.stack_keywords, 'tooling')
+  addMetadataSection('Risk Profile', primaryPrd?.risk_profile, 'risks')
+  addMetadataSection('Key Metrics', primaryPrd?.kpi_examples, 'kpis')
+
+  const sections = aggregates.map((aggregate, index) => {
+    const seenBodies = new Set<string>()
+    const parts: string[] = []
+
+    aggregate.bodies.forEach((entry) => {
+      const trimmed = entry.body.trim()
+      if (!trimmed) return
+      const signature = `${entry.source}:${trimmed}`
+      if (seenBodies.has(signature)) return
+      seenBodies.add(signature)
+
+      if (entry.source === 'kb-prd' && entry.prdName) {
+        parts.push(`**${entry.prdName}:**\n${trimmed}`)
+      } else {
+        parts.push(trimmed)
+      }
+    })
+
+    return {
+      title: aggregate.title || `Section ${index + 1}`,
+      description: aggregate.description,
+      body: parts.join(parts.length > 1 ? '\n\n---\n\n' : '\n\n'),
+    }
+  })
+
+  const kbSectionsApplied = aggregates.filter((aggregate) => aggregate.bodies.some((entry) => entry.source === 'kb-prd')).length
+  const fragmentSectionsApplied = aggregates.filter((aggregate) => aggregate.bodies.some((entry) => entry.source === 'fragment')).length
+  const metadataSectionsApplied = aggregates.filter((aggregate) => aggregate.bodies.some((entry) => entry.source === 'metadata')).length
 
   const provenance: Required<ComposeResult>['provenance'] = {
     kbPrds: composed.prds.map((prd) => ({
@@ -419,14 +776,26 @@ async function buildKBDraft(
       matches: attempt.matches,
       description: attempt.description,
     })),
-    intent: context.intent,
+    intent: context.node.intent,
+    coverage: {
+      templatedSections: templateSections.length,
+      kbSectionsApplied,
+      fragmentSectionsApplied,
+      metadataSectionsApplied,
+      prdBlendCount: prdUsage.size,
+    },
+    candidates: composed.candidates?.map((candidate) => ({
+      id: candidate.id,
+      name: candidate.name,
+      score: candidate.score,
+    })),
   }
 
   return {
     sections,
     checklist: Array.from(checklistSet),
     provenance,
-    prdTemplateId: primary.id,
+    prdTemplateId: topPrds[0]?.id,
   }
 }
 
@@ -470,7 +839,14 @@ function evaluateNodeAccuracy(
   context: NodeCardContext,
   template: ServerCardTemplate | undefined,
   prdTemplateId: string | undefined,
-  generation: CardContentResponse
+  generation: CardContentResponse,
+  kbCoverage?: {
+    templatedSections: number
+    kbSectionsApplied: number
+    fragmentSectionsApplied: number
+    metadataSectionsApplied: number
+    prdBlendCount: number
+  }
 ): ComposeResult['accuracy'] {
   let score = 40
   const factors: string[] = []
@@ -528,6 +904,35 @@ function evaluateNodeAccuracy(
     factors.push(`Reference PRD ${prdTemplateId} connected (+8)`)
   }
 
+  if (kbCoverage) {
+    if (kbCoverage.kbSectionsApplied >= 4) {
+      score += 20
+      factors.push('Multiple KB sections mapped into template (+20)')
+    } else if (kbCoverage.kbSectionsApplied >= 2) {
+      score += 14
+      factors.push('KB sections blended into draft (+14)')
+    } else if (kbCoverage.kbSectionsApplied >= 1) {
+      score += 8
+      factors.push('Single KB section leveraged (+8)')
+    }
+
+    if (kbCoverage.fragmentSectionsApplied > 0) {
+      const fragmentBonus = Math.min(10, kbCoverage.fragmentSectionsApplied * 4)
+      score += fragmentBonus
+      factors.push(`Fragment context applied in ${kbCoverage.fragmentSectionsApplied} section(s) (+${fragmentBonus})`)
+    }
+
+    if (kbCoverage.metadataSectionsApplied > 0) {
+      score += 4
+      factors.push('Metadata enrichments added (+4)')
+    }
+
+    if (kbCoverage.prdBlendCount > 1) {
+      score += 6
+      factors.push(`Blended insights from ${kbCoverage.prdBlendCount} PRDs (+6)`)
+    }
+  }
+
   let qualityConfidence: number | undefined
 
   if (generation.rawOutput) {
@@ -546,15 +951,45 @@ function evaluateNodeAccuracy(
     factors.push(`Model confidence reported as ${qualityConfidence}`)
   }
 
+  const enhancedFallback =
+    generation.usedFallback &&
+    kbCoverage !== undefined &&
+    (kbCoverage.kbSectionsApplied > 0 || kbCoverage.fragmentSectionsApplied > 0)
+
   if (generation.usedFallback) {
-    score -= 22
-    factors.push('Fallback content used (-22)')
+    const penalty = enhancedFallback ? 8 : 22
+    score -= penalty
+    factors.push(
+      enhancedFallback
+        ? 'Fallback output enriched with KB content (-8)'
+        : 'Fallback content used (-22)'
+    )
   }
 
   if (generation.warnings?.length) {
     const penalty = Math.min(generation.warnings.length * 5, 15)
     score -= penalty
     factors.push(`Warnings noted during generation (-${penalty})`)
+  }
+
+  let maxCap = 100
+  if (generation.usedFallback) {
+    if (enhancedFallback) {
+      maxCap = Math.min(maxCap, 88)
+      factors.push('Score capped at 88 until fallback content is replaced')
+    } else {
+      maxCap = Math.min(maxCap, 75)
+      factors.push('Score capped at 75 because content relies on raw fallback')
+    }
+  }
+
+  if ((generation.warnings?.length ?? 0) > 0) {
+    maxCap = Math.min(maxCap, 92)
+    factors.push('Score capped below 92 while warnings are present')
+  }
+
+  if (score > maxCap) {
+    score = maxCap
   }
 
   score = Math.max(5, Math.min(100, score))
@@ -565,7 +1000,9 @@ function evaluateNodeAccuracy(
     factors,
     lastGeneratedAt: new Date().toISOString(),
     qualityConfidence,
-    needsReview: generation.usedFallback || (generation.warnings?.length ?? 0) > 0,
+    needsReview:
+      (generation.warnings?.length ?? 0) > 0 ||
+      (generation.usedFallback && !enhancedFallback),
   }
 }
 
@@ -617,11 +1054,18 @@ export async function composeCardContent(
     context,
     template,
     kbDraft?.prdTemplateId ?? prdContext?.templateId,
-    generation
+    generation,
+    kbDraft?.provenance?.coverage
+  )
+
+  const sections = personaliseFallbackSections(
+    context,
+    generation.sections,
+    generation.usedFallback
   )
 
   return {
-    sections: generation.sections,
+    sections,
     checklist: generation.checklist,
     usedFallback: generation.usedFallback,
     warnings: generation.warnings,

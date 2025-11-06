@@ -1,51 +1,54 @@
 ---
-description: Core graph algorithms specification covering domain layout system, node relationships, cycle detection, and auto-layout implementations
+description: Core graph algorithms for domain layout, relationship management, cycle detection, and auto-layout in architecture visualization
 ---
 
 
 # graph-algorithms
 
-## Domain Layout System
-**Importance Score: 95**
-- Specialized radial layout algorithm organizing nodes by business domains
-- Smart domain sector calculations for Business, Product, Tech, Data/AI, Operations
-- Dynamic radius scaling based on node density per domain
-- Automatic department inference and positioning within domains
-- Collision detection with domain-aware spacing rules
-File: client/src/utils/domainLayout.ts
+Domain Layout Engine
+- Radial domain clustering algorithm that organizes nodes into concentric rings
+- Each ring represents a business domain tier (Product, Tech, Operations, Data)
+- Nodes within same domain automatically clustered with configurable gravity
+- Force-directed repulsion between different domains
+Importance Score: 90/100
 
-## Node Relationship Management  
-**Importance Score: 90**
-- Domain-specific relationship types (depends-on, implements, documents, tests)
-- Critical path analysis for technical dependencies
-- Circular dependency detection with domain context awareness
-- Cross-domain relationship validation rules
-- Relationship suggestion engine based on node types
-File: client/src/utils/relationships.ts
+Relationship Management
+- Bidirectional edge routing with conflict resolution
+- Cycle detection using modified depth-first traversal 
+- Smart edge bundling for parallel relationships
+- Domain boundary crossing minimization
+Importance Score: 85/100
 
-## Auto-Layout Engine
-**Importance Score: 85**
-- Force-directed layout with domain constraints
-- Smart node grouping based on relationship density
-- Domain boundary preservation during layout
-- Hierarchical layout for parent-child relationships
-File: client/src/utils/autoLayout.ts
+Graph Operations
+- Domain-aware node positioning with semantic distances
+- Hierarchical layout preservation during operations
+- Smart node insertion maintaining existing relationships
+- Automatic relationship suggestion based on domain rules
+Importance Score: 80/100
 
-## Cycle Detection
-**Importance Score: 80**
-- Domain-aware cycle detection algorithm
-- Dependency chain validation across domains
-- Critical path identification with domain context
-- Cycle prevention with relationship type rules
-File: client/src/utils/graphOps.ts
+Auto-Layout System
+- Multi-stage layout pipeline:
+  1. Domain clustering
+  2. Hierarchical arrangement
+  3. Edge crossing minimization
+  4. Final force-directed relaxation
+- Preserves mental map during incremental updates
+Importance Score: 75/100
 
-## Collision Prevention
-**Importance Score: 75**
-- Domain-specific spacing rules
-- Dynamic collision box calculation
-- Smart node repositioning within domain constraints
-- Overlap resolution preserving domain hierarchy
-File: client/src/utils/collision.ts
+Key Patterns:
+1. Domain-centric organization
+2. Semantic relationship management
+3. Layout stability preservation
+4. Hierarchical clustering
+
+Primary Files:
+```
+client/src/utils/domainLayout.ts
+client/src/utils/relationships.ts 
+client/src/utils/graphOps.ts
+client/src/utils/autoLayout.ts
+client/src/utils/d3Relax.ts
+```
 
 $END$
 

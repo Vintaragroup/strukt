@@ -67,18 +67,21 @@ export const workspacesAPI = {
     }
   },
 
-  get: async (name: string): Promise<Workspace> => {
+  get: async (name: string, options?: { forceRefresh?: boolean }): Promise<Workspace> => {
     const cacheKey = `workspace_${name}`
 
     // Check cache first
-    const cached = globalResponseCache.get(cacheKey)
-    if (cached) {
-      console.log(`[API] Returning cached workspace: ${name}`)
-      return cached as Workspace
+    if (!options?.forceRefresh) {
+      const cached = globalResponseCache.get(cacheKey)
+      if (cached) {
+        console.log(`[API] Returning cached workspace: ${name}`)
+        return cached as Workspace
+      }
     }
 
     try {
-      const { data } = await apiClient.get(`/api/workspaces/${name}`)
+      const encodedName = encodeURIComponent(name)
+      const { data } = await apiClient.get(`/api/workspaces/${encodedName}`)
       // Cache individual workspace (Task 3.9: 5 min TTL)
       globalResponseCache.set(cacheKey, data, CACHE_TTL.WORKSPACE)
       return data
@@ -91,6 +94,10 @@ export const workspacesAPI = {
   create: async (workspace: Omit<Workspace, '_id' | 'createdAt' | 'updatedAt'>): Promise<Workspace> => {
     try {
       const { data } = await apiClient.post('/api/workspaces', workspace)
+      globalResponseCache.delete('workspaces_list')
+      if (data?.name) {
+        globalResponseCache.set(`workspace_${data.name}`, data, CACHE_TTL.WORKSPACE)
+      }
       return data
     } catch (error) {
       const appError = ErrorHandler.parseError(error)
@@ -100,9 +107,15 @@ export const workspacesAPI = {
 
   update: async (name: string, workspace: Partial<Workspace>): Promise<Workspace> => {
     try {
-      const { data } = await apiClient.put(`/api/workspaces/${name}`, workspace, {
+      const encodedName = encodeURIComponent(name)
+      const { data } = await apiClient.put(`/api/workspaces/${encodedName}`, workspace, {
         timeout: WORKSPACE_UPDATE_TIMEOUT,
       })
+      globalResponseCache.delete('workspaces_list')
+      globalResponseCache.delete(`workspace_${name}`)
+      if (data?.name) {
+        globalResponseCache.set(`workspace_${data.name}`, data, CACHE_TTL.WORKSPACE)
+      }
       return data
     } catch (error) {
       const appError = ErrorHandler.parseError(error)
@@ -112,7 +125,10 @@ export const workspacesAPI = {
 
   delete: async (name: string): Promise<void> => {
     try {
-      await apiClient.delete(`/api/workspaces/${name}`)
+      const encodedName = encodeURIComponent(name)
+      await apiClient.delete(`/api/workspaces/${encodedName}`)
+      globalResponseCache.delete('workspaces_list')
+      globalResponseCache.delete(`workspace_${name}`)
     } catch (error) {
       const appError = ErrorHandler.parseError(error)
       throw appError

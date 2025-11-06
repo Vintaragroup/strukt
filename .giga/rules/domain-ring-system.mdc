@@ -1,74 +1,50 @@
 ---
-description: Implements specialized radial visualization system for organizing nodes by business domains with intelligent sector calculations and node placement
+description: Specifications for the radial domain organization system and ring-based node layout architecture
 ---
 
 
 # domain-ring-system
 
-## Ring Layout Engine
-- Implements specialized radial layout algorithm for organizing nodes by business domains
-- Custom domain configurations for Business, Product, Tech, Data/AI, and Operations rings
-- Intelligent sector size calculations based on node density
-- Node placement optimization within sectors using force-directed layouts
-- Department-specific positioning with context-aware angle distribution
-- Importance Score: 95
+The domain ring system implements a specialized radial layout architecture for organizing workspace nodes into concentric rings based on their domain classification and relationships.
 
-```typescript
-// client/src/utils/domainLayout.ts
-interface DomainRing {
-  domain: string;
-  radius: number;
-  sectors: Sector[];
-}
+Core Components:
 
-interface Sector {
-  startAngle: number;
-  endAngle: number;
-  nodes: Node[];
-}
+1. Ring Layout Engine
+- Divides workspace into 5 primary domains: Business, Product, Tech, Data/AI, Operations
+- Calculates sector angles based on node density and relationships
+- Maintains proportional spacing between domain boundaries
+- Implements force-directed node positioning within sectors
+Importance Score: 90/100
+
+2. Domain Classification System
+- Auto-categorizes nodes into domains based on content and relationships
+- Handles multi-domain node placement with weighted positioning
+- Enforces domain-specific validation rules and constraints
+- Manages domain boundary flexibility based on node density
+Importance Score: 85/100
+
+3. Ring Level Management
+- Supports 6 concentric rings representing hierarchy levels
+- Implements specialized ring promotion/demotion logic
+- Calculates optimal ring radius based on node count
+- Handles cross-ring relationship visualization
+Importance Score: 80/100
+
+4. Node Positioning Algorithm
+- Places nodes using polar coordinates within domain sectors
+- Implements collision avoidance between nodes in same ring
+- Optimizes node spacing for relationship line clarity
+- Maintains visual hierarchy through ring-based positioning
+Importance Score: 75/100
+
+Key File Paths:
+```
+client/src/components/DomainRings.tsx
+client/src/utils/domainLayout.ts
+client/src/utils/relationships.ts
 ```
 
-## Domain-Specific Visualization
-- Custom SVG path generation for sector visualization with dynamic gradients
-- Intelligent node grouping within sectors based on relationships
-- Visual hierarchy management through ring spacing and node placement
-- Interactive sector resizing based on content density
-- Importance Score: 90
-
-```typescript
-// client/src/components/DomainRings.tsx
-const calculateSectorPath = (ring: DomainRing, sector: Sector): string => {
-  // Domain-specific path calculation logic
-}
-```
-
-## Node Alignment System
-- Smart node alignment within sectors based on domain context
-- Relationship-aware positioning to minimize edge crossings
-- Department clustering with intelligent space distribution
-- Dynamic sector boundaries based on content relationships
-- Importance Score: 85
-
-```typescript
-// client/src/utils/alignment.ts
-const alignNodesInSector = (nodes: Node[], sector: Sector) => {
-  // Domain-aware node alignment logic
-}
-```
-
-## Domain Ring Hierarchy
-- Multi-level ring structure with inheritance relationships
-- Dynamic ring scaling based on domain importance
-- Intelligent ring spacing with relationship density consideration
-- Automatic domain detection from node metadata
-- Importance Score: 80
-
-## Domain Context Management
-- Context-aware sector generation based on project type
-- Smart domain mapping for unassigned nodes
-- Department-based node clustering within sectors
-- Historical pattern analysis for optimal sector sizing
-- Importance Score: 75
+The system uniquely combines domain-based organization with hierarchical ring structures to create an intuitive visual representation of workspace architecture while maintaining logical groupings and relationships between nodes.
 
 $END$
 

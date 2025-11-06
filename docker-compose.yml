@@ -73,6 +73,7 @@ services:
       - ./client/public:/app/public:cached
       - /app/node_modules
       - ./client/package.json:/app/package.json:ro
+      - ./client/package-lock.json:/app/package-lock.json:ro
       - ./client/vite.config.ts:/app/vite.config.ts:ro
       - ./client/tailwind.config.ts:/app/tailwind.config.ts:ro
       - ./client/postcss.config.js:/app/postcss.config.js:ro
@@ -90,6 +91,12 @@ services:
         - path: ./client/public
           action: sync
           target: /app/public
+        - path: ./client/package.json
+          action: sync+restart
+          target: /app/package.json
+        - path: ./client/package-lock.json
+          action: sync+restart
+          target: /app/package-lock.json
         - path: ./client/vite.config.ts
           action: sync
           target: /app/vite.config.ts

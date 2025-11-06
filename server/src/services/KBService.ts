@@ -86,13 +86,27 @@ export class KBService {
   }
 
   private static normalize(values?: string[] | null): string[] {
-    return (values ?? []).map((value) => value.toLowerCase().trim()).filter(Boolean)
+    return (values ?? [])
+      .map((value) => value.toLowerCase().trim())
+      .filter(Boolean)
   }
 
   private static anyOverlap(a: string[], b: string[]): boolean {
     if (!a.length || !b.length) return false
     const set = new Set(a.map((v) => v.toLowerCase()))
     return b.some((v) => set.has(v.toLowerCase()))
+  }
+
+  private static overlapCount(a: string[], b: string[]): number {
+    if (!a.length || !b.length) return 0
+    const set = new Set(b.map((v) => v.toLowerCase()))
+    let count = 0
+    for (const value of a) {
+      if (set.has(value.toLowerCase())) {
+        count += 1
+      }
+    }
+    return count
   }
   static async readJSON<T>(p: string): Promise<T> {
     const raw = await fs.readFile(p, 'utf-8')
@@ -148,7 +162,6 @@ export class KBService {
   }
 
   static scoreItem(item: Catalog['items'][number], filters: ComposeInput): number {
-    let score = 0
     const node_types = this.normalize(filters.node_types)
     const domains = this.normalize(filters.domains)
     const tags = this.normalize(filters.tags)
@@ -157,15 +170,38 @@ export class KBService {
     const itemDomains = this.normalize(item.domains)
     const itemTags = this.normalize(item.tags)
 
-    if (node_types.length > 0 && this.anyOverlap(node_types, itemNodeTypes)) {
+    const nodeCount = this.overlapCount(node_types, itemNodeTypes)
+    const domainCount = this.overlapCount(domains, itemDomains)
+    const tagCount = this.overlapCount(tags, itemTags)
+
+    let score = 0
+
+    if (nodeCount > 0) {
+      score += 6 + Math.min(4, nodeCount - 1) * 2
+    }
+    if (domainCount > 0) {
+      score += 4 + Math.min(3, domainCount - 1)
+    }
+    if (tagCount > 0) {
+      score += Math.min(5, tagCount)
+    }
+
+    // Encourage PRDs that satisfy multiple facets simultaneously.
+    if (nodeCount > 0 && domainCount > 0) {
+      score += 4
+    }
+    if (nodeCount > 0 && tagCount > 0) {
       score += 2
     }
-    if (domains.length > 0 && this.anyOverlap(domains, itemDomains)) {
-      score += 2
-    }
-    if (tags.length > 0 && this.anyOverlap(tags, itemTags)) {
+    if (domainCount > 0 && tagCount > 0) {
       score += 1
     }
+
+    // Reward fresher catalog ordering when scores tie.
+    if (score === 0 && (node_types.length || domains.length || tags.length)) {
+      score -= 1
+    }
+
     return score
   }
 
@@ -329,12 +365,19 @@ export class KBService {
     }
 
     const fragments = this.pickFragments(await this.listFragments(), filters)
+    const candidates = selectedMatches.map(({ it, score }) => ({
+      id: it.id,
+      name: it.name,
+      score,
+      path: it.path,
+    }))
 
     return {
       input: filters,
       selectedCount: prds.length,
       prds,
       fragments,
+      candidates,
       provenance: {
         catalog: this.resolveKBPath('catalog.json'),
         fragmentRoot: this.resolveKBPath('fragments'),

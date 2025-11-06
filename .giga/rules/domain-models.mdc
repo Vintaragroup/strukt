@@ -1,66 +1,123 @@
 ---
-description: Defines core data models and relationships for nodes, workspaces, templates and validation rules in a graph-based system
+description: Defines core data structures, relationships, and validation rules for workspaces, nodes, and content templates
 ---
 
 
 # domain-models
 
-## Node Model
+## Core Entity Types
 
-### Core Structure
-- Unique identifier and version tracking
-- Domain classification (Product, Tech, Business, Data/AI, Ops)
-- Type categorization (doc, requirement, backend, frontend)
-- Custom metadata fields for domain-specific attributes
-- Importance Score: 90
-
-### Validation Rules
-- Prevents circular dependencies in node relationships
-- Enforces domain-specific naming conventions
-- Validates required fields based on node type
-- Domain-aware type compatibility checks
-- Importance Score: 85
-
-## Workspace Model
-
-### Organization
-- Hierarchical structure with parent-child relationships
-- Version control with immutable snapshots
-- Access control and collaboration rules
-- Domain separation with cross-domain relationship tracking
-- Importance Score: 90
-
-### Template Integration
-- Domain-specific template recommendations
-- Automated template matching based on workspace context
-- Custom validation rules for template application
-- Template inheritance and composition patterns
-- Importance Score: 85
-
-## Relationship Types
-
-### Core Types
-- depends-on: Tracks technical dependencies
-- implements: Links requirements to implementations
-- documents: Associates documentation with components
-- tests: Connects test cases to features
-- Importance Score: 85
-
-### Validation Matrix
-- Cross-domain relationship rules
-- Type compatibility enforcement
-- Circular dependency prevention
-- Required relationship validations
-- Importance Score: 80
-
-File Paths:
+1. Workspace Model
+```typescript
+interface Workspace {
+  rootNode: string
+  nodes: Node[]
+  edges: Edge[]
+  domain: DomainType
+  templateType: string
+  version: number
+}
 ```
-server/src/models/Workspace.ts
-server/src/models/PRDTemplate.ts
-server/src/models/GenerationRequest.ts
-server/src/types/ai.ts
-client/src/utils/validation.ts
+
+2. Node Types
+- Root (exactly one per workspace)
+- Frontend
+- Backend 
+- Requirement
+- Documentation
+- Integration
+
+3. Edge Types
+- Depends-on
+- Implements
+- Contains
+- References
+- Blocks
+
+## Domain Relationships
+
+1. Domain Ring Structure
+- Ring 1: Core Business Logic
+- Ring 2: Domain Services
+- Ring 3: Technical Implementation
+- Ring 4: Infrastructure
+- Ring 5: External Systems
+- Ring 6: Documentation
+
+2. Template Categories
+- Product Requirements
+- Technical Architecture
+- Integration Specs
+- User Stories
+- Documentation Cards
+
+## Validation Rules
+
+1. Node Constraints
+- Single root node required
+- No orphaned nodes allowed
+- Maximum depth: 6 levels
+- Required fields per type
+
+2. Edge Validation
+- No circular dependencies
+- Cross-domain rules
+- Parent-child type restrictions
+- Maximum connections per node: 15
+
+3. Content Rules
+- Minimum documentation required
+- Link validation
+- Required sections by node type
+- Maximum content length limits
+
+## Template Structure
+
+1. Card Templates
+```typescript
+interface CardTemplate {
+  sections: Section[]
+  requiredFields: string[]
+  validationRules: Rule[]
+  defaultContent: ContentBlock[]
+  domainType: DomainType
+}
 ```
+
+2. Section Types
+- Overview
+- Requirements
+- Technical Details
+- Dependencies
+- Documentation
+- Testing Notes
+
+3. Content Blocks
+- Text
+- Checklists
+- Code Snippets
+- Diagrams
+- Links
+- Attachments
+
+## Workspace Version Control
+
+1. Version Model
+```typescript
+interface WorkspaceVersion {
+  id: string
+  parentVersion: string
+  changes: Change[]
+  metadata: VersionMetadata
+  timestamp: Date
+}
+```
+
+2. Change Tracking
+- Node modifications
+- Edge updates
+- Content changes
+- Template updates
 
 $END$
 

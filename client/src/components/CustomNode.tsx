@@ -190,6 +190,7 @@ const domainConfig = {
 const DEFAULT_MAX_NODE_HEIGHT = 720;
 const MIN_NODE_HEIGHT = 200;
 const ADD_BUTTON_RESERVE = 64;
+const MANUAL_RESIZE_BUFFER = 320;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -429,6 +430,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   const resizeCleanupRef = useRef<(() => void) | null>(null);
   const resizeFrameRef = useRef<number | null>(null);
   const pendingResizeRef = useRef<{ height?: number; width?: number } | null>(null);
+  const manualResizeModeRef = useRef(false);
 
   const commitResize = useCallback(() => {
     resizeFrameRef.current = null;
@@ -441,6 +443,17 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
         const nextData = { ...(node.data || {}) };
         if (pending.height !== undefined) {
           nextData.preferredHeight = pending.height;
+          const existingCap =
+            typeof nextData.maxNodeHeight === "number" && Number.isFinite(nextData.maxNodeHeight)
+              ? nextData.maxNodeHeight
+              : undefined;
+          if (existingCap === undefined || pending.height > existingCap) {
+            nextData.maxNodeHeight = Math.max(
+              pending.height + 40,
+              existingCap ?? 0,
+              DEFAULT_MAX_NODE_HEIGHT
+            );
+          }
         }
         if (pending.width !== undefined) {
           nextData.preferredWidth = pending.width;
@@ -457,8 +470,12 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
     (nextHeight?: number, nextWidth?: number) => {
       if (nextHeight == null && nextWidth == null) return;
       const pending = pendingResizeRef.current ?? {};
+      const activeContext = activeResizeRef.current;
+      const overrideCap = manualResizeModeRef.current && activeContext
+        ? Math.max(heightCap, activeContext.startHeight + MANUAL_RESIZE_BUFFER)
+        : heightCap;
       if (nextHeight != null) {
-        const clampedHeight = clamp(nextHeight, contentMinHeight, heightCap);
+        const clampedHeight = clamp(nextHeight, contentMinHeight, overrideCap);
         pending.height = clampedHeight;
       }
       if (nextWidth != null) {
@@ -488,6 +505,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
     }
     document.body.style.cursor = "";
     setIsResizing(false);
+    manualResizeModeRef.current = false;
   }, [commitResize]);
 
   const handleResizeMouseMove = useCallback(
@@ -544,6 +562,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
       };
       document.body.style.cursor = mode === "vertical" ? "ns-resize" : "nwse-resize";
       setIsResizing(true);
+      manualResizeModeRef.current = true;
     },
     [effectiveHeight, effectiveWidth, handleResizeMouseMove, handleResizeMouseUp, stopManualResize]
   );

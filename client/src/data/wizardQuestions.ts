@@ -665,10 +665,20 @@ const QUESTION_OPINION_BUILDERS: Record<
       ? formatList(metadata.labels)
       : sampleAudience;
 
+    const hasHealthcare = themes.includes("healthcare");
+    const hasFinance = themes.includes("finance");
+    const hasCompliance = themes.includes("compliance");
+
     let targetClause: string;
-    if (themes.includes("healthcare") || themes.includes("compliance") || themes.includes("finance")) {
+    if (hasHealthcare) {
       targetClause =
         "a 99% clean-claim rate, denials cleared within 48 hours, and audit exceptions below 0.5% while protecting reviewer wellbeing";
+    } else if (hasFinance) {
+      targetClause =
+        "trade breaks under 0.1%, same-day regulatory filings, and a 20% lift in assets under guidance while risk alerts are cleared inside 24 hours";
+    } else if (hasCompliance) {
+      targetClause =
+        "zero critical audit findings, 100% evidence coverage on priority controls, and remediation cycles under 24 hours whenever an exception appears";
     } else if (themes.includes("ai")) {
       targetClause =
         "a 60% reduction in repetitive work within 90 days while keeping human override below 10%";
@@ -739,9 +749,23 @@ const QUESTION_OPINION_BUILDERS: Record<
     const themes = context.analysis?.themes ?? [];
     const metadata = collectThemeMetadata(context.analysis);
     const personaPhrase = metadata.labels.length ? formatList(metadata.labels) : "your users";
-    if (themes.includes("healthcare") || themes.includes("compliance") || themes.includes("finance")) {
+    const hasHealthcare = themes.includes("healthcare");
+    const hasFinance = themes.includes("finance");
+    const hasCompliance = themes.includes("compliance");
+
+    if (hasHealthcare) {
       return wrapWithQuestion(
         `Should the calm-claim ritual surface prioritized work with wellbeing check-ins, guide compliant reconciliation with payer context, and finish with restorative debriefs plus logged clean-claim wins for ${personaPhrase}`
+      );
+    }
+    if (hasFinance) {
+      return wrapWithQuestion(
+        `Should the flow walk portfolio teams from ingesting market data, through automated risk scoring and compliance approval, into trade execution with instant audit trails so ${personaPhrase} can trust every move`
+      );
+    }
+    if (hasCompliance) {
+      return wrapWithQuestion(
+        `Would mapping a control escalation path—flag, assess, capture evidence, resolve, and report—help ${personaPhrase} keep regulators and auditors confident in the workflow`
       );
     }
     if (flair.hasTimer || flair.isGamified) {
@@ -1013,8 +1037,19 @@ const QUESTION_OPINION_BUILDERS: Record<
         "Great—those obligations will guide our data retention and automation roadmap."
       );
     }
+    const themes = context.analysis?.themes ?? [];
+    if (themes.includes("finance")) {
+      return wrapWithConfidence(
+        "Daily MiFID II / EMIR trade submissions, SEC/FINRA surveillance exports, quarterly 10-Q supporting schedules, AML SAR packages, and end-of-day treasury attestations—each with named owners and data sources so we can automate the evidence trail."
+      );
+    }
+    if (themes.includes("healthcare")) {
+      return wrapWithConfidence(
+        "HIPAA audit logs, claims reconciliation records, payer dispute packets, and state/federal quality reports with documented cadence and responsible teams so automation can assemble the binders."
+      );
+    }
     return wrapWithConfidence(
-      "List the filings or attestations you owe (SOC, PCI, claims) so we capture the right evidence."
+      "List the filings or attestations you owe (SOC 2, PCI, GDPR, billing) along with cadence, owners, and evidence systems so we capture the right proof automatically."
     );
   },
   revenue_model: (_question, context, answer) => {
@@ -1023,8 +1058,14 @@ const QUESTION_OPINION_BUILDERS: Record<
         "Perfect—now every roadmap bet can ladder up to that monetisation plan."
       );
     }
+    const themes = context.analysis?.themes ?? [];
+    if (themes.includes("finance")) {
+      return wrapWithConfidence(
+        "Blend bps-based platform fees on assets under management, premium analytics subscriptions for treasury/compliance teams, and automation-led cost savings (fewer manual reconciliations, leaner audit prep). Track ARR uplift, cost-per-trade, and hours saved."
+      );
+    }
     return wrapWithConfidence(
-      "Clarify how this experience drives revenue or savings so we prioritise accordingly."
+      "Clarify whether revenue comes from subscriptions, usage tiers, professional services, or efficiency savings so we tie backlog bets directly to monetary impact."
     );
   },
   learning_outcomes: (_question, context, answer) => {
@@ -1089,14 +1130,15 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
     const audience = context.answers.primary_audience || "target users";
     const themes = context.analysis?.themes ?? [];
     const flair = derivePromptFlair(context.prompt, context.analysis);
-    const hasCompliance = themes.includes("compliance") || themes.includes("finance");
+    const hasFinance = themes.includes("finance");
+    const hasCompliance = themes.includes("compliance") && !hasFinance;
     const hasHealthcare = themes.includes("healthcare");
     const hasCulinary = themes.includes("culinary") || flair.isCulinary;
     const hasProductivity = themes.includes("productivity") || flair.hasTimer || flair.isGamified;
 
     const iteration = context.iteration ?? 0;
 
-    if (hasHealthcare || hasCompliance) {
+    if (hasHealthcare) {
       if (iteration === 0) {
         return "Lift clean-claim accuracy to 99%, clear denials within 48 hours, and keep audit exceptions below 0.5%. Track reviewer caseload, escalation lag, and payer feedback so finance and compliance stay confident.";
       }
@@ -1109,6 +1151,30 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
         ].join("\n");
       }
       return "Alternative lens: set tiered goals—95% clean claims in 30 days, 97% in 60 days, 99% by day 90—and run retros when any week dips, so finance, compliance, and wellbeing leaders can course-correct together.";
+    }
+    if (hasFinance) {
+      if (iteration === 0) {
+        return "Cut trade breaks below 0.1%, file mandated reports within 24 hours, and grow compliant revenue by 15%. Track exposure alerts, settlement delays, and audit-ready evidence packages.";
+      }
+      if (iteration === 1) {
+        return [
+          "• Settlement accuracy at 99.9% with automated reconciliation of counterparties.",
+          "• All regulatory filings submitted on time with complete evidentiary trails.",
+          "• Risk alerts triaged and resolved inside one business day.",
+          "• Monetisation levers documented with forecasted ARR and guardrails for compliant upsell.",
+        ].join("\n");
+      }
+      return "Stress-test the KPIs: run best/worst-case scenarios on trade volume, compliance workload, and asset growth so finance stewards can prove the system balances profit and controls.";
+    }
+    if (hasCompliance) {
+      if (iteration === 0) {
+        return "Hold zero critical audit findings, remediate high-risk controls within 24 hours, and keep evidence coverage at 100%. Track how long exceptions stay open and how often teams escalate.";
+      }
+      return [
+        "• Zero critical audit findings each quarter with automated evidence capture.",
+        "• High-risk control exceptions resolved in under 24 hours; medium risk inside 72 hours.",
+        "• Quarterly control health reviews with trend visualisations for leadership.",
+      ].join("\n");
     }
     if (themes.includes("ai")) {
       return `Automate 60% of repetitive tasks for ${audience} within 90 days while keeping human intervention below 10%. Track resolution quality and feedback to prove trust.`;
@@ -1168,17 +1234,30 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
     const summary = context.summary || buildPromptSummary(context.prompt);
     const themes = context.analysis?.themes ?? [];
     const flair = derivePromptFlair(context.prompt, context.analysis);
-    const hasCompliance = themes.includes("compliance") || themes.includes("finance");
+    const hasFinance = themes.includes("finance");
+    const hasCompliance = themes.includes("compliance") && !hasFinance;
     const hasHealthcare = themes.includes("healthcare");
     const hasCulinary = themes.includes("culinary") || flair.isCulinary;
 
     const iteration = context.iteration ?? 0;
 
-    if (hasHealthcare || hasCompliance) {
+    if (hasHealthcare) {
       if (iteration === 0) {
         return `1. Billing lead opens the calm workspace and sees prioritized claims with stress-level check-ins.\n2. Assistant surfaces payer rules, prior notes, and compliance nudges while playing a grounding cue.\n3. They reconcile the claim, log any escalations, and trigger automated audit trails.\n4. The system celebrates progress, schedules the next focus block, and records clean-claim metrics for finance.`;
       }
       return `1. Morning standup sets intent, highlighting risk spikes or volunteer fatigue.\n2. Calm-mode queues guide claims reviewers through payer-specific playbooks with automatic double-signature capture.\n3. After action, the system launches a two-minute decompression ritual, captures coaching notes, and syncs clean-claim stats to finance and clinical dashboards.\n4. Weekly retros assemble compliance, wellbeing, and finance trends into a single report with recommended automations.`;
+    }
+    if (hasFinance) {
+      if (iteration === 0) {
+        return `1. Portfolio lead reviews market feeds, risk alerts, and cash positions.\n2. Assistant runs automated compliance checks before any proposed move.\n3. Approved trades execute with settlement tasks, treasury notifications, and instant audit trails.\n4. End-of-day pulse reconciles positions, files required reports, and highlights monetisation levers for finance leadership.`;
+      }
+      return `1. Daily risk huddle reviews VaR changes, flagged counterparties, and pending approvals.\n2. Analysts step through pre-trade checklists with automated evidence capture and sign-off gates.\n3. Execution console logs fills, pushes ledger updates, and snapshots exposure dashboards.\n4. Weekly close packages roll up P&L, control health, and monetisation performance for executives.`;
+    }
+    if (hasCompliance) {
+      if (iteration === 0) {
+        return `1. Control owners open a prioritized queue of exceptions ranked by severity and SLA.\n2. Workflow guides evidence collection, remediation steps, and required approvals.\n3. Completion updates the control library, notifies stakeholders, and archives proof.\n4. Weekly review exports audit-ready packets and spotlights recurring gaps.`;
+      }
+      return `1. Risk desk triages new exceptions and assigns owners with clear deadlines.\n2. Guided playbooks capture context, remediation tasks, and supporting documentation.\n3. Approvers sign digitally, triggering notifications and dashboard updates.\n4. Quarterly retros roll up control health trends and lessons for leadership.`;
     }
     if (themes.includes("ai")) {
       return `1. User submits a scenario tied to “${summary}”.\n2. AI analyzes prior data and drafts guidance.\n3. Human reviews, tweaks, and approves.\n4. The system publishes actions and logs feedback for future training.`;
@@ -1220,12 +1299,32 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
   tech_preferences: (_question, context, _answer) => {
     const themes = context.analysis?.themes ?? [];
     const flair = derivePromptFlair(context.prompt, context.analysis);
-    if (themes.includes("healthcare") || themes.includes("compliance") || themes.includes("finance")) {
+    const hasFinance = themes.includes("finance");
+    const hasHealthcare = themes.includes("healthcare");
+    const hasCompliance = themes.includes("compliance") && !hasFinance;
+
+    if (hasHealthcare) {
       return [
         "React + TypeScript calm-mode UI with accessible, low-light components.",
-        "Node/NestJS services that expose FEMA, FHIR/Epic, NetSuite, and county record adapters behind a GraphQL gateway.",
+        "Node/NestJS services exposing FHIR/Epic adapters and payer rules behind a GraphQL gateway.",
         "Postgres + S3 audit pipeline with immutable logs, SOC2/HIPAA guardrails, and PagerDuty/Grafana observability.",
-        "Offline-first sync for field volunteers and encrypted storage for trauma debrief notes.",
+        "Offline-first sync for field staff and encrypted storage for clinical notes.",
+      ].join("\n");
+    }
+    if (hasFinance) {
+      return [
+        "React + TypeScript dashboard with risk overlays, trade blotter, and compliance approvals.",
+        "Node/NestJS services orchestrating FIX/crypto adapters and regulatory reporting pipelines.",
+        "Postgres + Kafka event store for trades, plus S3/Glue for immutable audit archives.",
+        "SOC2-ready controls, role-based access, and Datadog/CloudTrail monitoring wired into every service.",
+      ].join("\n");
+    }
+    if (hasCompliance) {
+      return [
+        "React + TypeScript control center with evidence capture, approval routing, and SLA tracking.",
+        "Node/NestJS backend backed by a policy engine (Open Policy Agent) for automated control checks.",
+        "Postgres + object storage for immutable evidence snapshots, with scheduled exports to GRC tooling.",
+        "CI/CD with automated control tests, audit logging, and alerting via PagerDuty + Grafana.",
       ].join("\n");
     }
     if (themes.includes("ai")) {
@@ -1295,14 +1394,26 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
     if (_answer) {
       return _answer;
     }
-    const summary = context.summary || buildPromptSummary(context.prompt);
-    return `Combine historical records, expert-reviewed exemplars, and a feedback loop from live usage so the AI behind “${summary}” keeps getting better.`;
+    const themes = context.analysis?.themes ?? [];
+    if (themes.includes("finance")) {
+      return "Train models on anonymised trade ledgers, historical compliance rulings, risk alerts, and expert-reviewed remediation notes, then loop in feedback from desk supervisors and auditors to keep the assistant trustworthy.";
+    }
+    if (themes.includes("healthcare")) {
+      return "Blend de-identified encounter records, payer rules, clinician-reviewed exemplars, and post-encounter feedback so the assistant stays clinically accurate and compliant.";
+    }
+    if (themes.includes("ai") || themes.includes("data")) {
+      return "Bootstrap with curated datasets, SME-reviewed exemplars, and a tight human-in-the-loop review process, then keep fine-tuning with production feedback and drift monitoring.";
+    }
+    return "Combine historical records, expert-reviewed exemplars, and a feedback loop from live usage so the automation keeps learning without drifting from reality.";
   },
   data_strategy: (_question, context, _answer) => {
     if (_answer) {
       return _answer;
     }
     const themes = context.analysis?.themes ?? [];
+    if (themes.includes("finance")) {
+      return "Ingest trade blotters, market data, risk model outputs, compliance status logs, settlement timings, and revenue dashboards so we can monitor trade-cycle time, break frequency, regulatory SLA compliance, and ARR growth end to end.";
+    }
     if (themes.includes("ai") || themes.includes("data")) {
       return "Capture model quality metrics (precision/recall), human override rate, activation funnels, and team satisfaction to prove value holistically.";
     }
@@ -1311,6 +1422,13 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
   change_management: (_question, context, _answer) => {
     if (_answer) {
       return _answer;
+    }
+    const themes = context.analysis?.themes ?? [];
+    if (themes.includes("finance")) {
+      return "Nominate trading, risk, and compliance champions; schedule regulator-friendly walkthroughs; run tabletop drills; and set a clear comms cadence so every desk adopts the new workflow with confidence.";
+    }
+    if (themes.includes("internal_enablement")) {
+      return "Pair internal champions with enablement sprints, stagger launches by cohort, and keep retros/office hours rolling so behaviour change sticks.";
     }
     return "Outline the champions, training assets, comms cadence, and feedback channels required to shift teams onto the new workflow.";
   },
@@ -1369,6 +1487,10 @@ const QUESTION_SUGGESTION_BUILDERS: Record<
       return _answer;
     }
     const flair = derivePromptFlair(context.prompt, context.analysis);
+    const themes = context.analysis?.themes ?? [];
+    if (themes.includes("finance")) {
+      return "Instrument trade-cycle time, break frequency, regulatory filing SLAs, assets under guidance, and revenue from premium analytics so finance stewards can prove the platform balances growth and controls.";
+    }
     if (flair.hasTimer || flair.isGamified) {
       return "Track timer completion rate, streak health, and developer mood shifts so you can prove the retro timer works.";
     }
