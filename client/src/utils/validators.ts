@@ -75,11 +75,11 @@ export function detectVSCodeShape(output: string): { shape: "tasks" | "simple" |
 export function validate(target: Target, output: string): { ok: boolean; reasons: string[] } {
   switch (target) {
     case "lovable": {
-      const hasFences = /```/.test(output);
-      const hasJSX = /<\/?[A-Z][A-Za-z0-9]*/.test(output);
-      const hasDefaultExportFn = /export\s+default\s+function\s+[A-Z][A-Za-z0-9_]*/.test(output);
-      const hasShadcnImport = /from\s+['"]@\/components\/ui\//.test(output);
-      const hasTailwind = /className=\"[^\"]+\"/.test(output);
+  const hasFences = /```/.test(output);
+  const hasJSX = /<\/?[A-Z][A-Za-z0-9]*/.test(output);
+  const hasDefaultExportFn = /export\s+default\s+function\s+[A-Z][A-Za-z0-9_]*/.test(output);
+  const hasShadcnImport = /from\s+['"]@\/components\/ui\//.test(output);
+  const hasTailwind = /className="[^"]+"/.test(output);
       const reasons = [
         hasFences ? "Contains code fences; must be raw TSX." : null,
         !hasJSX ? "No JSX component detected." : null,
@@ -103,7 +103,9 @@ export function validate(target: Target, output: string): { ok: boolean; reasons
           const untilNext = acSection.split(/\n##\s*/)[0] || acSection;
           const lines = untilNext.split(/\n+/).map((l) => l.trim());
           gherkinCount = lines.filter((l) => /Given.+When.+Then/i.test(l) || /^[-*]\s*(Given|When|Then)/i.test(l)).length;
-        } catch {}
+        } catch (e) {
+          // Ignore parsing failures when counting Gherkin-like lines; shape checks will handle invalid content.
+        }
       }
       const shapeAOk = scope && ac && risks && next && gherkinCount >= 2;
 

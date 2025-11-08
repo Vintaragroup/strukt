@@ -1,14 +1,5 @@
-import { useEffect, useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-} from "./ui/context-menu";
 import { 
   RelationshipType, 
   getRelationshipLabel, 
@@ -67,17 +58,7 @@ export function EdgeContextMenu({
   onDeleteEdge,
   onClose,
 }: EdgeContextMenuProps) {
-  const [isOpen, setIsOpen] = useState(!!edgeId);
-
-  useEffect(() => {
-    setIsOpen(!!edgeId);
-  }, [edgeId]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      onClose();
-    }
-  }, [isOpen, onClose]);
+  const isOpen = !!edgeId;
 
   if (!edgeId) return null;
 
@@ -114,7 +95,7 @@ export function EdgeContextMenu({
                     key={type}
                     onClick={() => {
                       onChangeRelationshipType(edgeId, type);
-                      setIsOpen(false);
+                      onClose();
                     }}
                     className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between gap-2 ${
                       isActive ? "bg-indigo-50" : ""
@@ -146,7 +127,7 @@ export function EdgeContextMenu({
               <button
                 onClick={() => {
                   onStartEditLabel(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
               >
@@ -155,7 +136,7 @@ export function EdgeContextMenu({
               <button
                 onClick={() => {
                   onCycleArrowhead(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
                 title="Cycle arrowhead: none → end → both"
@@ -165,7 +146,7 @@ export function EdgeContextMenu({
               <button
                 onClick={() => {
                   onToggleStraighten(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
               >
@@ -175,7 +156,7 @@ export function EdgeContextMenu({
               <button
                 onClick={() => {
                   onToggleOrthogonal(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
               >
@@ -185,7 +166,7 @@ export function EdgeContextMenu({
               <button
                 onClick={() => {
                   onToggleDashed(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
               >
@@ -197,7 +178,7 @@ export function EdgeContextMenu({
                   // Disable for hard dependencies to avoid creating immediate cycles
                   if (currentRelationshipType === 'depends-on' || currentRelationshipType === 'blocks') return;
                   onMakeBidirectional(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className={`w-full px-3 py-2 text-left text-sm transition-colors ${
                   (currentRelationshipType === 'depends-on' || currentRelationshipType === 'blocks')
@@ -216,7 +197,7 @@ export function EdgeContextMenu({
               <button
                 onClick={() => {
                   onDeleteEdge(edgeId);
-                  setIsOpen(false);
+                  onClose();
                 }}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors"
               >

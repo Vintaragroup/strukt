@@ -3,6 +3,7 @@ export type Target = "lovable" | "base44" | "claude" | "vscode";
 // Centralized per-platform headers. Keep these short and enforceable.
 export const PLATFORM_HEADERS: Record<Target, string> = {
   lovable: [
+    "You are a Lovable AI build assistant.",
     "You are a Lovable.dev code generator.",
     "Output ONLY one React component in raw TSX (no backticks) using shadcn/ui + Tailwind.",
     "Requirements: default exported function component, at least one import from '@/components/ui/*', and visible Tailwind className usage.",

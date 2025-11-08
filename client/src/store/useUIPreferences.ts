@@ -1,9 +1,16 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { LassoMode, WhiteboardTool } from "@/types/whiteboard";
 
 interface UIPreferencesState {
   beginnerMode: boolean;
   setBeginnerMode: (value: boolean) => void;
+  recipeEnabled: boolean;
+  setRecipeEnabled: (value: boolean) => void;
+  whiteboardTool: WhiteboardTool;
+  setWhiteboardTool: (tool: WhiteboardTool) => void;
+  lassoMode: LassoMode;
+  setLassoMode: (mode: LassoMode) => void;
 }
 
 const STORAGE_KEY = "strukt-ui-preferences";
@@ -13,6 +20,12 @@ export const useUIPreferences = create<UIPreferencesState>()(
     (set) => ({
       beginnerMode: false,
       setBeginnerMode: (value) => set({ beginnerMode: value }),
+      recipeEnabled: true,
+      setRecipeEnabled: (value) => set({ recipeEnabled: value }),
+      whiteboardTool: "none",
+      setWhiteboardTool: (tool) => set({ whiteboardTool: tool }),
+      lassoMode: "full",
+      setLassoMode: (mode) => set({ lassoMode: mode }),
     }),
     {
       name: STORAGE_KEY,
@@ -41,6 +54,9 @@ export const useUIPreferences = create<UIPreferencesState>()(
       }),
       partialize: (state) => ({
         beginnerMode: state.beginnerMode,
+        recipeEnabled: state.recipeEnabled,
+        whiteboardTool: state.whiteboardTool,
+        lassoMode: state.lassoMode,
       }),
     }
   )

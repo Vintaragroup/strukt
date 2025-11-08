@@ -12,6 +12,9 @@ import {
   Minimize2,
   CircleSlash2,
   Settings2,
+  FolderPlus,
+  FolderMinus,
+  LayoutGrid,
 } from "lucide-react";
 
 interface NodeContextMenuProps {
@@ -35,6 +38,9 @@ interface NodeContextMenuProps {
   onMarkIncorrectSuggestion?: () => void;
   onAutoCreateForNode?: () => void;
   onReconfigureFoundation?: () => void;
+  onGroupChildren?: () => void; // collapse this node + selected peers into aggregate
+  onExpandAggregate?: () => void; // expand if this node is an aggregate
+  onOrganizeChildren?: () => void; // locally arrange immediate children around this node
 }
 
 export function NodeContextMenu({
@@ -58,6 +64,9 @@ export function NodeContextMenu({
   onMarkIncorrectSuggestion,
   onAutoCreateForNode,
   onReconfigureFoundation,
+  onGroupChildren,
+  onExpandAggregate,
+  onOrganizeChildren,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -131,6 +140,26 @@ export function NodeContextMenu({
     </button>
   )}
 
+  {/* Aggregate group actions */}
+  {onGroupChildren && (
+    <button
+      onClick={() => handleAction(onGroupChildren)}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
+    >
+      <FolderPlus className="w-4 h-4" />
+      <span>Group with selection</span>
+    </button>
+  )}
+  {onExpandAggregate && (
+    <button
+      onClick={() => handleAction(onExpandAggregate)}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
+    >
+      <FolderMinus className="w-4 h-4" />
+      <span>Expand group</span>
+    </button>
+  )}
+
   {onEnrich && (
         <button
           onClick={() => handleAction(onEnrich)}
@@ -138,6 +167,16 @@ export function NodeContextMenu({
         >
           <Sparkles className="w-4 h-4" />
       <span>Enrich with AI</span>
+    </button>
+  )}
+
+  {onOrganizeChildren && (
+    <button
+      onClick={() => handleAction(onOrganizeChildren)}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-indigo-50 hover:text-indigo-900 transition-colors"
+    >
+      <LayoutGrid className="w-4 h-4" />
+      <span>Organize children</span>
     </button>
   )}
 

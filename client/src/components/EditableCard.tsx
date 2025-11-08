@@ -84,16 +84,12 @@ export function EditableCard({
   onEditingChange,
   onGenerateContent,
   isGenerating,
-}: EditableCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  }: EditableCardProps) {
   const [showToolbar, setShowToolbar] = useState(false);
 
   const handleEditingChange = (editing: boolean) => {
-    setIsEditing(editing);
     onEditingChange?.(editing && data.type === "text");
-  };
-
-  const colorClasses = {
+  };  const colorClasses = {
     teal: "border-teal-300 bg-teal-50/50 focus-within:border-teal-400",
     purple: "border-purple-300 bg-purple-50/50 focus-within:border-purple-400",
     blue: "border-blue-300 bg-blue-50/50 focus-within:border-blue-400",
@@ -142,6 +138,15 @@ export function EditableCard({
       section.id === sectionId ? { ...section, body } : section
     );
     onUpdate({ ...data, sections: updatedSections });
+  };
+
+  const handleAddSection = () => {
+    const newSection: CardSection = {
+      id: `section-${Date.now()}`,
+      title: `Section ${(data.sections?.length || 0) + 1}`,
+      body: "",
+    };
+    onUpdate({ ...data, sections: [...(data.sections || []), newSection] });
   };
 
   return (
@@ -293,6 +298,12 @@ export function EditableCard({
                 />
               </div>
             ))}
+            <button
+              onClick={handleAddSection}
+              className="w-full text-left text-sm text-gray-400 hover:text-gray-600 py-1"
+            >
+              + Add section
+            </button>
           </div>
         ) : (
           <textarea

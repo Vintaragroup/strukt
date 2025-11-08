@@ -1,61 +1,56 @@
 ---
-description: Handles AI content generation pipeline including context injection, template matching, and generation queue management
+description: Specification for AI-driven content generation pipeline including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-Core Generation Components:
+## Generation Service Architecture
+- Multi-stage pipeline for content generation with domain-specific validation
+- Custom prompt enrichment with architectural context injection
+- Template matching algorithms for software architecture patterns
+- Generation queue system with priority handling and circuit breaker
+Importance Score: 95
 
-1. Context Injection System
-Importance Score: 90/100
-- Intelligent workspace context analyzer 
-- Maps node relationships into structured prompt contexts
-- Domain classification with archetype detection
-- PRD template blending system
-- Context type validation and scoring
-File: `server/src/services/ContextInjector.ts`
+## Context Injection System 
+Path: server/src/services/ContextInjector.ts
+- Domain-aware context building for architecture components
+- Workspace analysis for dependency chains and relationships
+- PRD template integration with architectural patterns
+- Knowledge base fragment selection and scoring
+Importance Score: 90
 
-2. Template Matching Engine 
-Importance Score: 85/100
-- Multi-stage template composition with progressive relaxation
-- Fragment prioritization based on domain context
-- Custom scoring algorithm for PRD template matching
-- Domain-specific filtering and recommendation system
-File: `server/src/services/cards/cardComposer.ts`
+## Template Matching Engine
+Path: server/src/services/ai/provider.ts
+- Architecture-specific template scoring and selection
+- Multi-stage filtering with domain weighting
+- Fragment composition with fallback strategies
+- Template accuracy validation and quality gates
+Importance Score: 85
 
-3. Generation Queue Management
-Importance Score: 80/100
-- Asynchronous generation pipeline with state management
-- Smart batching of related generation requests
-- Circuit breaker pattern for AI provider stability
-- Generation history tracking with failure recovery
-File: `server/src/services/GenerationQueue.ts`
+## Generation Queue Management
+Path: server/src/services/GenerationQueue.ts
+- Priority-based queue for architecture node generation
+- Circuit breaker integration for API failure handling
+- Batch processing optimization for related nodes
+- Result normalization and validation pipeline
+Importance Score: 80
 
-4. Knowledge Integration
-Importance Score: 75/100
-- Domain-aware template matching
-- Multi-faceted search with weighted relevance
-- Category/tag-based recommendation engine
-- Semantic similarity matching for templates
-Files: 
-- `server/src/services/KBService.ts`
-- `server/src/services/ai/wizard.ts`
+## Knowledge Integration
+Path: server/src/services/KBService.ts
+- Domain-specific knowledge base organization
+- Fragment scoring based on architectural relevance
+- Template composition rules for software components
+- Context-aware fragment selection algorithm
+Importance Score: 85
 
-5. Normalization Pipeline
-Importance Score: 70/100
-- Content standardization across different AI providers
-- Schema validation and type enforcement
-- Quality scoring system for generated content
-- Auto-correction for common AI output issues
-File: `server/src/services/ai/normalize.ts`
-
-The system implements a sophisticated AI generation pipeline focused on:
-- Contextual awareness through workspace analysis
-- Intelligent template matching and composition
-- Robust queue management and error handling
-- Knowledge base integration for improved quality
-- Content normalization and validation
+## Feedback Processing
+Path: server/src/services/ai/feedback.ts
+- Quality scoring for generated architecture components
+- Feedback integration into template selection
+- Generation accuracy tracking and improvement
+- Domain-specific quality metrics
+Importance Score: 75
 
 $END$
 

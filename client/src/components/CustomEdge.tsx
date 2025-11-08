@@ -1,13 +1,13 @@
 // @ts-nocheck
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { EdgeProps, getBezierPath, EdgeLabelRenderer, Position, useReactFlow } from "@xyflow/react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
-import { FileText, Plus, MessageSquare, AlertCircle, X, Edit2 } from "lucide-react";
+import { Plus, MessageSquare, X, Edit2 } from "lucide-react";
 import { getRelationshipColor, getRelationshipLabel, RelationshipType } from "../utils/relationships";
 
 export const CustomEdge = memo(({
@@ -19,7 +19,7 @@ export const CustomEdge = memo(({
   sourcePosition,
   targetPosition,
   style = {},
-  markerEnd,
+  markerEnd: _markerEnd,
   data,
   selected,
 }: EdgeProps) => {
@@ -230,10 +230,10 @@ export const CustomEdge = memo(({
   const [currentNoteText, setCurrentNoteText] = useState("");
   const [editingNoteIndex, setEditingNoteIndex] = useState<number | null>(null);
   const [isHover, setIsHover] = useState(false);
-  const [isEditingLabel, setIsEditingLabel] = useState<boolean>(false);
-  const [labelDraft, setLabelDraft] = useState<string>(
-    (typeof data?.label === 'string' && data.label) || ''
-  );
+  // External request to edit (from parent) OR internal manual edit
+  const [localEditing, setLocalEditing] = useState(false);
+  const isEditingLabel = !!data?.editingLabel || localEditing;
+  const [labelDraft, setLabelDraft] = useState<string>((typeof data?.label === 'string' && data.label) || '');
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -293,18 +293,19 @@ export const CustomEdge = memo(({
   const lineStyle = (data?.lineStyle as 'solid' | 'dashed') || 'solid';
   const arrowMode = (data?.arrowhead as 'none' | 'end' | 'both') || 'none';
 
+  // When external editing requested, hydrate draft & focus
+  // Defer draft hydration to microtask to avoid synchronous setState warning in lint rule
   useEffect(() => {
-    if (data?.editingLabel) {
-      setIsEditingLabel(true);
+    if (!data?.editingLabel) return;
+    Promise.resolve().then(() => {
       setLabelDraft(typeof data?.label === 'string' ? data.label : '');
-      // focus next tick
       setTimeout(() => inputRef.current?.focus(), 0);
-    }
-  }, [data?.editingLabel]);
+    });
+  }, [data?.editingLabel, data?.label]);
 
   const handleStartInlineEdit = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setIsEditingLabel(true);
+    setLocalEditing(true);
     setLabelDraft(typeof data?.label === 'string' ? data.label : '');
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -314,7 +315,7 @@ export const CustomEdge = memo(({
     if (data?.onUpdateEdgeLabel && typeof data.onUpdateEdgeLabel === 'function') {
       data.onUpdateEdgeLabel(id, next);
     }
-    setIsEditingLabel(false);
+    setLocalEditing(false);
   };
 
   const handleCancelEdit = () => {
@@ -322,7 +323,7 @@ export const CustomEdge = memo(({
     if (data?.onCancelEditEdgeLabel && typeof data.onCancelEditEdgeLabel === 'function') {
       data.onCancelEditEdgeLabel(id);
     }
-    setIsEditingLabel(false);
+    setLocalEditing(false);
   };
   
   // Zoom-aware stroke widths to keep hit area and glow consistent in screen pixels

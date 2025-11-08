@@ -12,8 +12,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Handle, Position, NodeProps, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
-import { Layers, Layout, Server, FileText, BookOpen, Plus, MoreVertical, Copy, Trash2, Download, FileJson, FileCode2, ClipboardCopy, GitBranch, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { Layers, Layout, Server, FileText, BookOpen, Plus, MoreVertical, Copy, Trash2, FileJson, FileCode2, ClipboardCopy, GitBranch, Sparkles, ChevronDown, ChevronUp, FolderPlus, FolderMinus } from "lucide-react";
+import { motion } from "motion/react";
 import { Button } from "./ui/button";
 import {
   Popover,
@@ -23,6 +23,7 @@ import {
 import { EditableCard, EditableCardData, CardType } from "./EditableCard";
 import { CARD_TEMPLATES, NODE_CARD_MATRIX, type NodeCardTemplateId } from "../config/nodeCardRegistry";
 import type { DomainType } from "../types";
+import type { WhiteboardShapePayload } from "@/types/whiteboard";
 
 export interface CustomNodeData extends Record<string, unknown> {
   label: string;
@@ -73,6 +74,12 @@ export interface CustomNodeData extends Record<string, unknown> {
     needsReview?: boolean;
     warnings?: string[];
   };
+  // Parent-driven children collapse/expand affordances
+  canCollapseChildren?: boolean;
+  onCollapseChildren?: () => void;
+  isAggregateGroup?: boolean;
+  onExpandChildrenGroup?: () => void;
+  whiteboardShape?: WhiteboardShapePayload;
 }
 
 const BASE_NODE_WIDTH = 280;
@@ -146,6 +153,18 @@ const nodeConfig = {
     selectedRingOpacity: "ring-opacity-90",
     selectedGlow: "shadow-gray-500/60",
   },
+  // Fallback style for aggregate groups
+  aggregate: {
+    icon: Layers,
+    color: "#6b7280",
+    bgGradient: "from-gray-600 via-gray-500 to-slate-600",
+    borderColor: "border-l-gray-600",
+    cardColor: "gray" as const,
+    badgeColor: "bg-white/30 text-white border-white/40",
+    selectedRing: "ring-gray-500",
+    selectedRingOpacity: "ring-opacity-90",
+    selectedGlow: "shadow-gray-500/60",
+  },
 };
 
 // Domain-specific overrides
@@ -187,6 +206,48 @@ const domainConfig = {
   },
 };
 
+const WhiteboardShapeNode = memo(function WhiteboardShapeNode({
+  shape,
+  selected,
+}: {
+  shape: WhiteboardShapePayload;
+  selected?: boolean;
+}) {
+  if (shape.kind === "rectangle") {
+    return (
+      <div className="h-full w-full relative">
+        <div
+          className="absolute inset-0"
+          style={{
+            borderRadius: shape.borderRadius,
+            border: `${shape.strokeWidth}px solid ${shape.stroke}`,
+            backgroundColor: shape.fill,
+            boxShadow: selected ? "0 0 0 2px rgba(79,70,229,0.45)" : undefined,
+          }}
+        />
+      </div>
+    );
+  }
+  const path = shape.points.map((point) => `${point.x},${point.y}`).join(" ");
+  return (
+    <div className="h-full w-full relative rounded-2xl border border-indigo-100 bg-white/70">
+      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+        <polyline
+          points={path}
+          fill="none"
+          stroke={shape.stroke}
+          strokeWidth={shape.strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {selected && (
+        <div className="absolute inset-0 rounded-2xl border-2 border-dashed border-indigo-400 pointer-events-none" />
+      )}
+    </div>
+  );
+});
+
 const DEFAULT_MAX_NODE_HEIGHT = 720;
 const MIN_NODE_HEIGHT = 200;
 const ADD_BUTTON_RESERVE = 64;
@@ -195,17 +256,17 @@ const MANUAL_RESIZE_BUFFER = 320;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData>) => {
+  const whiteboardShape = data.whiteboardShape as WhiteboardShapePayload | undefined;
   const [isHovered, setIsHovered] = useState(false);
   const [isPlacingMode, setIsPlacingMode] = useState(false);
-  const [handleHovered, setHandleHovered] = useState(false);
   const [showPulse, setShowPulse] = useState(data.isNew || false);
   const [isResizing, setIsResizing] = useState(false);
-  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
-  const { screenToFlowPosition, setNodes } = useReactFlow();
+  const { setNodes, getEdges: rfGetEdges, getNode: rfGetNode } = useReactFlow() as any;
   const updateNodeInternals = useUpdateNodeInternals();
   
   // Use domain config if domain is specified, otherwise use type config
-  let config = nodeConfig[data.type];
+  // Resolve visual config with safe fallback to aggregate preset
+  let config = (nodeConfig as any)[data.type] || (nodeConfig as any).aggregate;
   if (data.domain && domainConfig[data.domain]) {
     config = { ...config, ...domainConfig[data.domain] };
   }
@@ -351,74 +412,17 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
     
     // Only clean up if we've actually started and now parent says stop
     if (data.isPlacingFromThisNode === false && isPlacingMode && hasStartedPlacingRef.current) {
-      // Parent has turned off placing mode, sync local state
-      setIsPlacingMode(false);
+      // Defer state update to microtask to avoid synchronous setState inside effect body
+      queueMicrotask(() => setIsPlacingMode(false));
       hasStartedPlacingRef.current = false;
-      
-      // Clean up event listeners immediately
       if (eventCleanupRef.current) {
         eventCleanupRef.current();
         eventCleanupRef.current = null;
       }
-      // Don't clear dragStartPos - it stays for the duration of the operation
     }
   }, [data.isPlacingFromThisNode, isPlacingMode]);
 
-  const handleDragHandleClick = (e: React.MouseEvent | React.PointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Prevent if already in placing mode
-    if (isPlacingMode) return;
-    
-    // Start placing mode
-    const startPos = { x: e.clientX, y: e.clientY };
-    setIsPlacingMode(true);
-    dragStartPos.current = startPos;
-    
-    // Notify parent about placing mode
-    if (data.onPlacingModeChange) {
-      data.onPlacingModeChange(true, id, startPos);
-    }
-
-    // IMMEDIATELY attach event listeners (don't wait for useEffect)
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (dragStartPos.current && dataRef.current.onDragPreviewUpdate) {
-        dataRef.current.onDragPreviewUpdate(
-          dragStartPos.current,
-          { x: moveEvent.clientX, y: moveEvent.clientY }
-        );
-      }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // Cancel placing mode
-        setIsPlacingMode(false);
-        dragStartPos.current = null;
-        if (dataRef.current.onDragPreviewUpdate) {
-          dataRef.current.onDragPreviewUpdate(null, null);
-        }
-        if (dataRef.current.onPlacingModeChange) {
-          dataRef.current.onPlacingModeChange(false, id, null);
-        }
-        // Clean up listeners
-        if (eventCleanupRef.current) {
-          eventCleanupRef.current();
-          eventCleanupRef.current = null;
-        }
-      }
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('keydown', handleEscape);
-
-    // Store cleanup function
-    eventCleanupRef.current = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  };
+  // Removed unused drag handle click handler to satisfy lint
 
   const activeResizeRef = useRef<{
     startX: number;
@@ -469,20 +473,22 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   const scheduleResize = useCallback(
     (nextHeight?: number, nextWidth?: number) => {
       if (nextHeight == null && nextWidth == null) return;
-      const pending = pendingResizeRef.current ?? {};
       const activeContext = activeResizeRef.current;
       const overrideCap = manualResizeModeRef.current && activeContext
         ? Math.max(heightCap, activeContext.startHeight + MANUAL_RESIZE_BUFFER)
         : heightCap;
+      let nextPending: { height?: number; width?: number } = pendingResizeRef.current
+        ? { ...pendingResizeRef.current }
+        : {};
       if (nextHeight != null) {
         const clampedHeight = clamp(nextHeight, contentMinHeight, overrideCap);
-        pending.height = clampedHeight;
+        nextPending.height = clampedHeight;
       }
       if (nextWidth != null) {
         const clampedWidth = clamp(nextWidth, baseWidth, widthCap);
-        pending.width = clampedWidth;
+        nextPending.width = clampedWidth;
       }
-      pendingResizeRef.current = pending;
+      pendingResizeRef.current = nextPending;
       if (resizeFrameRef.current === null) {
         resizeFrameRef.current = requestAnimationFrame(commitResize);
       }
@@ -587,22 +593,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
     };
   }, [stopManualResize]);
 
-  // Nudge React Flow to re-measure node size so handle anchors move after collapse/expand
-  useEffect(() => {
-    updateNodeInternals(id);
-    const timer = setTimeout(() => updateNodeInternals(id), 360);
-    return () => clearTimeout(timer);
-  }, [isCollapsed, id, updateNodeInternals]);
-
-  // Fallback: if transition events don't fire, run a short rAF loop
-  useEffect(() => {
-    startFollowingHandles();
-    const stopTimer = setTimeout(() => {
-      stopFollowingHandles();
-    }, 380);
-    return () => clearTimeout(stopTimer);
-  }, [isCollapsed]);
-
+  // Helper functions must be declared before effects that use them
   const startFollowingHandles = () => {
     if (isFollowingRef.current) return;
     isFollowingRef.current = true;
@@ -622,6 +613,22 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
     updateNodeInternals(id);
   };
 
+  // Nudge React Flow to re-measure node size so handle anchors move after collapse/expand
+  useEffect(() => {
+    updateNodeInternals(id);
+    const timer = setTimeout(() => updateNodeInternals(id), 360);
+    return () => clearTimeout(timer);
+  }, [isCollapsed, id, updateNodeInternals]);
+
+  // Fallback: if transition events don't fire, run a short rAF loop
+  useEffect(() => {
+    startFollowingHandles();
+    const stopTimer = setTimeout(() => {
+      stopFollowingHandles();
+    }, 380);
+    return () => clearTimeout(stopTimer);
+  }, [isCollapsed]);
+
   const handleScrollAreaWheel = useCallback((event: ReactWheelEvent<HTMLDivElement>) => {
     if (!event.ctrlKey) {
       event.stopPropagation();
@@ -631,6 +638,11 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
   const handleScrollAreaPointerDown = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
   }, []);
+
+  // Render whiteboard shapes after hooks are declared to satisfy the Rules of Hooks
+  if (whiteboardShape) {
+    return <WhiteboardShapeNode shape={whiteboardShape} selected={selected} />;
+  }
 
   return (
     <motion.div
@@ -770,6 +782,33 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
           maxHeight: heightCap,
         }}
       >
+        {/* Inline node debug overlay (dev only) */}
+        {data?.debug && (
+          <div className="absolute top-2 right-2 z-50 rounded-md bg-black/60 text-[10px] text-white/90 px-2 py-1 leading-4">
+            <div className="font-mono">{id}</div>
+            <div className="opacity-80">{String(data.type)}{data.domain ? ` • ${String(data.domain)}` : ''}{typeof data.ring === 'number' ? ` • r${data.ring}` : ''}</div>
+            <div className="opacity-80">{data.isAggregateGroup ? 'aggregate' : 'node'}{data.collapsed ? ' • collapsed' : ''}</div>
+            {(() => {
+              try {
+                const edges = typeof rfGetEdges === 'function' ? rfGetEdges() : [];
+                const out = edges.filter((e: any) => e.source === id).length;
+                const inn = edges.filter((e: any) => e.target === id).length;
+                const snapChildren = Array.isArray((data as any).childrenSnapshot) ? (data as any).childrenSnapshot.length : undefined;
+                const node = typeof rfGetNode === 'function' ? rfGetNode(id) : null;
+                const px = node?.positionAbsolute?.x ?? node?.position?.x;
+                const py = node?.positionAbsolute?.y ?? node?.position?.y;
+                return (
+                  <div className="opacity-80">
+                    deg: out {out} • in {inn}{typeof snapChildren === 'number' ? ` • snap ${snapChildren}` : ''}
+                    {typeof px === 'number' && typeof py === 'number' ? ` • x ${Math.round(px)} • y ${Math.round(py)}` : ''}
+                  </div>
+                );
+              } catch {
+                return null;
+              }
+            })()}
+          </div>
+        )}
         {/* Resize overlays */}
         {!isCollapsed && (
           <>
@@ -836,6 +875,28 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
             {/* Context Menu */}
             {(selected || isHovered) && (
               <div className="flex items-center gap-1">
+                {/* Parent-driven collapse/expand children button */}
+                {data.isAggregateGroup ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20"
+                    onClick={(e) => { e.stopPropagation(); data.onExpandChildrenGroup?.(); }}
+                    title="Expand grouped children"
+                  >
+                    <FolderMinus className="w-4 h-4" />
+                  </Button>
+                ) : data.canCollapseChildren ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20"
+                    onClick={(e) => { e.stopPropagation(); data.onCollapseChildren?.(); }}
+                    title="Collapse children into group"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </Button>
+                ) : null}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -1064,6 +1125,43 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
                       <path d="M9 11l3 3 5-5" />
                     </svg>
                     To-Do List
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 h-9 text-sm"
+                    onClick={() => data.onAddCard?.("markdown")}
+                  >
+                    <FileCode2 className="w-4 h-4 text-blue-600" />
+                    Markdown
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 h-9 text-sm"
+                    onClick={() => data.onAddCard?.("checklist")}
+                  >
+                    <svg className="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="9 11 12 14 22 4" />
+                      <polyline points="9 19 12 22 22 12" />
+                      <line x1="3" y1="11" x2="7" y2="11" />
+                      <line x1="3" y1="19" x2="7" y2="19" />
+                    </svg>
+                    Checklist
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 h-9 text-sm"
+                    onClick={() => data.onAddCard?.("brief")}
+                  >
+                    <BookOpen className="w-4 h-4 text-amber-600" />
+                    Brief
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 h-9 text-sm"
+                    onClick={() => data.onAddCard?.("spec")}
+                  >
+                    <FileJson className="w-4 h-4 text-emerald-600" />
+                    Specification
                   </Button>
                 </div>
               </PopoverContent>

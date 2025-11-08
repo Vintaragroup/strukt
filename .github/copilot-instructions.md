@@ -13,55 +13,56 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Core Business Logic Architecture:
+Core business functionality organizes around five key areas:
 
-1. AI Content Generation Pipeline
-- Specialized node suggestion system with domain context awareness 
-- Multi-stage template composition with progressive fallback
-- Custom scoring algorithms for content relevance
-- Token budget management and context injection
-File: server/src/services/GenerationService.ts
+1. Domain-Driven Graph Management (Importance: 95)
+- Workspace graph system with specialized node types (frontend, backend, requirement, doc)
+- Custom acyclic validation ensuring valid requirement relationships
+- Domain ring visualization organizing nodes into business/product/tech/data-ai/operations sectors
+Path: client/src/components/DomainRings.tsx
 
-2. Knowledge Base Management
-- Domain-specific template matching and retrieval
-- Fragment prioritization based on workspace context
-- Custom recommendation engine with weighted scoring
-- Category-based template organization
-File: server/src/services/KBService.ts
+2. PRD Template Processing (Importance: 90)
+- Multi-stage template matching using vector embeddings
+- Domain-specific classification system for template categorization
+- Custom knowledge base scoring with fragment selection logic
+Path: server/src/services/KBService.ts
 
-3. Domain Layout System
-- Radial organization based on business domains
-- Specialized positioning for Business/Tech/Operations nodes
-- Relationship-aware node placement
-- Domain boundary management
-File: client/src/utils/domainLayout.ts
+3. AI Suggestion Pipeline (Importance: 85)
+- Context-aware node suggestion generation
+- Domain-specific prompt enhancement with workspace analysis
+- Custom template composition with fallback strategies
+Path: server/src/services/ai/suggestions.ts
 
-4. Documentation Generation
-- Multi-target content generation pipeline
-- Domain-specific card template composition
-- Accuracy scoring and staleness detection
-- Hierarchical content organization
-File: client/src/components/DocumentationPreview.tsx
+4. Workspace Health Analysis (Importance: 80)
+- Documentation freshness scoring with custom algorithms
+- Relationship strength evaluation based on domain connections
+- Multi-factor workspace health calculation
+Path: client/src/components/WorkspaceHealthPanel.tsx
 
-5. Workspace Health Analysis
-- Documentation freshness scoring
-- Relationship density calculations
-- Node connectivity assessment
-- Custom health metrics aggregation
-File: client/src/components/WorkspaceHealthPanel.tsx
+5. Content Generation System (Importance: 75)
+- Domain-aware card generation with accuracy scoring
+- Template fragment composition with business context injection
+- Custom enrichment workflows based on node type
+Path: server/src/services/cards/cardComposer.ts
 
-Key Integration Points:
-- Context injection between workspace structure and AI prompts
-- Template matching between knowledge base and node types
-- Health metrics feedback into suggestion generation
-- Domain categorization influencing layout decisions
+The system implements unique domain-specific validations and rules throughout:
+- Node type hierarchies enforce business domain separation
+- Relationship types model technical and business dependencies
+- Template matching incorporates industry-specific patterns
+- AI suggestions respect domain boundaries and relationships
 
-The system implements an AI-assisted software architecture documentation platform with:
-- Domain-driven node organization
-- Intelligent template matching
-- Multi-stage content generation
-- Sophisticated health tracking
-- Context-aware suggestions
+Core workflows integrate these components:
+1. User creates workspace through AI-guided wizard
+2. System suggests nodes based on domain context
+3. Domain rings organize nodes into business sectors
+4. Template matching provides relevant documentation
+5. Health analysis ensures workspace quality
+
+Knowledge management focuses on:
+- PRD template organization by domain
+- Custom scoring for template relevance
+- Fragment selection based on context
+- Documentation quality tracking
 
 $END$
 

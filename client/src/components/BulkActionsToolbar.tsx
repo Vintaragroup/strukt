@@ -16,6 +16,7 @@ import {
   X,
   MoreHorizontal,
   Sparkles,
+  FolderPlus,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -46,6 +47,7 @@ interface BulkActionsToolbarProps {
   onIncompleteAllTodos: () => void;
   onClearCards: () => void;
   onExportBatch: () => void;
+  onGroupSelected?: () => void;
 }
 
 export function BulkActionsToolbar({
@@ -60,6 +62,7 @@ export function BulkActionsToolbar({
   onIncompleteAllTodos,
   onClearCards,
   onExportBatch,
+  onGroupSelected,
 }: BulkActionsToolbarProps) {
   const [showStats, setShowStats] = useState(false);
 
@@ -98,6 +101,23 @@ export function BulkActionsToolbar({
 
             {/* Quick Actions */}
             <div className="flex items-center gap-1">
+              {/* Group (Collapse) */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onGroupSelected}
+                    disabled={!onGroupSelected || selectedCount < 2}
+                    className="h-9 w-9 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Group selected (collapse)</p>
+                </TooltipContent>
+              </Tooltip>
               
               {/* Duplicate */}
               <Tooltip>

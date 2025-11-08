@@ -11,7 +11,10 @@
     "client": "npm --prefix client run dev",
     "kb:validate": "npm --prefix server run kb:validate",
     "eval": "tsx scripts/eval-ci.ts",
-    "bundle:from-export": "tsx scripts/bundle-from-export.ts"
+    "bundle:from-export": "tsx scripts/bundle-from-export.ts",
+    "mcp:start": "./.mcp/start-mcp.sh",
+    "mcp:stop": "./.mcp/stop-mcp.sh",
+    "mcp:status": "docker ps | grep frontend-mcp-server || echo \"MCP server not running\""
   },
   "devDependencies": {
     "concurrently": "^8.2.0",

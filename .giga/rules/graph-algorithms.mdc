@@ -1,54 +1,64 @@
 ---
-description: Core graph algorithms for domain layout, relationship management, cycle detection, and auto-layout in architecture visualization
+description: Specification for graph algorithms implementation including domain layout, relationship management, cycle detection, and auto-layout logic
 ---
 
 
 # graph-algorithms
 
-Domain Layout Engine
-- Radial domain clustering algorithm that organizes nodes into concentric rings
-- Each ring represents a business domain tier (Product, Tech, Operations, Data)
-- Nodes within same domain automatically clustered with configurable gravity
-- Force-directed repulsion between different domains
-Importance Score: 90/100
+## Domain Ring Layout System
+Importance Score: 90
 
-Relationship Management
-- Bidirectional edge routing with conflict resolution
-- Cycle detection using modified depth-first traversal 
-- Smart edge bundling for parallel relationships
-- Domain boundary crossing minimization
-Importance Score: 85/100
+Core layout algorithm for organizing nodes in concentric rings based on domain separation:
+- Implements 5 core business domains: business, product, tech, data-ai, operations  
+- Custom radial positioning with domain-specific sector angles
+- Dynamic ring radius calculations based on node density
+- Domain intersection detection for boundary nodes
 
-Graph Operations
-- Domain-aware node positioning with semantic distances
-- Hierarchical layout preservation during operations
-- Smart node insertion maintaining existing relationships
-- Automatic relationship suggestion based on domain rules
-Importance Score: 80/100
+File: `client/src/components/DomainRings.tsx`
 
-Auto-Layout System
-- Multi-stage layout pipeline:
-  1. Domain clustering
-  2. Hierarchical arrangement
-  3. Edge crossing minimization
-  4. Final force-directed relaxation
-- Preserves mental map during incremental updates
-Importance Score: 75/100
+## Relationship Management
+Importance Score: 85
 
-Key Patterns:
-1. Domain-centric organization
-2. Semantic relationship management
-3. Layout stability preservation
-4. Hierarchical clustering
+Domain-specific relationship handling:
+- Bi-directional dependency tracking between nodes
+- Custom validation rules for cross-domain relationships
+- Auto-suggestion of related nodes based on domain context
+- Specialized relationship types (implements, documents, depends-on)
 
-Primary Files:
-```
-client/src/utils/domainLayout.ts
-client/src/utils/relationships.ts 
-client/src/utils/graphOps.ts
-client/src/utils/autoLayout.ts
-client/src/utils/d3Relax.ts
-```
+File: `client/src/utils/relationships.ts`
+
+## Cycle Detection
+Importance Score: 80
+
+Custom cycle detection implementation for domain architecture:
+- Validates acyclic dependencies across domain boundaries
+- Enforces hierarchical relationships within domains
+- Detects indirect cyclic dependencies through multiple domains
+- Provides domain-aware cycle resolution suggestions
+
+File: `client/src/utils/graphOps.ts`
+
+## Auto-layout Implementation
+Importance Score: 85
+
+Specialized layout algorithms for software architecture visualization:
+- Domain-aware force-directed layout within rings
+- Node clustering by type and relationships
+- Edge routing optimized for domain ring visualization
+- Automatic spacing based on node importance and connections
+
+File: `client/src/utils/autoLayout.ts`
+
+## Node Type Management
+Importance Score: 75
+
+Domain-specific node classification and validation:
+- Enforces node type rules per domain
+- Manages allowed relationship types between node categories
+- Implements domain-specific node styling and indicators
+- Handles node type conversion rules
+
+File: `client/src/components/CustomNode.tsx`
 
 $END$
 

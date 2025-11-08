@@ -1,123 +1,92 @@
 ---
-description: Defines core data structures, relationships, and validation rules for workspaces, nodes, and content templates
+description: Documentation of data models, relationships, and validation rules for domain entities and their interactions
 ---
 
 
 # domain-models
 
-## Core Entity Types
+## Core Node Types
+
+1. Knowledge Base Nodes
+- Template-based nodes with domain classification
+- Pre-defined validation rules per domain type
+- Relationships constrained by domain compatibility matrix
+- Custom metadata fields for requirement tracing
+
+2. Workspace Graph Nodes
+- Root node enforced with single-instance validation
+- Technical nodes: frontend, backend, data, operations  
+- Documentation nodes with freshness tracking
+- Relationship nodes with bi-directional validation
+
+## Node Relationships
+
+1. Dependency Management
+- Acyclic graph validation for technical dependencies
+- Custom relationship types: implements, documents, requires
+- Domain-specific connection rules between node types
+- Auto-validation of circular references
+
+2. Version Control
+- Snapshot-based version control for node graphs
+- Delta compression for node content changes
+- Branch management with merge validation
+- Custom diffing logic for node metadata
+
+## Template Models
+
+1. PRD Templates
+- Domain-aware template matching system
+- Vector embeddings for semantic similarity
+- Custom scoring algorithm for template relevance
+- Auto-categorization by technical domain
+
+2. Documentation Templates  
+- Domain-specific card types
+- Dynamic template composition
+- Validation rules for required sections
+- Custom metadata enrichment
+
+## Data Models
 
 1. Workspace Model
 ```typescript
 interface Workspace {
-  rootNode: string
   nodes: Node[]
   edges: Edge[]
   domain: DomainType
-  templateType: string
-  version: number
+  rootNode: string
+  version: string
+  metadata: WorkspaceMetadata
 }
 ```
 
-2. Node Types
-- Root (exactly one per workspace)
-- Frontend
-- Backend 
-- Requirement
-- Documentation
-- Integration
-
-3. Edge Types
-- Depends-on
-- Implements
-- Contains
-- References
-- Blocks
-
-## Domain Relationships
-
-1. Domain Ring Structure
-- Ring 1: Core Business Logic
-- Ring 2: Domain Services
-- Ring 3: Technical Implementation
-- Ring 4: Infrastructure
-- Ring 5: External Systems
-- Ring 6: Documentation
-
-2. Template Categories
-- Product Requirements
-- Technical Architecture
-- Integration Specs
-- User Stories
-- Documentation Cards
+2. Node Model
+```typescript
+interface Node {
+  id: string
+  type: NodeType
+  domain: DomainType
+  content: string
+  metadata: NodeMetadata
+  relationships: Relationship[]
+  validations: ValidationRule[]
+}
+```
 
 ## Validation Rules
 
-1. Node Constraints
-- Single root node required
-- No orphaned nodes allowed
-- Maximum depth: 6 levels
-- Required fields per type
+1. Graph Structure
+- Single root node enforcement
+- Acyclic dependency validation  
+- Domain compatibility checks
+- Required relationship validation
 
-2. Edge Validation
-- No circular dependencies
-- Cross-domain rules
-- Parent-child type restrictions
-- Maximum connections per node: 15
-
-3. Content Rules
-- Minimum documentation required
-- Link validation
-- Required sections by node type
-- Maximum content length limits
-
-## Template Structure
-
-1. Card Templates
-```typescript
-interface CardTemplate {
-  sections: Section[]
-  requiredFields: string[]
-  validationRules: Rule[]
-  defaultContent: ContentBlock[]
-  domainType: DomainType
-}
-```
-
-2. Section Types
-- Overview
-- Requirements
-- Technical Details
-- Dependencies
-- Documentation
-- Testing Notes
-
-3. Content Blocks
-- Text
-- Checklists
-- Code Snippets
-- Diagrams
-- Links
-- Attachments
-
-## Workspace Version Control
-
-1. Version Model
-```typescript
-interface WorkspaceVersion {
-  id: string
-  parentVersion: string
-  changes: Change[]
-  metadata: VersionMetadata
-  timestamp: Date
-}
-```
-
-2. Change Tracking
-- Node modifications
-- Edge updates
-- Content changes
-- Template updates
+2. Content Rules
+- Required fields by node type
+- Format validation by content type
+- Documentation freshness rules
+- Reference integrity checks
 
 $END$
 

@@ -21,7 +21,6 @@ import { Toaster } from "./components/ui/sonner";
 import { AnimatePresence } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { updateEdgesWithOptimalHandles } from "./utils/edgeRouting";
-import { applyRadialLayout } from "./utils/autoLayout";
 import { applyDomainRadialLayout, calculateNewNodePosition, getDomainForNodeType } from "./utils/domainLayout";
 import { devOutlineCollisions, resolveCollisions } from "./utils/collision";
 import { captureNodeDimensions as measureNodes } from "@/utils/measure";
@@ -44,11 +43,12 @@ import {
   downloadDocumentationBundle,
 } from "./utils/export";
 import { importNodeFromJSON, importMultipleNodesFromJSON } from "./utils/import";
-import { getNodesBounds, getViewportForBounds } from '@xyflow/react';
+import { getNodesBounds } from '@xyflow/react';
 
 import { Toolbar } from "./components/Toolbar";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
+import { useUIPreferences } from "@/store/useUIPreferences";
 import { ZoomControls } from "./components/ZoomControls";
 import { NodeHierarchy } from "./components/NodeHierarchy";
 import { AIButton } from "./components/AIButton";
@@ -91,9 +91,13 @@ import { WorkspaceHealthPanel } from "./components/WorkspaceHealthPanel";
 import { SnapshotsPanel } from "./components/SnapshotsPanel";
 import { RelationshipsPanel } from "./components/RelationshipsPanel";
 import { DocumentationPreview } from "./components/DocumentationPreview";
+import { ViewportLogger } from "./components/devtools/ViewportLogger";
+import { NodeInspector } from "./components/devtools/NodeInspector";
+import { ChangeLoggerPanel, wrapOnNodesChange } from "./components/devtools/ChangeLogger";
 import { FoundationSetupDialog, type FoundationConfig } from "./components/FoundationSetupDialog";
 import { NodeFoundationDialog, type NodeFoundationKind } from "./components/NodeFoundationDialog";
-import type { DocumentationBundle } from "./utils/documentationBundle";
+import { FoundationNodePicker } from "./components/FoundationNodePicker";
+import { AssociatedNodePicker } from "./components/AssociatedNodePicker";
 import { CustomConnectionLine } from "./components/CustomConnectionLine";
 import { setConnectStart, setShiftPressed } from "./utils/connectionState";
 import { DomainRings } from "./components/DomainRings";
@@ -117,7 +121,6 @@ import {
   bulkReplaceTags,
   bulkChangeType,
   bulkDeleteNodes,
-  bulkDuplicateNodes,
   bulkUpdateTodos,
   bulkClearCards,
   selectNodesByCriteria,
@@ -129,16 +132,97 @@ import { createAutoSnapshot, getSnapshots } from "./utils/snapshots";
 import { RelationshipType, setRelationshipType, getRelationshipLabel, isValidConnectionPreview } from "./utils/relationships";
 import type { DocumentationBundle, DocumentationFlag } from "./utils/documentationBundle";
 import { documentationFlagId } from "./utils/documentationBundle";
+import { FOUNDATION_CATEGORIES, type FoundationNodeTemplate } from "./config/foundationNodes";
+import { WhiteboardToolbox } from "./components/whiteboard/WhiteboardToolbox";
+import { WhiteboardToolsLayer } from "./components/whiteboard/WhiteboardToolsLayer";
+import type { WhiteboardShapePayload } from "./types/whiteboard";
 
 const DEFAULT_WORKSPACE_ID = import.meta.env.VITE_DEFAULT_WORKSPACE_ID || "";
 const USE_MOCK_SUGGESTIONS = import.meta.env.VITE_MOCK_AI_SUGGESTIONS !== "false";
 const WORKSPACE_ID_STORAGE_KEY = "flowforge-active-workspace-id";
 const WORKSPACE_NAME_STORAGE_KEY = "flowforge-active-workspace-name";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+// const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api"; // unused
 const VALID_CARD_TYPES: CardType[] = ["text", "todo", "markdown", "checklist", "brief", "spec"];
 
 const createAutoNodeId = () => `auto-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
 const createAutoCardId = () => `card-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
+
+// =============================
+// Lineage Hierarchical ID Helpers (Option A)
+// =============================
+// Rules:
+//  - Center hierId = "0"
+//  - First child at a ring depth under a parent gets plain ring number (e.g. 1, 2, 3)
+//  - Subsequent siblings under same parent+ring get ring.suffix (2.2, 2.3 ...)
+//  - Sibling numbering resets per parent per ring.
+//  - We never renumber existing hierIds on deletion; gaps are allowed.
+//  - If a node already has hierId, we preserve it.
+
+interface ExistingLineageIndex {
+  // parentId -> ring -> { hasBase: boolean; usedSuffixes: Set<number>; maxSuffix: number }
+  [parentId: string]: {
+    [ring: number]: {
+      hasBase: boolean;
+      usedSuffixes: Set<number>;
+      maxSuffix: number;
+    };
+  };
+}
+
+function buildExistingLineageIndex(nodes: Node[]): ExistingLineageIndex {
+  const index: ExistingLineageIndex = {};
+  nodes.forEach(n => {
+    const data: any = n.data || {};
+    const hierId: string | undefined = data.hierId;
+    const parentId: string | undefined = data.parentId; // parentId optionally stored on creation
+    const ring: number = Number(data.ring) || 0;
+    if (!hierId || ring <= 0) return;
+    const parentKey = parentId || 'center';
+    index[parentKey] ||= {};
+    index[parentKey][ring] ||= { hasBase: false, usedSuffixes: new Set<number>(), maxSuffix: 0 };
+    const group = index[parentKey][ring];
+    const baseMatch = new RegExp(`^${ring}$`).test(hierId);
+    if (baseMatch) {
+      group.hasBase = true;
+      group.maxSuffix = Math.max(group.maxSuffix, 1);
+      return;
+    }
+    const suffixMatch = hierId.match(new RegExp(`^${ring}\\.(\\d+)$`));
+    if (suffixMatch) {
+      const suffixNum = Number(suffixMatch[1]);
+      if (Number.isFinite(suffixNum)) {
+        group.usedSuffixes.add(suffixNum);
+        group.maxSuffix = Math.max(group.maxSuffix, suffixNum);
+      }
+    }
+  });
+  return index;
+}
+
+function computeNextHierId(
+  nodes: Node[],
+  parentId: string | null | undefined,
+  ring: number
+): string {
+  const effectiveParent = parentId || 'center';
+  const index = buildExistingLineageIndex(nodes);
+  index[effectiveParent] ||= {};
+  index[effectiveParent][ring] ||= { hasBase: false, usedSuffixes: new Set<number>(), maxSuffix: 0 };
+  const group = index[effectiveParent][ring];
+
+  if (!group.hasBase) {
+    // First sibling gets plain ring number
+    group.hasBase = true;
+    group.maxSuffix = Math.max(group.maxSuffix, 1);
+    return String(ring);
+  }
+  // Next sibling gets next suffix >=2
+  const next = Math.max(2, group.maxSuffix + 1);
+  group.usedSuffixes.add(next);
+  group.maxSuffix = next;
+  return `${ring}.${next}`;
+}
+
 
 const sanitizeCardSections = (sections: any): CardSection[] | undefined => {
   if (!Array.isArray(sections)) return undefined;
@@ -277,31 +361,25 @@ const DEFAULT_WORKSPACE_NODE = {
   },
 };
 
-function generateWorkspaceName(existingNames: Set<string>): string {
-  const base = "FlowForge Workspace";
-  if (!existingNames.has(base)) {
-    return base;
-  }
-  let counter = 2;
-  let candidate = `${base} ${counter}`;
-  while (existingNames.has(candidate)) {
-    counter += 1;
-    candidate = `${base} ${counter}`;
-  }
-  return candidate;
-}
+// function generateWorkspaceName(existingNames: Set<string>): string {
+//   const base = "FlowForge Workspace";
+//   if (!existingNames.has(base)) return base;
+//   let counter = 2;
+//   let candidate = `${base} ${counter}`;
+//   while (existingNames.has(candidate)) {
+//     counter += 1;
+//     candidate = `${base} ${counter}`;
+//   }
+//   return candidate;
+// }
 
-function buildDefaultWorkspacePayload(name: string): Omit<Workspace, "_id" | "createdAt" | "updatedAt"> {
-  return {
-    name,
-    nodes: [
-      {
-        ...DEFAULT_WORKSPACE_NODE,
-      } as any,
-    ],
-    edges: [],
-  };
-}
+// function buildDefaultWorkspacePayload(name: string): Omit<Workspace, "_id" | "createdAt" | "updatedAt"> {
+//   return {
+//     name,
+//     nodes: [ { ...DEFAULT_WORKSPACE_NODE } as any ],
+//     edges: [],
+//   };
+// }
 
 type SerializableWorkspaceNode = {
   id: string;
@@ -317,6 +395,7 @@ type SerializableWorkspaceNode = {
     maxNodeHeight?: number;
     maxNodeWidth?: number;
     cards?: EditableCardData[];
+    whiteboardShape?: WhiteboardShapePayload;
   };
 };
 
@@ -392,7 +471,7 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         ? nodeData.maxNodeWidth
         : undefined;
 
-    return {
+    const base: Node = {
       id: workspaceNode.id,
       type: "custom",
       position: workspaceNode.position || { x: 0, y: 0 },
@@ -407,8 +486,15 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         ...(preferredWidth ? { preferredWidth } : {}),
         ...(maxNodeHeight ? { maxNodeHeight } : {}),
         ...(maxNodeWidth ? { maxNodeWidth } : {}),
+        // Preserve aggregate marker if present so UI can treat it as a group even after reload
+        ...(nodeData as any)?.isAggregate ? { isAggregate: true } : {},
+        ...(nodeData && nodeData.whiteboardShape ? { whiteboardShape: nodeData.whiteboardShape } : {}),
       },
     } as Node<CustomNodeData>;
+
+    // If node is marked aggregate but persisted type was normalized to 'requirement', keep visual hint consistent
+    // by setting a lightweight flag the renderer already understands (it checks data.isAggregate)
+    return base;
   });
 }
 
@@ -440,11 +526,12 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
   const data = (node.data || {}) as any;
 
   const isCenter = node.id === "center" || node.type === "center";
-  const type: SerializableWorkspaceNode["type"] = isCenter
-    ? "root"
-    : typeof data.type === "string"
-    ? (data.type as SerializableWorkspaceNode["type"])
-    : "requirement";
+  let rawType: string | undefined = typeof data.type === 'string' ? data.type : undefined;
+  // Normalize aggregate groups to 'requirement' for persistence (server schema doesn't know 'aggregate')
+  if (rawType === 'aggregate') {
+    rawType = 'requirement';
+  }
+  const type: SerializableWorkspaceNode["type"] = isCenter ? "root" : (rawType as any) || "requirement";
 
   const title =
     (typeof data.label === "string" && data.label.trim().length > 0 && data.label) ||
@@ -476,6 +563,10 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       ? data.maxNodeWidth
       : undefined;
   const cards = sanitizeCards(data.cards);
+  const whiteboardShape =
+    data.whiteboardShape && typeof data.whiteboardShape === "object"
+      ? data.whiteboardShape
+      : undefined;
 
   return {
     id: node.id,
@@ -494,6 +585,9 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       maxNodeHeight,
       maxNodeWidth,
       cards,
+      ...(whiteboardShape ? { whiteboardShape } : {}),
+      // Preserve minimal aggregate metadata (optional) without breaking schema
+      ...(data.isAggregate ? { isAggregate: true, groupSize: Array.isArray(data.children) ? data.children.length : undefined } : {}),
     },
   };
 }
@@ -812,6 +906,11 @@ function FlowCanvas() {
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAddNodeModalOpen, setIsAddNodeModalOpen] = useState(false);
+  const [isFoundationPickerOpen, setIsFoundationPickerOpen] = useState(false);
+  const [foundationPickerOptions, setFoundationPickerOptions] = useState<NodeCreatorOptions | null>(null);
+  const [isAssociatedPickerOpen, setIsAssociatedPickerOpen] = useState(false);
+  const [associatedPickerOptions, setAssociatedPickerOptions] = useState<NodeCreatorOptions | null>(null);
+  const [associatedParentId, setAssociatedParentId] = useState<string | null>(null);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isAISuggestPanelOpen, setIsAISuggestPanelOpen] = useState(false);
   const [isSpecContextDialogOpen, setIsSpecContextDialogOpen] = useState(false);
@@ -891,10 +990,14 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const [isConnectSourcesOpen, setIsConnectSourcesOpen] = useState(false);
   const [isFoundationDialogOpen, setIsFoundationDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"radial" | "process">("radial");
-  const [showDomainRings, setShowDomainRings] = useState(true);
+  const [showDomainRings] = useState(true); // setter unused
   const [suggestionPanelRefresh, setSuggestionPanelRefresh] = useState(0);
   const [isSuggestionPanelOpen, setIsSuggestionPanelOpen] = useState(false);
   const historyManager = useRef(new HistoryManager(50));
+  const { whiteboardTool, lassoMode } = useUIPreferences((state) => ({
+    whiteboardTool: state.whiteboardTool,
+    lassoMode: state.lassoMode,
+  }));
   const centerNodeIdRef = useRef<string>("center");
   const isCenterNode = useCallback(
     (node: { id?: string; type?: string } | null | undefined) =>
@@ -1053,14 +1156,23 @@ const openWizard = useCallback(
   []
 );
 
+type NodeCreatorOptions = {
+  type?: string;
+  prompt?: string;
+  position?: { x: number; y: number } | null;
+  sourceNodeId?: string | null;
+  edgeToReplace?: { id: string; targetNodeId?: string } | null;
+  forceWizard?: boolean;
+};
+
+type PlacementOverrides = Omit<NodeCreatorOptions, "prompt" | "forceWizard" | "type"> & {
+  position?: { x: number; y: number } | null;
+  sourceNodeId?: string | null;
+  edgeToReplace?: { id: string; targetNodeId?: string } | null;
+};
+
 const openQuickAddModal = useCallback(
-  (options?: {
-    type?: string;
-    prompt?: string;
-    position?: { x: number; y: number } | null;
-    sourceNodeId?: string | null;
-    edgeToReplace?: { id: string; targetNodeId?: string } | null;
-  }) => {
+  (options?: NodeCreatorOptions) => {
     setNodeTypeToAdd(options?.type);
     setEdgePosition(options?.position ?? null);
     setDragSourceNodeId(options?.sourceNodeId ?? null);
@@ -1072,15 +1184,37 @@ const openQuickAddModal = useCallback(
 );
 
 const launchNodeCreator = useCallback(
-  (options?: {
-    type?: string;
-    prompt?: string;
-    position?: { x: number; y: number } | null;
-    sourceNodeId?: string | null;
-    edgeToReplace?: { id: string; targetNodeId?: string } | null;
-    forceWizard?: boolean;
-  }) => {
-    if (!hasCustomNodes || options?.forceWizard) {
+  (options?: NodeCreatorOptions) => {
+    const centerId = centerNodeIdRef.current || "center";
+    const sourceId = options?.sourceNodeId ?? null;
+
+    // 1) If creating directly off the center, always use Foundation palette
+    if (sourceId && sourceId === centerId) {
+      setFoundationPickerOptions(options ?? null);
+      setIsFoundationPickerOpen(true);
+      return;
+    }
+
+    // 2) If creating from a foundation node, open Associated node picker
+    if (sourceId) {
+      const parent = nodes.find((n) => n.id === sourceId);
+      const isFoundation = Boolean((parent?.data as any)?.tags?.includes?.("foundation"));
+      if (isFoundation) {
+        setAssociatedPickerOptions(options ?? null);
+        setAssociatedParentId(sourceId);
+        setIsAssociatedPickerOpen(true);
+        return;
+      }
+    }
+
+    // 3) Default behavior (first‑time flow goes to Foundation picker or Wizard)
+    if (!hasCustomNodes && !options?.forceWizard) {
+      setFoundationPickerOptions(options ?? null);
+      setIsFoundationPickerOpen(true);
+      return;
+    }
+
+    if (options?.forceWizard || !hasCustomNodes) {
       openWizard(options?.prompt ?? pendingWizardPrompt ?? null);
       return;
     }
@@ -1093,7 +1227,7 @@ const launchNodeCreator = useCallback(
       edgeToReplace: options?.edgeToReplace ?? null,
     });
   },
-  [hasCustomNodes, openQuickAddModal, openWizard, pendingWizardPrompt]
+  [hasCustomNodes, openQuickAddModal, openWizard, pendingWizardPrompt, nodes]
 );
 
 const handleAddNodeFromSidebar = useCallback(
@@ -1532,17 +1666,21 @@ const handleSwitchToWizard = useCallback(
     }
   }, []);
 
-  // Optional d3-force relaxer behind VITE_FEATURE_D3_RELAX (default off)
-  const maybeD3Relax = useCallback(async (nodesIn: Node[]): Promise<Node[]> => {
+  // Lightweight node debug overlay flag (query param, env, or localStorage)
+  const [nodeDebug, setNodeDebug] = useState<boolean>(() => {
     try {
-      const flag = (import.meta as any)?.env?.VITE_FEATURE_D3_RELAX;
-      if (!flag || String(flag).toLowerCase() === 'off') return nodesIn;
-      const mod = await import('./utils/d3Relax');
-      return await mod.relaxLayoutWithD3(nodesIn as any, [] as any, { maxTicks: 100 });
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('nodeDebug') === '1';
+      const env = (import.meta as any)?.env?.VITE_NODE_DEBUG === 'on';
+      const saved = window.localStorage?.getItem('nodeDebug') === '1';
+      return q || env || saved;
     } catch {
-      return nodesIn;
+      return false;
     }
-  }, []);
+  });
+
+  // Optional d3-force relaxer behind VITE_FEATURE_D3_RELAX (default off)
+  // Removed unused maybeD3Relax helper
 
   // --- Layout + Relaxation Orchestrator ---
   const [relaxPadding, setRelaxPadding] = useState(12);
@@ -1586,7 +1724,7 @@ const handleSwitchToWizard = useCallback(
     // Ensure internals refreshed for measurement
     try {
       reactFlowInstance.updateNodeInternals(baseNodes.map(n => n.id));
-    } catch {}
+  } catch { /* layout debug overlay failed: non-critical */ }
 
     // 2) Wait for React Flow to measure nodes
     await waitTwoFrames();
@@ -1668,11 +1806,11 @@ const handleSwitchToWizard = useCallback(
     setNodes(nextNodes);
     try {
       reactFlowInstance.updateNodeInternals(nextNodes.map((n: any) => n.id));
-    } catch {}
+  } catch { /* snapshot metrics optional */ }
 
     // 7) Fit and draw debug overlay if enabled
     if (fit) {
-      try { reactFlowInstance.fitView({ padding: 0.2, duration: 300 }); } catch {}
+  try { reactFlowInstance.fitView({ padding: 0.2, duration: 300 }); } catch { /* best-effort fitView */ }
       if (layoutDebug) requestAnimationFrame(() => devOutlineCollisions(padding));
     }
 
@@ -1698,7 +1836,7 @@ const handleSwitchToWizard = useCallback(
 
     // Apply current positions as base
     setNodes(nodesIn);
-    try { reactFlowInstance.updateNodeInternals(nodesIn.map((n) => n.id)); } catch {}
+  try { reactFlowInstance.updateNodeInternals(nodesIn.map((n) => n.id)); } catch { /* RF internals refresh may fail */ }
 
     // Wait for measurement to stabilize
     await waitTwoFrames();
@@ -1739,7 +1877,7 @@ const handleSwitchToWizard = useCallback(
     const snapped = (info.nodes as any).map((n: any) => ({ ...n, position: { x: Math.round(n.position?.x ?? 0), y: Math.round(n.position?.y ?? 0) } }))
     const annotated = annotateNodesWithHeightCaps(snapped as any, dimensionSnapshot) as any;
     setNodes(annotated);
-    try { reactFlowInstance.updateNodeInternals(annotated.map((n: any) => n.id)); } catch {}
+  try { reactFlowInstance.updateNodeInternals(annotated.map((n: any) => n.id)); } catch { /* RF internals refresh may fail */ }
     setEdges((prevEdges) => updateEdgesWithOptimalHandles(annotated as any, prevEdges, centerId));
     window.requestAnimationFrame(() => refreshDimensions());
   }, [reactFlowInstance, setNodes, setEdges, waitTwoFrames, relaxPadding]);
@@ -1753,6 +1891,11 @@ const handleSwitchToWizard = useCallback(
       // Silently fail to prevent crashes
     }
   }, [onNodesChangeInternal]);
+
+  // Dev: wrapped onNodesChange with console logger
+  const onNodesChangeLogged = useMemo(() => {
+    return wrapOnNodesChange(onNodesChange, { label: 'NodesChange' });
+  }, [onNodesChange]);
 
   // Ensure center node is always non-draggable and non-selectable, even when nodes are loaded/restored
   useEffect(() => {
@@ -1965,6 +2108,277 @@ const handleSwitchToWizard = useCallback(
     toast.success(result.result.message);
   }, [nodes, setNodes]);
 
+  // Group (collapse) selected nodes into aggregate
+  const handleGroupSelected = useCallback(() => {
+    import('./utils/aggregateGroups').then(({ collapseSelectedIntoAggregate }) => {
+      const result = collapseSelectedIntoAggregate(nodes, edges);
+      if (!result.ok) {
+        toast.error(result.reason || 'Failed to group selection');
+        return;
+      }
+      setNodes(result.nodes);
+      setEdges(result.edges);
+      setIsSaved(false);
+      toast.success(`Grouped ${result.affected} nodes`, { description: 'Aggregate created' });
+    }).catch((err) => {
+      console.error('Group collapse failed', err);
+      toast.error('Internal error grouping');
+    });
+  }, [nodes, edges, setNodes, setEdges]);
+
+  // Expand aggregate node
+  const handleExpandAggregate = useCallback((aggregateId: string) => {
+    import('./utils/aggregateGroups').then(({ expandAggregate }) => {
+      const result = expandAggregate(nodes, edges, aggregateId);
+      if (!result.ok) {
+        toast.error(result.reason || 'Failed to expand group');
+        return;
+      }
+      setNodes(result.nodes);
+      setEdges(result.edges);
+      setIsSaved(false);
+      toast.success(`Expanded group (${result.restoredCount} nodes)`);
+    }).catch((err) => {
+      console.error('Group expand failed', err);
+      toast.error('Internal error expanding');
+    });
+  }, [nodes, edges, setNodes, setEdges]);
+
+  // Collapse all immediate children of a parent node into an aggregate
+  const handleCollapseChildren = useCallback((parentId: string) => {
+    import('./utils/aggregateGroups').then(({ collapseNodeIdsIntoAggregate, expandAggregate }) => {
+      // Deep collect descendant nodes via outgoing edges (BFS) excluding center + existing aggregates
+      const eligible = (nodeId: string) => {
+        const n = nodes.find(nn => nn.id === nodeId);
+        return !!n && !isCenterNode(n) && !(n.data?.isAggregate || n.data?.type === 'aggregate') && n.id !== parentId;
+      };
+
+      // Step 1: Expand any aggregate children directly under parent so we can fully collapse everything
+      let workingNodes = nodes;
+      let workingEdges = edges;
+      const directChildrenEdges = workingEdges.filter(e => e.source === parentId);
+      const aggregateChildIds = directChildrenEdges
+        .map(e => e.target)
+        .filter(cid => {
+          const cn = workingNodes.find(n => n.id === cid);
+          return cn && (cn.data?.isAggregate || cn.data?.type === 'aggregate');
+        });
+      // Track restored child ids from any expanded aggregate child so we can treat them as reachable descendants
+      const restoredFromAggregateChildren: string[] = [];
+      if (aggregateChildIds.length > 0) {
+        for (const aggId of aggregateChildIds) {
+          // Capture child ids BEFORE expansion (they won't be directly connected to parent afterwards)
+          const aggNode = workingNodes.find(n => n.id === aggId);
+          const preChildren: string[] = Array.isArray((aggNode as any)?.data?.children)
+            ? (aggNode as any).data.children.slice()
+            : [];
+          const exp = expandAggregate(workingNodes, workingEdges, aggId);
+          if (exp.ok) {
+            workingNodes = exp.nodes;
+            workingEdges = exp.edges;
+            // Record restored child ids for later BFS seeding / inclusion
+            restoredFromAggregateChildren.push(...preChildren.filter(id => !!id));
+          }
+        }
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[collapseChildren] Expanded nested aggregates before collapsing', { parentId, aggregateChildIds });
+        }
+      }
+
+      const visited = new Set<string>();
+      const queue: string[] = [parentId];
+      // Seed queue with any restored children from expanded aggregates so they are treated as descendants even if no direct edge now exists
+      for (const childId of restoredFromAggregateChildren) {
+        if (eligible(childId) && !visited.has(childId)) {
+          visited.add(childId);
+          queue.push(childId);
+        }
+      }
+      let guard = 0;
+      while (queue.length > 0 && guard < 5000) { // hard guard to avoid infinite loops on accidental cycles
+        const current = queue.shift()!;
+        // For each outgoing edge, consider target
+        for (const e of workingEdges) {
+          if (e.source !== current) continue;
+          const tgt = e.target;
+          if (!visited.has(tgt) && eligible(tgt)) {
+            visited.add(tgt);
+            queue.push(tgt);
+          }
+        }
+        guard++;
+      }
+
+      // Fallback: if deep traversal produced <2, attempt immediate outgoing children only
+      let collapseSet = Array.from(visited);
+      // Ensure any restored children are included even if BFS didn't traverse them via edges
+      for (const childId of restoredFromAggregateChildren) {
+        if (eligible(childId) && !collapseSet.includes(childId)) {
+          collapseSet.push(childId);
+        }
+      }
+      if (collapseSet.length < 2) {
+        const directChildren = edges.filter(e => e.source === parentId).map(e => e.target).filter(eligible);
+        if (directChildren.length >= 2) {
+          collapseSet = directChildren;
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug('[collapseChildren] Using direct children fallback', { parentId, directChildren });
+          }
+        }
+      }
+      if (collapseSet.length < 2) {
+        toast.error('Need at least 2 child nodes to collapse');
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[collapseChildren] Abort collapse: insufficient eligible descendants', { parentId, visitedSize: visited.size });
+        }
+        return;
+      }
+      // Safety: avoid collapsing excessively large hierarchies unintentionally
+      if (collapseSet.length > 250) {
+        toast.error('Refusing to collapse >250 nodes at once');
+        return;
+      }
+
+      const descendantIds = collapseSet;
+      // Derive a more meaningful label from parent
+      const parentNode = nodes.find(n => n.id === parentId);
+      const baseLabel = (parentNode?.data?.label || (parentNode as any)?.label || parentNode?.id || 'Group');
+      const label = `${baseLabel} (collapsed ${descendantIds.length})`;
+      const result = collapseNodeIdsIntoAggregate(workingNodes, workingEdges, descendantIds, label);
+      if (!result.ok) {
+        toast.error(result.reason || 'Failed to collapse children');
+        return;
+      }
+      // Inject parentId + refined label directly if aggregate created
+      if (result.aggregateId) {
+        result.nodes = result.nodes.map(n => {
+          if (n.id === result.aggregateId) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                parentId,
+                // Ensure label matches refined baseLabel even if utility overwrote
+                label,
+                restoredFromAggregateChildrenCount: restoredFromAggregateChildren.length,
+              }
+            };
+          }
+          return n;
+        });
+        // Dev trace for debugging unexpected group formation
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[collapseChildren] Aggregate created', {
+            parentId,
+            aggregateId: result.aggregateId,
+            descendantCount: descendantIds.length,
+            descendants: descendantIds,
+            restoredFromAggregateChildren,
+            label,
+          });
+        }
+      }
+      setNodes(result.nodes);
+      setEdges(result.edges);
+      setIsSaved(false);
+      toast.success(`Collapsed ${result.affected} descendant node(s)`, { description: `Created aggregate: ${baseLabel}` });
+    }).catch(err => {
+      console.error('Parent-driven collapse failed', err);
+      toast.error('Internal error collapsing children');
+    });
+  }, [nodes, edges, setNodes, setEdges, isCenterNode]);
+
+  // Organize a parent's immediate children around it in a tidy local fan/circle
+  const handleOrganizeChildren = useCallback((parentId: string) => {
+    try {
+      const parent = nodes.find(n => n.id === parentId);
+      if (!parent) return;
+
+      // Collect immediate children by outgoing edges
+      const childIds = edges.filter(e => e.source === parentId).map(e => e.target);
+      const children = childIds
+        .map(id => nodes.find(n => n.id === id))
+        .filter((n): n is Node => !!n && !isCenterNode(n));
+
+      if (children.length < 2) {
+        toast.info('Need at least 2 children to organize');
+        return;
+      }
+
+      // Parent center point using measured dimensions if available
+      const measuredParent = nodeDimensionsRef.current?.[parent.id];
+      const pWidth =
+        parseDimensionValue(measuredParent?.width) ??
+        parseDimensionValue(parent.width) ??
+        parseDimensionValue(parent.style?.width) ??
+        DEFAULT_CARD_WIDTH;
+      const pHeight =
+        parseDimensionValue(measuredParent?.height) ??
+        parseDimensionValue(parent.height) ??
+        parseDimensionValue(parent.style?.height) ??
+        DEFAULT_CARD_HEIGHT;
+      const px = (parent.position?.x ?? 0) + Math.round(pWidth / 2);
+      const py = (parent.position?.y ?? 0) + Math.round(pHeight / 2);
+
+      // Dimensions for children and compute radius to avoid overlap
+      const gap = 28; // minimum angular gap between nodes along circumference
+      const dims = children.map((n) => {
+        const m = nodeDimensionsRef.current?.[n.id];
+        const w =
+          parseDimensionValue(m?.width) ??
+          parseDimensionValue(n.width) ??
+          parseDimensionValue(n.style?.width) ??
+          DEFAULT_CARD_WIDTH;
+        const h =
+          parseDimensionValue(m?.height) ??
+          parseDimensionValue(n.height) ??
+          parseDimensionValue(n.style?.height) ??
+          DEFAULT_CARD_HEIGHT;
+        return { w: Math.max(1, Math.round(w)), h: Math.max(1, Math.round(h)) };
+      });
+      const circumference = dims.reduce((acc, d) => acc + d.w + gap, 0);
+      const minR = 200;
+      const r = Math.max(minR, Math.ceil(circumference / (2 * Math.PI)));
+
+      // Sort by label for deterministic placement
+      const sorted = [...children].sort((a, b) => {
+        const la = String(a?.data?.label || a.id);
+        const lb = String(b?.data?.label || b.id);
+        return la.localeCompare(lb, undefined, { sensitivity: 'base' });
+      });
+
+      // Place on full circle around parent center
+      const count = sorted.length;
+      const startAngle = -Math.PI / 2; // start at top
+
+      const updated = nodes.map((n) => {
+        const idx = sorted.findIndex((c) => c.id === n.id);
+        if (idx === -1) return n;
+        // Respect pinned nodes
+        const pinned = Boolean((n as any)?.data?.pinned);
+        if (pinned) return n;
+        const d = dims[idx];
+        const angle = startAngle + (2 * Math.PI * idx) / count;
+        const x = Math.round(px + r * Math.cos(angle) - d.w / 2);
+        const y = Math.round(py + r * Math.sin(angle) - d.h / 2);
+        return { ...n, position: { x, y } } as Node;
+      });
+
+      setNodes(updated);
+      setIsSaved(false);
+
+      // Relax locally respecting pins to resolve any nearby collisions
+      const current = typeof reactFlowInstance?.getNodes === 'function'
+        ? (reactFlowInstance!.getNodes() as Node[])
+        : updated;
+      relaxRespectingPins(current, { padding: 12, maxPasses: 6 });
+      toast.success('Children organized');
+    } catch (err) {
+      console.error('Organize children failed', err);
+      toast.error('Could not organize children');
+    }
+  }, [nodes, edges, setNodes, relaxRespectingPins, isCenterNode, reactFlowInstance]);
+
   const handleSelectByCriteria = useCallback((criteria: BulkSelectionCriteria) => {
     const updatedNodes = selectNodesByCriteria(nodes, criteria, edges);
     setNodes(updatedNodes);
@@ -2025,8 +2439,7 @@ const handleSwitchToWizard = useCallback(
     }
 
     if (!reactFlowInstance) return;
-    // Get the bounding box of selected nodes
-    const nodeIds = selectedNodes.map(n => n.id);
+  // Get the bounding box of selected nodes
     
     // Calculate dynamic max zoom based on selection count
     let maxZoom = 2.0;
@@ -2248,8 +2661,10 @@ const handleSwitchToWizard = useCallback(
     if (nodes.length <= 1) return;
 
     const storageAvailable = typeof window !== 'undefined';
-    const pref = storageAvailable ? localStorage.getItem('flowforge-auto-layout-on-load') : null;
-    if (pref !== 'true') return;
+    // Default ON when not set; allow explicit opt-out via 'false'
+    const prefRaw = storageAvailable ? localStorage.getItem('flowforge-auto-layout-on-load') : null;
+    const shouldAuto = prefRaw == null ? true : prefRaw === 'true';
+    if (!shouldAuto) return;
 
     const t = setTimeout(() => {
       try {
@@ -2261,6 +2676,9 @@ const handleSwitchToWizard = useCallback(
             viewMode,
             viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
             dimensions: nodeDimensionsRef.current,
+            edges,
+            radialAlgorithm: viewMode === 'radial' ? 'relationship' : undefined,
+            recipeEnabled: useUIPreferences.getState().recipeEnabled,
           });
           // Apply layout and then perform relaxation with measurement-awareness
           if (process.env.NODE_ENV !== 'production') {
@@ -2281,6 +2699,10 @@ const handleSwitchToWizard = useCallback(
             if (storageAvailable) {
               localStorage.setItem('flowforge-initial-layout-applied', 'true');
               localStorage.setItem(LAYOUT_VERSION_KEY, CURRENT_LAYOUT_VERSION);
+              // Persist default for future sessions
+              if (prefRaw == null) {
+                localStorage.setItem('flowforge-auto-layout-on-load', 'true');
+              }
             }
           }).finally(() => {
             setTimeout(() => setIsAutoLayouting(false), 600);
@@ -2293,6 +2715,18 @@ const handleSwitchToWizard = useCallback(
 
     return () => clearTimeout(t);
   }, [allNodesMeasured, nodes, viewMode, applyLayoutAndRelax, relaxPadding, isUserDragging, recordRadialBaseline]);
+
+  // Ensure a sensible default for auto layout on first ever run (opt-out respected)
+  useEffect(() => {
+    try {
+      const storageAvailable = typeof window !== 'undefined';
+      if (!storageAvailable) return;
+      const existing = localStorage.getItem('flowforge-auto-layout-on-load');
+      if (existing == null) {
+        localStorage.setItem('flowforge-auto-layout-on-load', 'true');
+      }
+  } catch { /* localStorage unavailable */ }
+  }, []);
 
   // Keep radial layout spacing in sync with live node dimensions
   // Debounced dimension watcher for radial view: throttle via requestAnimationFrame
@@ -2322,6 +2756,9 @@ const handleSwitchToWizard = useCallback(
         viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
         dimensions: nodeDimensionsRef.current,
         pinnedIds: pinnedRef.current,
+        edges,
+        radialAlgorithm: 'relationship',
+        recipeEnabled: useUIPreferences.getState().recipeEnabled,
       });
 
       if (!hasRadialBaselineChanged(layoutedNodes)) {
@@ -2460,7 +2897,7 @@ const handleSwitchToWizard = useCallback(
     try {
       reactFlowInstance.setViewport({ x: targetX, y: targetY, zoom: 1 }, { duration: 0 });
       initialCenterFitRef.current = true;
-    } catch {}
+  } catch { /* center fit viewport best-effort */ }
   }, [reactFlowInstance, nodes]);
 
   useEffect(() => {
@@ -2807,7 +3244,8 @@ const handleSwitchToWizard = useCallback(
             }))
           : undefined;
 
-      const sections = draft?.sections?.length
+      // For markdown, brief, and spec types, initialize with default sections
+      let sections = draft?.sections?.length
         ? draft.sections.map((section, index) => ({
             id: `${cardId}-section-${index}`,
             title: section.title || `Section ${index + 1}`,
@@ -2818,6 +3256,28 @@ const handleSwitchToWizard = useCallback(
             title: section.title,
             body: "",
           }));
+
+      // Add default sections for markdown, brief, and spec if not from template
+      if (!sections && (cardType === "markdown" || cardType === "brief" || cardType === "spec")) {
+        if (cardType === "markdown") {
+          sections = [
+            { id: `${cardId}-section-0`, title: "Overview", body: "" },
+            { id: `${cardId}-section-1`, title: "Details", body: "" },
+          ];
+        } else if (cardType === "brief") {
+          sections = [
+            { id: `${cardId}-section-0`, title: "Executive Summary", body: "" },
+            { id: `${cardId}-section-1`, title: "Key Points", body: "" },
+            { id: `${cardId}-section-2`, title: "Acceptance Criteria", body: "" },
+          ];
+        } else if (cardType === "spec") {
+          sections = [
+            { id: `${cardId}-section-0`, title: "Specification", body: "" },
+            { id: `${cardId}-section-1`, title: "Requirements", body: "" },
+            { id: `${cardId}-section-2`, title: "Implementation Notes", body: "" },
+          ];
+        }
+      }
 
       const newCard: EditableCardData = {
         id: cardId,
@@ -3002,6 +3462,7 @@ const handleSwitchToWizard = useCallback(
         type: seed.nodeType,
         ring,
       });
+      const hierId = computeNextHierId(nodes, null, ring);
 
       const metadata = {
         ...(seed.metadata ?? {}),
@@ -3023,6 +3484,8 @@ const handleSwitchToWizard = useCallback(
           cards: [],
           metadata,
           isNew: true,
+          hierId,
+          parentId: null,
         } as CustomNodeData,
       };
 
@@ -3427,8 +3890,7 @@ const handleSwitchToWizard = useCallback(
       }
       
       // If node has a parentNode, verify the parent exists
-      const hasValidParent = !node.parentNode || nodes.some(n => n && n.id === node.parentNode);
-      
+  const hasValidParent = !node.parentNode || nodes.some(n => n && n.id === node.parentNode);
       const isCenter = node.type === "center";
       const centerMetadata: CenterNodeData | undefined = isCenter ? (node.data as CenterNodeData) : undefined;
       const ideaCaptured = Boolean(centerMetadata?.coreIdea && centerMetadata?.primaryAudience && centerMetadata?.coreOutcome);
@@ -3436,6 +3898,11 @@ const handleSwitchToWizard = useCallback(
       const secondaryText = isCenter
         ? centerMetadata?.secondaryButtonText ?? (ideaCaptured ? "Create your next node" : "Share your idea")
         : node.data?.secondaryButtonText;
+
+      // Aggregate / parent-child collapse affordances
+      const isAggregateGroup = !!(node.data?.isAggregate || node.data?.type === 'aggregate');
+      const outgoingChildIds = edges.filter(e => e.source === node.id).map(e => e.target);
+      const canCollapseChildren = !isAggregateGroup && outgoingChildIds.length >= 2;
 
       return {
         ...node,
@@ -3447,6 +3914,8 @@ const handleSwitchToWizard = useCallback(
         // Add callbacks to data
         data: {
           ...(node.data || {}),
+          // Debug overlay flag
+          debug: nodeDebug,
           onToggleCollapse: () => {
             setNodes((nds) => nds.map((n) => n.id === node.id ? {
               ...n,
@@ -3475,6 +3944,12 @@ const handleSwitchToWizard = useCallback(
           onExportSubgraphJSON: () => handleExportSubgraphJSON(node.id),
           onExportSubgraphMarkdown: () => handleExportSubgraphMarkdown(node.id),
           onEnrichWithAI: () => handleOpenEnrichment(node.id),
+          // Parent-driven collapse of children
+          canCollapseChildren,
+          onCollapseChildren: canCollapseChildren ? () => handleCollapseChildren(node.id) : undefined,
+          // Aggregate-driven expansion
+          isAggregateGroup,
+          onExpandChildrenGroup: isAggregateGroup ? () => handleExpandAggregate(node.id) : undefined,
           onOpenSuggestionPanel: () => {
             setSelectedNodeId(node.id);
             setIsWizardOpen(false);
@@ -3526,6 +4001,7 @@ const handleSwitchToWizard = useCallback(
     });
   }, [
     nodes,
+    nodeDebug,
     isConnecting,
     connectStartInfoRef,
     setNodes,
@@ -3552,26 +4028,48 @@ const handleSwitchToWizard = useCallback(
     isCenterNode,
     activeCardGeneration,
     setIsIdeaKickoffOpen,
-    setKickoffAutoShown
+    setKickoffAutoShown,
+    edges,
+    handleCollapseChildren,
+    handleExpandAggregate
     // Note: Export/copy handlers intentionally omitted from deps to avoid hoisting issues
     // These functions are stable and don't need to trigger re-computation
   ]);
 
   const handleAddNode = useCallback(
-    (nodeData: { type: string; label: string; summary: string; tags: string[]; domain?: string; ring?: number; department?: string }) => {
+    (
+      nodeData: {
+        type: string;
+        label: string;
+        summary: string;
+        tags: string[];
+        domain?: string;
+        ring?: number;
+        department?: string;
+      },
+      placementOverrides?: PlacementOverrides
+    ) => {
       const newNodeId = `${nodes.length + 1}`;
       const centerId = centerNodeIdRef.current || "center";
       const normalizedDomain = nodeData.domain ?? getDomainForNodeType(nodeData.type);
-      const normalizedRing = Math.max(1, nodeData.ring ?? 1);
+      const placementSource = placementOverrides?.sourceNodeId ?? dragSourceNodeId;
+      const parentNode = placementSource ? nodes.find(n => n.id === placementSource) : null;
+      // Direct children of center should start at ring 2; children of non-center nodes increment parent's ring
+      const defaultRing = parentNode ? (Number((parentNode as any)?.data?.ring) + 1 || 2) : 2;
+      const normalizedRing = Math.max(1, nodeData.ring ?? defaultRing);
+      const placementPosition = placementOverrides?.position ?? edgePosition;
+      const placementEdge = placementOverrides?.edgeToReplace ?? edgeToReplace;
       const calculatedPosition = calculateNewNodePosition(nodes, centerId, {
         domain: normalizedDomain,
         type: nodeData.type,
         ring: normalizedRing,
       });
+      const parentIdForLineage = placementSource || centerId;
+      const hierId = computeNextHierId(nodes, parentIdForLineage === centerId ? null : parentIdForLineage, normalizedRing);
       const newNode = {
         id: newNodeId,
         type: "custom",
-        position: edgePosition ?? calculatedPosition,
+        position: placementPosition ?? calculatedPosition,
         data: {
           label: nodeData.label,
           type: nodeData.type as any,
@@ -3582,6 +4080,8 @@ const handleSwitchToWizard = useCallback(
           department: nodeData.department,
           cards: [],
           isNew: true,
+          hierId,
+          parentId: parentIdForLineage === centerId ? null : parentIdForLineage,
         } as CustomNodeData,
       };
 
@@ -3601,10 +4101,10 @@ const handleSwitchToWizard = useCallback(
       }, 2000);
       
       // If this was dragged from a source node or added from an edge, create connections
-      if (dragSourceNodeId) {
+      if (placementSource) {
         const newEdge = {
-          id: `e${dragSourceNodeId}-${newNodeId}`,
-          source: dragSourceNodeId,
+          id: `e${placementSource}-${newNodeId}`,
+          source: placementSource,
           target: newNodeId,
           type: "custom",
         };
@@ -3613,20 +4113,20 @@ const handleSwitchToWizard = useCallback(
           let updatedEdges = [...eds];
           
           // If this was added from an edge button (we have edgeToReplace info)
-          if (edgeToReplace) {
+          if (placementEdge) {
             // Option 1: Insert node into the edge (source -> new node -> original target)
             // Remove the original edge
-            updatedEdges = updatedEdges.filter(e => e.id !== edgeToReplace.id);
+            updatedEdges = updatedEdges.filter(e => e.id !== placementEdge.id);
             
             // Add edge from source to new node
             updatedEdges.push(newEdge);
             
             // Add edge from new node to original target (if target exists)
-            if (edgeToReplace.targetNodeId) {
+            if (placementEdge.targetNodeId) {
               updatedEdges.push({
-                id: `e${newNodeId}-${edgeToReplace.targetNodeId}`,
+                id: `e${newNodeId}-${placementEdge.targetNodeId}`,
                 source: newNodeId,
-                target: edgeToReplace.targetNodeId,
+                target: placementEdge.targetNodeId,
                 type: "custom",
               });
             }
@@ -3651,6 +4151,183 @@ const handleSwitchToWizard = useCallback(
       toast.success("Node added successfully");
     },
     [nodes, setNodes, edgePosition, dragSourceNodeId, edgeToReplace, setEdges]
+  );
+
+  const handleFoundationTemplateSelect = useCallback(
+    (template: FoundationNodeTemplate) => {
+      handleAddNode(
+        {
+          type: template.nodeType,
+          label: template.label,
+          summary: template.summary,
+          tags: template.tags,
+          domain: template.domain,
+          ring: template.ring,
+        },
+        {
+          position: foundationPickerOptions?.position ?? null,
+          sourceNodeId: foundationPickerOptions?.sourceNodeId ?? null,
+          edgeToReplace: foundationPickerOptions?.edgeToReplace ?? null,
+        }
+      );
+      setIsFoundationPickerOpen(false);
+      setFoundationPickerOptions(null);
+    },
+    [foundationPickerOptions, handleAddNode]
+  );
+
+  const handleFoundationUseWizard = useCallback(() => {
+    setIsFoundationPickerOpen(false);
+    const preserved = foundationPickerOptions ?? null;
+    setFoundationPickerOptions(null);
+    launchNodeCreator({ ...(preserved ?? {}), forceWizard: true });
+  }, [foundationPickerOptions, launchNodeCreator]);
+
+  const handleFoundationUseCustom = useCallback(() => {
+    setIsFoundationPickerOpen(false);
+    const preserved = foundationPickerOptions ?? null;
+    setFoundationPickerOptions(null);
+    if (preserved) {
+      openQuickAddModal({
+        type: preserved.type,
+        prompt: preserved.prompt,
+        position: preserved.position ?? null,
+        sourceNodeId: preserved.sourceNodeId ?? null,
+        edgeToReplace: preserved.edgeToReplace ?? null,
+      });
+    } else {
+      openQuickAddModal();
+    }
+  }, [foundationPickerOptions, openQuickAddModal]);
+
+  const associatedTemplatesForParent = useCallback(() => {
+    if (!associatedParentId) return [] as FoundationNodeTemplate[];
+    const parent = nodes.find((n) => n.id === associatedParentId);
+    if (!parent) return [] as FoundationNodeTemplate[];
+    const data: any = parent.data || {};
+    const parentDomain = data.domain as string | undefined;
+    const parentType = data.type as string | undefined;
+    // Heuristic mapping: choose category by type/domain
+    let categoryId: "frontend" | "backend" | "data" | "operations" | null = null;
+    if (parentType === "frontend" || parentDomain === "product") categoryId = "frontend";
+    else if (parentType === "backend" || parentDomain === "tech") categoryId = "backend";
+    else if (parentDomain === "data-ai") categoryId = "data";
+    else if (parentDomain === "operations") categoryId = "operations";
+
+    const candidates = categoryId
+      ? FOUNDATION_CATEGORIES.find((c) => c.id === categoryId)?.templates ?? []
+      : FOUNDATION_CATEGORIES.flatMap((c) => c.templates);
+
+    // Filter out same label and prefer ring >= parent.ring when available
+    const parentRing = Number(data?.ring) || 1;
+    return candidates.filter((t) => t.label !== data?.label && (t.ring >= parentRing));
+  }, [associatedParentId, nodes]);
+
+  const handleAssociatedTemplateSelect = useCallback(
+    (template: FoundationNodeTemplate) => {
+      handleAddNode(
+        {
+          type: template.nodeType,
+          label: template.label,
+          summary: template.summary,
+          tags: template.tags,
+          domain: template.domain,
+          ring: template.ring,
+        },
+        {
+          position: associatedPickerOptions?.position ?? null,
+          sourceNodeId: associatedPickerOptions?.sourceNodeId ?? null,
+          edgeToReplace: associatedPickerOptions?.edgeToReplace ?? null,
+        }
+      );
+      setIsAssociatedPickerOpen(false);
+      setAssociatedPickerOptions(null);
+      setAssociatedParentId(null);
+    },
+    [associatedPickerOptions, handleAddNode]
+  );
+
+  const handleAssociatedUseCustom = useCallback(() => {
+    setIsAssociatedPickerOpen(false);
+    const preserved = associatedPickerOptions ?? null;
+    setAssociatedPickerOptions(null);
+    setAssociatedParentId(null);
+    if (preserved) {
+      openQuickAddModal({
+        type: preserved.type,
+        prompt: preserved.prompt,
+        position: preserved.position ?? null,
+        sourceNodeId: preserved.sourceNodeId ?? null,
+        edgeToReplace: preserved.edgeToReplace ?? null,
+      });
+    } else {
+      openQuickAddModal();
+    }
+  }, [associatedPickerOptions, openQuickAddModal]);
+
+  const handleDeleteElementsFromTools = useCallback(
+    (nodeIds: string[], edgeIds: string[]) => {
+      const centerId = centerNodeIdRef.current || "center";
+      const nodeSet = new Set(nodeIds.filter((id) => id && id !== centerId));
+      const edgeSet = new Set(edgeIds);
+      if (!nodeSet.size && !edgeSet.size) return;
+      setNodes((nds) => nds.filter((node) => !nodeSet.has(node.id)));
+      setEdges((eds) =>
+        eds.filter(
+          (edge) =>
+            !edgeSet.has(edge.id) &&
+            !nodeSet.has(edge.source) &&
+            !nodeSet.has(edge.target)
+        )
+      );
+      setIsSaved(false);
+    },
+    [setEdges, setNodes]
+  );
+
+  const handleSelectNodesFromTools = useCallback(
+    (selectedIds: string[]) => {
+      const selectedSet = new Set(selectedIds);
+      const centerId = centerNodeIdRef.current || "center";
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (!node?.id) return node;
+          if (node.id === centerId) {
+            return { ...node, selected: false };
+          }
+          return { ...node, selected: selectedSet.has(node.id) };
+        })
+      );
+    },
+    [setNodes]
+  );
+
+  const handleAddWhiteboardShape = useCallback(
+    (shape: WhiteboardShapePayload) => {
+      const newNodeId = createAutoNodeId();
+      const label = shape.kind === "rectangle" ? "Layout Block" : "Freehand Sketch";
+      const newNode: Node<CustomNodeData> = {
+        id: newNodeId,
+        type: "custom",
+        position: shape.position,
+        data: {
+          label,
+          summary: "",
+          tags: ["whiteboard"],
+          type: "doc",
+          whiteboardShape: shape,
+        },
+        style: {
+          width: shape.width,
+          height: shape.height,
+        },
+        draggable: true,
+        selectable: true,
+      };
+      setNodes((nds) => [...nds, newNode]);
+      setIsSaved(false);
+    },
+    [setNodes]
   );
 
   // Edge context menu handler
@@ -3733,6 +4410,9 @@ const handleSwitchToWizard = useCallback(
         viewMode: "radial",
         viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
         dimensions: nodeDimensionsRef.current,
+        edges,
+        radialAlgorithm: 'relationship',
+        recipeEnabled: useUIPreferences.getState().recipeEnabled,
       });
       recordRadialBaseline(layoutedNodes);
     } else {
@@ -3743,6 +4423,8 @@ const handleSwitchToWizard = useCallback(
         viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
         dimensions: nodeDimensionsRef.current,
         padding: relaxPadding,
+        edges,
+        recipeEnabled: useUIPreferences.getState().recipeEnabled,
       });
       lastRadialBaseRef.current = null;
     }
@@ -3880,6 +4562,17 @@ const handleSwitchToWizard = useCallback(
         },
       }));
   }, [edges, nodes, handleAddNodeFromEdge, onEdgeContextMenuHandler, handleUpdateEdgeLabel, handleCancelEditEdgeLabel]);
+
+  const foundationUsedLabels = useMemo<Set<string>>(() => {
+    return new Set(
+      nodes
+        .map((node) => {
+          const label = (node.data as any)?.label;
+          return typeof label === "string" ? label : "";
+        })
+        .filter((label) => label && label.length > 0)
+    );
+  }, [nodes]);
 
   const handleCompleteOnboarding = useCallback(() => {
     localStorage.setItem("flowforge-onboarding-seen", "true");
@@ -4051,6 +4744,9 @@ const handleSwitchToWizard = useCallback(
           centerNodeId: centerId,
           viewMode: "radial",
           viewportDimensions,
+          edges: edgeResult,
+          radialAlgorithm: 'relationship',
+          recipeEnabled: useUIPreferences.getState().recipeEnabled,
         });
 
         if (renameTo || summaryText) {
@@ -4439,6 +5135,15 @@ const handleSwitchToWizard = useCallback(
       const centerId = centerNodeIdRef.current || 'center';
       const nextEdges = updateEdgesWithOptimalHandles(nextNodes as any, [...edges, ...newEdges], centerId);
 
+      // Debug: summarize new nodes and their intended rings before layout
+      try {
+        const debugNew = toCreate.map(n => {
+          const d: any = n.data || {};
+          return { id: n.id, label: d.label, ring: d.ring, explicitRing: d.explicitRing, hierId: d.hierId };
+        });
+        console.debug('[scaffold] created auth nodes (pre-layout)', debugNew);
+  } catch { /* debug log failed */ }
+
       // Select the Foundation node to orient the user
       const selectedNextNodes = nextNodes.map((n) => {
         const label = (n.data as any)?.label;
@@ -4531,7 +5236,7 @@ const handleSwitchToWizard = useCallback(
     setIsNodeFoundationDialogOpen(true);
   }, [nodes, detectNodeFoundationKind]);
 
-  const handleApplyNodeFoundation = useCallback((config: { provider: "auth0"|"supabase"|"keycloak"|"cognito"; mfa: boolean; rolesModel: "roles"|"groups"|"both"; }) => {
+  const handleApplyNodeFoundation = useCallback(async (config: { provider: "auth0"|"supabase"|"keycloak"|"cognito"; mfa: boolean; rolesModel: "roles"|"groups"|"both"; }) => {
     try {
       if (!nodeFoundationTargetId) return;
       const target = nodes.find(n => n.id === nodeFoundationTargetId);
@@ -4543,7 +5248,15 @@ const handleSwitchToWizard = useCallback(
 
       const existsByLabel = (label: string) => nodes.some(n => (n.data as any)?.label === label);
       const mkId = () => createAutoNodeId();
-      const mkNode = (label: string, type: "frontend" | "backend" | "requirement" | "doc", summary?: string, extraTags: string[] = []) => ({
+      const targetRing = (Number((target.data as any)?.ring) + 1) || 2;
+      // Create nodes first without hierId so we can batch-assign deterministic lineage IDs
+      const mkNode = (
+        label: string,
+        type: "frontend" | "backend" | "requirement" | "doc",
+        summary?: string,
+        extraTags: string[] = [],
+        ringOverride?: number
+      ) => ({
         id: mkId(),
         type: "custom" as const,
         position: { x: 0, y: 0 },
@@ -4552,6 +5265,9 @@ const handleSwitchToWizard = useCallback(
           summary,
           type,
           tags: ["foundation", nodeFoundationKind, ...extraTags],
+          ring: typeof ringOverride === 'number' ? ringOverride : targetRing,
+          explicitRing: true,
+          parentId: target.id,
         },
       });
 
@@ -4570,17 +5286,71 @@ const handleSwitchToWizard = useCallback(
         config.provider === "keycloak" ? "Keycloak realm, clients, roles, mappers" :
         "AWS Cognito user pool, app clients, triggers";
 
+      // Ring mapping per user expectation for auth scaffolding:
+      // r3 (targetRing): core auth services and models
+      // r4 (targetRing+1): policies/requirements that depend on core
+      // r5 (targetRing+2): tertiary controls (e.g., rate limiting)
+      const r3 = targetRing;
+      const r4 = targetRing + 1;
+      const r5 = targetRing + 2;
+
       const toCreate: Node[] = [
-        existsByLabel(authReqLabel) ? null : mkNode(authReqLabel, "requirement", "OIDC, RBAC, sessions, rate limits"),
-        existsByLabel(mfaPolicyLabel) ? null : mkNode(mfaPolicyLabel, "requirement", config.mfa ? "MFA required for all users" : "MFA optional for high-risk flows"),
-        existsByLabel(roleModelLabel) ? null : mkNode(roleModelLabel, "requirement", rolesModelSummary(config.rolesModel)),
-        existsByLabel(pwdPolicyLabel) ? null : mkNode(pwdPolicyLabel, "requirement", "Length, complexity, rotation exceptions"),
-        existsByLabel(oidcLabel) ? null : mkNode(oidcLabel, "backend", providerSummary, [config.provider]),
-        existsByLabel(sessionLabel) ? null : mkNode(sessionLabel, "backend", "Session store, refresh tokens, logout"),
-        existsByLabel(auditLabel) ? null : mkNode(auditLabel, "backend", "Auth-related audit events and trails"),
-        existsByLabel(rateLimitLabel) ? null : mkNode(rateLimitLabel, "backend", "Per-IP and per-user limits; burst protection"),
+        // r3 core
+        existsByLabel(oidcLabel) ? null : mkNode(oidcLabel, "backend", providerSummary, [config.provider], r3),
+        existsByLabel(auditLabel) ? null : mkNode(auditLabel, "backend", "Auth-related audit events and trails", [], r3),
+        existsByLabel(pwdPolicyLabel) ? null : mkNode(pwdPolicyLabel, "requirement", "Length, complexity, rotation exceptions", [], r3),
+        existsByLabel(roleModelLabel) ? null : mkNode(roleModelLabel, "requirement", rolesModelSummary(config.rolesModel), [], r3),
+        existsByLabel(sessionLabel) ? null : mkNode(sessionLabel, "backend", "Session store, refresh tokens, logout", [], r3),
+        // r4 secondary
+        existsByLabel(mfaPolicyLabel) ? null : mkNode(mfaPolicyLabel, "requirement", config.mfa ? "MFA required for all users" : "MFA optional for high-risk flows", [], r4),
+        existsByLabel(authReqLabel) ? null : mkNode(authReqLabel, "requirement", "OIDC, RBAC, sessions, rate limits", [], r4),
+        // r5 tertiary
+        existsByLabel(rateLimitLabel) ? null : mkNode(rateLimitLabel, "backend", "Per-IP and per-user limits; burst protection", [], r5),
       ].filter(Boolean) as Node[];
 
+      // Batch assign lineage hierId Option A per ring bucket (ring-wide sequencing)
+      if (toCreate.length) {
+        type BucketKey = number; // ring number
+        const buckets: Record<BucketKey, Node[]> = {};
+        const keyFor = (n: Node) => Number((n.data as any)?.ring) || 1;
+
+        toCreate.forEach((n) => {
+          const k = keyFor(n);
+          (buckets[k] ||= []).push(n);
+        });
+
+        Object.entries(buckets).forEach(([ringKey, newNodes]) => {
+          const ringNum = parseInt(ringKey, 10) || 1;
+          // Existing nodes anywhere on this ring
+          const existingSiblings = nodes.filter(n => Number((n.data as any)?.ring) === ringNum);
+          const existingHierIds = existingSiblings.map(n => String((n.data as any)?.hierId || '')).filter(Boolean);
+          const hasBase = existingHierIds.some(h => new RegExp(`^${ringNum}$`).test(h));
+          const suffixes = existingHierIds
+            .map(h => { const m = h.match(new RegExp(`^${ringNum}\\.(\\d+)$`)); return m ? Number(m[1]) : null; })
+            .filter((v): v is number => Number.isFinite(v));
+          let maxSuffix = suffixes.length ? Math.max(...suffixes) : (hasBase ? 1 : 0);
+          let baseAssignedThisBatch = false;
+          // Deterministic order for new siblings
+          const sortedNew = newNodes.slice().sort((a,b) => {
+            const la = String((a.data as any)?.label || a.id).toLowerCase();
+            const lb = String((b.data as any)?.label || b.id).toLowerCase();
+            return la.localeCompare(lb);
+          });
+          sortedNew.forEach(n => {
+            const data: any = n.data || {};
+            if (!hasBase && !baseAssignedThisBatch) {
+              data.hierId = String(ringNum);
+              baseAssignedThisBatch = true;
+              maxSuffix = Math.max(maxSuffix, 1);
+            } else {
+              const next = Math.max(2, maxSuffix + 1);
+              data.hierId = `${ringNum}.${next}`;
+              maxSuffix = next;
+            }
+            n.data = data;
+          });
+        });
+      }
       const nextNodes = [...nodes, ...toCreate];
       const idByLabel: Record<string, string> = {};
       nextNodes.forEach(n => {
@@ -4610,10 +5380,18 @@ const handleSwitchToWizard = useCallback(
       if (findIdByLabel(authReqLabel) && findIdByLabel(rateLimitLabel)) newEdges.push(mkEdge(findIdByLabel(rateLimitLabel)!, findIdByLabel(authReqLabel)!, 'implements'));
 
       // Documents/implements specifics
-      if (findIdByLabel(mfaPolicyLabel) && findIdByLabel(oidcLabel)) newEdges.push(mkEdge(findIdByLabel(oidcLabel)!, findIdByLabel(mfaPolicyLabel)!, 'implements'));
-      if (findIdByLabel(roleModelLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(roleModelLabel)!, 'implements'));
-      if (findIdByLabel(pwdPolicyLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(pwdPolicyLabel)!, 'implements'));
-      if (findIdByLabel(auditLabel) && targetId) newEdges.push(mkEdge(findIdByLabel(auditLabel)!, targetId, 'documents'));
+  if (findIdByLabel(mfaPolicyLabel) && findIdByLabel(oidcLabel)) newEdges.push(mkEdge(findIdByLabel(oidcLabel)!, findIdByLabel(mfaPolicyLabel)!, 'implements'));
+  if (findIdByLabel(roleModelLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(roleModelLabel)!, 'implements'));
+  if (findIdByLabel(pwdPolicyLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(pwdPolicyLabel)!, 'implements'));
+      if (findIdByLabel(auditLabel) && targetId) {
+        newEdges.push(mkEdge(findIdByLabel(auditLabel)!, targetId, 'documents'));
+        // Add reverse association to ensure BFS depth includes audit logging from auth node perspective
+        newEdges.push(mkEdge(targetId, findIdByLabel(auditLabel)!, 'related-to'));
+      }
+      if (findIdByLabel(authReqLabel) && findIdByLabel(rateLimitLabel)) newEdges.push(mkEdge(findIdByLabel(rateLimitLabel)!, findIdByLabel(authReqLabel)!, 'implements'));
+      if (findIdByLabel(rateLimitLabel) && targetId) {
+        newEdges.push(mkEdge(targetId, findIdByLabel(rateLimitLabel)!, 'related-to'));
+      }
 
       const centerId = centerNodeIdRef.current || 'center';
       const nextEdges = updateEdgesWithOptimalHandles(nextNodes as any, [...edges, ...newEdges], centerId);
@@ -4623,7 +5401,15 @@ const handleSwitchToWizard = useCallback(
       setIsSaved(false);
       setIsNodeFoundationDialogOpen(false);
 
-      applyLayoutAndRelax(nextNodes, { padding: 12, maxPasses: 10, fit: true, fixedIds: [centerId] });
+  await applyLayoutAndRelax(nextNodes, { padding: 16, maxPasses: 12, fit: true, fixedIds: [centerId] });
+
+      // Debug: summarize after layout positions + lineage
+      try {
+        const placed = (typeof reactFlowInstance.getNodes === 'function' ? (reactFlowInstance.getNodes() as Node[]) : nextNodes)
+          .filter(n => toCreate.some(c => c.id === n.id));
+        const dbg = placed.map(n => ({ id: n.id, hierId: (n.data as any)?.hierId, ring: (n.data as any)?.ring, pos: n.position, label: (n.data as any)?.label }));
+        console.debug('[scaffold] placed auth nodes (post-layout)', dbg);
+  } catch { /* debug log failed */ }
       toast.success("Auth scaffolding created", { description: `${targetLabel} now has requirements and services.` });
     } catch (e) {
       console.error(e);
@@ -4714,7 +5500,7 @@ const handleSwitchToWizard = useCallback(
         const validIds = new Set<string>();
         bundle.nodes.forEach((node) => {
           validIds.add(documentationFlagId("node", node.id));
-          node.cards.forEach((card, cardIndex) => {
+          node.cards.forEach((card, _cardIndex) => {
             validIds.add(documentationFlagId("card", node.id, card.id));
             card.sections?.forEach((section, sectionIndex) => {
               validIds.add(
@@ -5341,6 +6127,9 @@ const handleSwitchToWizard = useCallback(
         viewMode: 'radial',
         viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
         dimensions: nodeDimensionsRef.current,
+        edges,
+        radialAlgorithm: 'relationship',
+        recipeEnabled: useUIPreferences.getState().recipeEnabled,
       });
 
       if (process.env.NODE_ENV !== 'production') {
@@ -5366,6 +6155,8 @@ const handleSwitchToWizard = useCallback(
       viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
       dimensions: nodeDimensionsRef.current,
       padding: relaxPadding,
+      edges,
+      recipeEnabled: useUIPreferences.getState().recipeEnabled,
     });
     if (process.env.NODE_ENV !== 'production') {
       console.debug('[layout] calling relax', { fit: false, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
@@ -5425,6 +6216,8 @@ const handleSwitchToWizard = useCallback(
         viewMode: 'radial',
         viewportDimensions: { width: window.innerWidth, height: window.innerHeight },
         dimensions: nodeDimensionsRef.current,
+        edges: edgesFromSeed,
+        recipeEnabled: useUIPreferences.getState().recipeEnabled,
       });
       if (process.env.NODE_ENV !== 'production') {
         console.debug('[layout] calling relax', { fit: true, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
@@ -5448,11 +6241,13 @@ const handleSwitchToWizard = useCallback(
 
   return (
     <div className="w-screen h-screen bg-gradient-to-br from-slate-50 via-indigo-100/60 to-purple-100/60 animate-gradient-slow bg-[length:200%_200%]">
-      <div ref={reactFlowWrapperRef} className="w-full h-full">
+      <div ref={reactFlowWrapperRef} className="w-full h-full relative">
+        {/* Devtools: optionally wrap onNodesChange with logger */}
+        {/* Wrapped handler defined below for clarity */}
         <ReactFlow
           nodes={nodesWithCallbacks}
           edges={edgesWithCallbacks}
-          onNodesChange={onNodesChange}
+          onNodesChange={onNodesChangeLogged}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
       onConnectStart={onConnectStart}
@@ -5532,6 +6327,15 @@ const handleSwitchToWizard = useCallback(
             return <DomainRings centerX={centerX} centerY={centerY} />;
           })()}
         </ReactFlow>
+        <WhiteboardToolsLayer
+          activeTool={whiteboardTool}
+          lassoMode={lassoMode}
+          reactFlowInstance={reactFlowInstance}
+          wrapperRef={reactFlowWrapperRef}
+          onAddShape={handleAddWhiteboardShape}
+          onDeleteElements={handleDeleteElementsFromTools}
+          onSelectNodes={handleSelectNodesFromTools}
+        />
       </div>
 
       {layoutDebug && (
@@ -5547,6 +6351,19 @@ const handleSwitchToWizard = useCallback(
             onChange={handleRelaxPaddingChange}
             className="w-full accent-indigo-600 cursor-pointer"
           />
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              id="toggle-node-debug"
+              type="checkbox"
+              checked={nodeDebug}
+              onChange={(e) => {
+                const next = e.target.checked;
+                setNodeDebug(next);
+                try { window.localStorage?.setItem('nodeDebug', next ? '1' : '0'); } catch (e) { /* ignore storage errors */ }
+              }}
+            />
+            <label htmlFor="toggle-node-debug" className="text-[11px] text-slate-600">Show node debug overlay</label>
+          </div>
           <button
             onClick={handleAutoLayout}
             className="mt-3 w-full rounded-md bg-indigo-600 text-white px-3 py-2 shadow hover:bg-indigo-700 text-sm"
@@ -5559,11 +6376,54 @@ const handleSwitchToWizard = useCallback(
           >
             Load Collision Seed
           </button>
+          <button
+            onClick={() => {
+              console.log('=== NODE COORDINATES ===');
+              console.log('Format: [id, hierId, ring, x, y, label]');
+              nodes.forEach(node => {
+                const { x, y } = node.position || { x: 0, y: 0 };
+                const label = node.data?.label || node.id;
+                const hierId = (node as any)?.data?.hierId || '-';
+                const ring = (node as any)?.data?.ring ?? '-';
+                console.log(`${node.id}: (${hierId}) r${ring} [${Math.round(x)}, ${Math.round(y)}] "${label}"`);
+              });
+              console.log(`Total nodes: ${nodes.length}`);
+              console.log('=========================');
+              
+              // Also create a copy-friendly format
+              const coordsText = nodes.map(node => {
+                const { x, y } = node.position || { x: 0, y: 0 };
+                const label = node.data?.label || node.id;
+                const hierId = (node as any)?.data?.hierId || '-';
+                const ring = (node as any)?.data?.ring ?? '-';
+                return `${node.id}: (${hierId}) r${ring} [${Math.round(x)}, ${Math.round(y)}] "${label}"`;
+              }).join('\n');
+              
+              navigator.clipboard.writeText(coordsText).then(() => {
+                toast.success('Node coordinates copied to clipboard!');
+              }).catch(() => {
+                toast.info('Node coordinates logged to console');
+              });
+            }}
+            className="mt-2 w-full rounded-md bg-green-600 text-white px-3 py-2 shadow hover:bg-green-700 text-sm"
+          >
+            Log Node Coords
+          </button>
         </div>
+      )}
+
+      {/* Devtools overlays */}
+      {layoutDebug && (
+        <>
+          <ViewportLogger />
+          <ChangeLoggerPanel />
+          <NodeInspector nodes={nodes} edges={edges} />
+        </>
       )}
 
       {/* Minimap Panel */}
       <MinimapPanel />
+      <WhiteboardToolbox />
 
       {/* Drag Preview Overlay */}
       <AnimatePresence mode="wait">
@@ -5644,6 +6504,8 @@ const handleSwitchToWizard = useCallback(
         selectedCount={nodes.filter(n => n.selected).length}
         canUndo={canUndo}
         canRedo={canRedo}
+        nodes={nodes}
+        viewMode={viewMode}
       />
 
       <ZoomControls
@@ -5919,6 +6781,22 @@ const handleSwitchToWizard = useCallback(
               ? () => handleExportSubgraphMarkdown(activeContextNode.id)
               : undefined
           }
+          onGroupChildren={(() => {
+            if (activeContextNode.data?.isAggregate) return undefined;
+            return !isCenterNode(activeContextNode) ? () => handleGroupSelected() : undefined;
+          })()}
+          onExpandAggregate={(() => {
+            if (activeContextNode.data?.isAggregate) {
+              return () => handleExpandAggregate(activeContextNode.id);
+            }
+            return undefined;
+          })()}
+          onOrganizeChildren={(() => {
+            if (isCenterNode(activeContextNode)) return undefined;
+            const childCount = edges.filter(e => e.source === activeContextNode.id).length;
+            if (childCount < 2) return undefined;
+            return () => handleOrganizeChildren(activeContextNode.id);
+          })()}
         />
       )}
 
@@ -6026,6 +6904,7 @@ const handleSwitchToWizard = useCallback(
         onIncompleteAllTodos={handleBulkIncompleteAllTodos}
         onClearCards={handleBulkClearCards}
         onExportBatch={handleExportBatch}
+        onGroupSelected={handleGroupSelected}
       />
 
       {/* Bulk Tag Editor */}
@@ -6128,6 +7007,38 @@ const handleSwitchToWizard = useCallback(
             toast.error('Failed to load sample');
           }
         }}
+      />
+
+      <FoundationNodePicker
+        open={isFoundationPickerOpen}
+        onOpenChange={(open) => {
+          setIsFoundationPickerOpen(open);
+          if (!open) {
+            setFoundationPickerOptions(null);
+          }
+        }}
+        categories={FOUNDATION_CATEGORIES}
+        existingLabels={foundationUsedLabels}
+        onSelectTemplate={handleFoundationTemplateSelect}
+        onUseWizard={handleFoundationUseWizard}
+        onUseCustom={handleFoundationUseCustom}
+      />
+
+      {/* Associated node picker for children of a foundation node */}
+      <AssociatedNodePicker
+        open={isAssociatedPickerOpen}
+        onOpenChange={(open) => {
+          setIsAssociatedPickerOpen(open);
+          if (!open) {
+            setAssociatedPickerOptions(null);
+            setAssociatedParentId(null);
+          }
+        }}
+        parentLabel={String(nodes.find(n => n.id === associatedParentId)?.data?.label || "Selected node")}
+        templates={associatedTemplatesForParent()}
+        existingLabels={foundationUsedLabels}
+        onSelectTemplate={handleAssociatedTemplateSelect}
+        onUseCustom={handleAssociatedUseCustom}
       />
 
       {/* Foundation setup dialog */}

@@ -67,7 +67,7 @@ export const DomainRings = memo(({
         </pattern>
       </defs>
 
-      {/* Draw rings with pulsing animation */}
+      {/* Draw simplified rings for relationship layout debugging */}
       {radii.map((radius, index) => (
         <g key={`ring-${index}`}>
           <circle
@@ -75,25 +75,11 @@ export const DomainRings = memo(({
             cy={centerY}
             r={radius}
             fill="none"
-            stroke="url(#ring-dots)"
-            strokeWidth="2"
-            strokeDasharray="8 8"
-            opacity={opacity * 0.6}
-          >
-            <animate
-              attributeName="stroke-dashoffset"
-              from="0"
-              to="16"
-              dur={`${8 + index * 2}s`}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values={`${opacity * 0.6};${opacity * 0.9};${opacity * 0.6}`}
-              dur={`${6 + index * 2}s`}
-              repeatCount="indefinite"
-            />
-          </circle>
+            stroke="#94a3b8"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            opacity={opacity * 1.0}
+          />
         </g>
       ))}
 
@@ -215,22 +201,34 @@ export const DomainRings = memo(({
         );
       })}
 
-      {/* Ring number labels */}
-      {showLabels && radii.map((radius, index) => (
-        <g key={`ring-label-${index}`}>
+      {/* Ring number labels (0 is center) */}
+      {showLabels && (
+        <g>
           <text
             x={centerX}
-            y={centerY - radius - 10}
+            y={centerY - 12}
             textAnchor="middle"
-            fill="#94a3b8"
+            fill="#64748b"
             fontSize="10"
-            fontWeight="500"
-            opacity={opacity * 2}
+            fontWeight="600"
           >
-            Ring {index + 1}
+            Ring 0
           </text>
+          {radii.map((radius, index) => (
+            <text
+              key={`ring-label-${index}`}
+              x={centerX}
+              y={centerY - radius - 8}
+              textAnchor="middle"
+              fill="#64748b"
+              fontSize="10"
+              fontWeight="500"
+            >
+              Ring {index + 1}
+            </text>
+          ))}
         </g>
-      ))}
+      )}
       </g>
     </svg>
   );

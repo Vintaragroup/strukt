@@ -1,50 +1,58 @@
 ---
-description: Specifications for the radial domain organization system and ring-based node layout architecture
+description: Technical specification for the domain-ring visualization system that organizes nodes into concentric rings based on business domains
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements a specialized radial layout architecture for organizing workspace nodes into concentric rings based on their domain classification and relationships.
+The domain ring system implements specialized visualization logic for organizing nodes into concentric rings based on their business domains. The system consists of several key components:
 
-Core Components:
+## Ring Calculation Engine
+File: client/src/components/DomainRings.tsx
+Importance Score: 95
 
-1. Ring Layout Engine
-- Divides workspace into 5 primary domains: Business, Product, Tech, Data/AI, Operations
-- Calculates sector angles based on node density and relationships
-- Maintains proportional spacing between domain boundaries
-- Implements force-directed node positioning within sectors
-Importance Score: 90/100
+Core logic for calculating and positioning domain-based rings:
+- Domain Ring Structure:
+  - Business (outermost)
+  - Product
+  - Technical
+  - Data/AI  
+  - Operations (innermost)
+- Each ring subdivided into sectors based on node density
+- Dynamic radius calculation based on node count per domain
+- Automatic sector sizing with overlap prevention
 
-2. Domain Classification System
-- Auto-categorizes nodes into domains based on content and relationships
-- Handles multi-domain node placement with weighted positioning
-- Enforces domain-specific validation rules and constraints
-- Manages domain boundary flexibility based on node density
-Importance Score: 85/100
+## Node Positioning System
+File: client/src/utils/geometry.ts
+Importance Score: 90
 
-3. Ring Level Management
-- Supports 6 concentric rings representing hierarchy levels
-- Implements specialized ring promotion/demotion logic
-- Calculates optimal ring radius based on node count
-- Handles cross-ring relationship visualization
-Importance Score: 80/100
+Specialized node placement algorithms:
+- Ring-specific node distribution with force-directed spacing
+- Inter-ring relationship optimization 
+- Node repositioning with domain transition handling
+- Custom coordinate system for radial layout
 
-4. Node Positioning Algorithm
-- Places nodes using polar coordinates within domain sectors
-- Implements collision avoidance between nodes in same ring
-- Optimizes node spacing for relationship line clarity
-- Maintains visual hierarchy through ring-based positioning
-Importance Score: 75/100
+## Domain Classification
+File: client/src/utils/autoLayout.ts
+Importance Score: 85
 
-Key File Paths:
-```
-client/src/components/DomainRings.tsx
-client/src/utils/domainLayout.ts
-client/src/utils/relationships.ts
-```
+Business rules for domain assignment:
+- Automatic domain detection based on node type and metadata
+- Custom scoring system for domain affinity
+- Multi-domain node handling with primary/secondary assignments
+- Domain inheritance rules for connected nodes
 
-The system uniquely combines domain-based organization with hierarchical ring structures to create an intuitive visual representation of workspace architecture while maintaining logical groupings and relationships between nodes.
+## Visual Organization Rules
+File: client/src/utils/nodePositioning.ts  
+Importance Score: 80
+
+Business-specific visualization constraints:
+- Mandatory single root node in center
+- Domain-based color coding system
+- Relationship line routing between rings
+- Visual emphasis rules based on node importance
+
+The system enables intuitive organization of architectural components while enforcing business domain separation through physical positioning and visual hierarchies.
 
 $END$
 
