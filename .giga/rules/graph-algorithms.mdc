@@ -1,64 +1,55 @@
 ---
-description: Specification for graph algorithms implementation including domain layout, relationship management, cycle detection, and auto-layout logic
+description: Documents core graph algorithms for domain layout, relationship management, cycle detection, and auto-layout systems
 ---
 
 
 # graph-algorithms
 
-## Domain Ring Layout System
-Importance Score: 90
-
-Core layout algorithm for organizing nodes in concentric rings based on domain separation:
-- Implements 5 core business domains: business, product, tech, data-ai, operations  
-- Custom radial positioning with domain-specific sector angles
-- Dynamic ring radius calculations based on node density
-- Domain intersection detection for boundary nodes
-
-File: `client/src/components/DomainRings.tsx`
-
-## Relationship Management
+## Domain Layout Engine
+- Custom radial layout system for organizing nodes into business domains
+- Dynamic sector calculation with configurable angles per domain
+- Automatic domain assignment based on node type and relationships
+- Force-directed relaxation within domain boundaries
 Importance Score: 85
 
-Domain-specific relationship handling:
-- Bi-directional dependency tracking between nodes
-- Custom validation rules for cross-domain relationships
-- Auto-suggestion of related nodes based on domain context
-- Specialized relationship types (implements, documents, depends-on)
-
-File: `client/src/utils/relationships.ts`
-
-## Cycle Detection
+## Edge Routing System 
+- Smart path finding between nodes across domain boundaries
+- Custom routing algorithm respecting domain separation
+- Dynamic bend point insertion for edge clarity
+- Automatic edge bundling for parallel connections
 Importance Score: 80
 
-Custom cycle detection implementation for domain architecture:
-- Validates acyclic dependencies across domain boundaries
-- Enforces hierarchical relationships within domains
-- Detects indirect cyclic dependencies through multiple domains
-- Provides domain-aware cycle resolution suggestions
+## Relationship Manager
+File: client/src/utils/relationships.ts
+- Domain-specific relationship taxonomy (implements, depends-on, documents)
+- Bi-directional relationship tracking with type constraints
+- Circular dependency detection for business validation
+- Multi-hop relationship inference
+Importance Score: 90
 
-File: `client/src/utils/graphOps.ts`
-
-## Auto-layout Implementation
+## Auto-Layout System
+File: client/src/utils/autoLayout.ts
+- Template-based layout recipes for common architectural patterns
+- Dynamic spacing based on node density and domain
+- Hierarchical layout with domain awareness
+- Collision avoidance with domain boundary respect
 Importance Score: 85
 
-Specialized layout algorithms for software architecture visualization:
-- Domain-aware force-directed layout within rings
-- Node clustering by type and relationships
-- Edge routing optimized for domain ring visualization
-- Automatic spacing based on node importance and connections
-
-File: `client/src/utils/autoLayout.ts`
-
-## Node Type Management
+## Cycle Detection
+File: client/src/utils/graphOps.ts
+- Domain-aware cycle detection for dependency validation
+- Custom validation rules per relationship type
+- Multi-domain cycle analysis
+- Critical path identification
 Importance Score: 75
 
-Domain-specific node classification and validation:
-- Enforces node type rules per domain
-- Manages allowed relationship types between node categories
-- Implements domain-specific node styling and indicators
-- Handles node type conversion rules
-
-File: `client/src/components/CustomNode.tsx`
+## Force-Directed Relaxation
+File: client/src/utils/d3Relax.ts
+- Modified d3-force algorithm respecting domain boundaries
+- Custom force calculations for domain separation
+- Dynamic force strength based on relationship types
+- Incremental relaxation for large graphs
+Importance Score: 80
 
 $END$
 

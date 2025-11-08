@@ -1,58 +1,56 @@
 ---
-description: Technical specification for the domain-ring visualization system that organizes nodes into concentric rings based on business domains
+description: Technical documentation for the unique domain ring visualization system used for organizing and managing hierarchical node relationships
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements specialized visualization logic for organizing nodes into concentric rings based on their business domains. The system consists of several key components:
+The domain ring system implements a specialized visualization and organization model for managing hierarchical node relationships across different business domains.
 
-## Ring Calculation Engine
-File: client/src/components/DomainRings.tsx
-Importance Score: 95
+## Core Components
 
-Core logic for calculating and positioning domain-based rings:
-- Domain Ring Structure:
-  - Business (outermost)
-  - Product
-  - Technical
-  - Data/AI  
-  - Operations (innermost)
-- Each ring subdivided into sectors based on node density
-- Dynamic radius calculation based on node count per domain
-- Automatic sector sizing with overlap prevention
+### Domain Ring Calculator (Importance Score: 95)
+File: `client/src/components/DomainRings.tsx`
+- Ring-based hierarchical organization system separating nodes into distinct business domains
+- Dynamic sector calculation with animated gradient boundaries 
+- Business domain classification:
+  - Business Strategy & Goals
+  - Product Management 
+  - Technical Architecture
+  - Data & AI Infrastructure
+  - Operations & Infrastructure
+- Sector size allocation based on node density and relationships
 
-## Node Positioning System
-File: client/src/utils/geometry.ts
-Importance Score: 90
+### Node Positioning Engine (Importance Score: 90)
+File: `client/src/components/CenterNode.tsx`
+- Specialized node visualization for multi-level concept hierarchies
+- Gradient-based domain indicators showing node domain alignment
+- Multi-directional connection routing with domain boundary awareness
+- Dynamic expansion/collapse with size management for concept hierarchies
 
-Specialized node placement algorithms:
-- Ring-specific node distribution with force-directed spacing
-- Inter-ring relationship optimization 
-- Node repositioning with domain transition handling
-- Custom coordinate system for radial layout
+### Layout Recipe System (Importance Score: 85)
+File: `client/src/config/layoutRecipes.ts`
+- Domain-specific layout patterns for different business contexts
+- Pre-configured arrangements for common architectures:
+  - Authentication systems
+  - Payment processing flows
+  - Analytics pipelines
+  - Data warehousing
+- Business rule mappings between node types and recommended layouts
 
-## Domain Classification
-File: client/src/utils/autoLayout.ts
-Importance Score: 85
+### Domain Relationship Manager (Importance Score: 80)
+File: `client/src/components/CustomNode.tsx`
+- Domain-aware node type system with specific behaviors
+- Documentation accuracy scoring and staleness detection
+- Domain-specific card template recommendations
+- Hierarchical node grouping and relationship validation
 
-Business rules for domain assignment:
-- Automatic domain detection based on node type and metadata
-- Custom scoring system for domain affinity
-- Multi-domain node handling with primary/secondary assignments
-- Domain inheritance rules for connected nodes
-
-## Visual Organization Rules
-File: client/src/utils/nodePositioning.ts  
-Importance Score: 80
-
-Business-specific visualization constraints:
-- Mandatory single root node in center
-- Domain-based color coding system
-- Relationship line routing between rings
-- Visual emphasis rules based on node importance
-
-The system enables intuitive organization of architectural components while enforcing business domain separation through physical positioning and visual hierarchies.
+### Domain Collision Detection (Importance Score: 75)
+File: `client/src/utils/geometry.ts`
+- Custom collision detection for nodes crossing domain boundaries
+- Sector boundary calculations for node placement
+- Domain overlap resolution with hierarchical priorities
+- Ring radius optimization based on node density
 
 $END$
 

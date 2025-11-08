@@ -1,56 +1,65 @@
 ---
-description: Specification for AI-driven content generation pipeline including context injection, template matching, and generation queue management
+description: Handles core AI content generation workflows, context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-## Generation Service Architecture
-- Multi-stage pipeline for content generation with domain-specific validation
-- Custom prompt enrichment with architectural context injection
-- Template matching algorithms for software architecture patterns
-- Generation queue system with priority handling and circuit breaker
-Importance Score: 95
-
-## Context Injection System 
-Path: server/src/services/ContextInjector.ts
-- Domain-aware context building for architecture components
-- Workspace analysis for dependency chains and relationships
-- PRD template integration with architectural patterns
-- Knowledge base fragment selection and scoring
+## Core Generation Service
+Path: `server/src/services/GenerationService.ts`
+- Multi-stage content generation pipeline with domain-specific validations
+- Context-aware template matching for architecture nodes
+- Custom fallback chains for handling API failures while maintaining domain consistency
+- Generation history tracking with metadata for improvement feedback loops
 Importance Score: 90
 
-## Template Matching Engine
-Path: server/src/services/ai/provider.ts
-- Architecture-specific template scoring and selection
-- Multi-stage filtering with domain weighting
-- Fragment composition with fallback strategies
-- Template accuracy validation and quality gates
+## Context Injection System
+Path: `server/src/services/ContextInjector.ts`
+- Workspace-aware context building for AI prompts
+- Knowledge graph traversal for relevant context extraction
+- Domain boundary detection and context scoping
+- Template-specific context optimization
 Importance Score: 85
 
 ## Generation Queue Management
-Path: server/src/services/GenerationQueue.ts
-- Priority-based queue for architecture node generation
-- Circuit breaker integration for API failure handling
-- Batch processing optimization for related nodes
-- Result normalization and validation pipeline
+Path: `server/src/services/GenerationQueue.ts`
+- Priority-based generation request handling
+- Batching logic for related generation tasks
+- Request deduplication with context merging
+- Failure recovery with automatic retries
 Importance Score: 80
 
-## Knowledge Integration
-Path: server/src/services/KBService.ts
-- Domain-specific knowledge base organization
-- Fragment scoring based on architectural relevance
-- Template composition rules for software components
-- Context-aware fragment selection algorithm
+## Template Matching Algorithm 
+Path: `server/src/services/cards/templatePlanner.ts`
+- Semantic similarity scoring for template selection
+- Domain-specific template filtering and ranking
+- Multi-factor template scoring based on node context
+- Dynamic template composition from fragments
 Importance Score: 85
 
-## Feedback Processing
-Path: server/src/services/ai/feedback.ts
-- Quality scoring for generated architecture components
-- Feedback integration into template selection
-- Generation accuracy tracking and improvement
-- Domain-specific quality metrics
+## AI Provider Integration
+Path: `server/src/services/ai/provider.ts`
+- Model-specific prompt formatting
+- Response parsing and validation rules
+- Token budget management per request type
+- Custom error handling with fallback chains
 Importance Score: 75
+
+## Knowledge Base Integration
+Path: `server/src/services/KBService.ts`
+- Domain-specific pattern matching
+- Fragment prioritization for architectural guidance
+- Multi-stage template matching logic
+- PRD integration for context enhancement
+Importance Score: 80
+
+## Feedback Processing
+Path: `server/src/services/ai/feedback.ts`
+- Generation quality scoring system
+- Context effectiveness evaluation
+- Template improvement suggestions tracking
+- User feedback aggregation for model tuning
+Importance Score: 70
 
 $END$
 

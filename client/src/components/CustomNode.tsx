@@ -21,8 +21,8 @@ import {
   PopoverTrigger,
 } from "./ui/popover";
 import { EditableCard, EditableCardData, CardType } from "./EditableCard";
-import { CARD_TEMPLATES, NODE_CARD_MATRIX, type NodeCardTemplateId } from "../config/nodeCardRegistry";
-import type { DomainType } from "../types";
+import { CARD_TEMPLATES, getRecommendedCardTemplates, type NodeCardTemplateId } from "../config/nodeCardRegistry";
+import type { DomainType, NodeType } from "../types";
 import type { WhiteboardShapePayload } from "@/types/whiteboard";
 
 export interface CustomNodeData extends Record<string, unknown> {
@@ -323,17 +323,10 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps<CustomNodeData
       : "bg-rose-100/90 text-rose-700 border border-rose-200"
     : "";
   const recommendedCards = useMemo(() => {
-    const matches = NODE_CARD_MATRIX.filter((entry) => {
-      const nodeMatch = entry.nodeTypes ? entry.nodeTypes.includes(data.type) : true;
-      const domainMatch = entry.domains
-        ? normalizedDomain
-          ? entry.domains.includes(normalizedDomain)
-          : false
-        : true;
-      return nodeMatch && domainMatch;
+    return getRecommendedCardTemplates({
+      nodeType: data.type as NodeType | undefined,
+      domain: normalizedDomain,
     });
-    const uniqueIds = Array.from(new Set(matches.flatMap((entry) => entry.recommendedCards)));
-    return uniqueIds.map((templateId) => CARD_TEMPLATES[templateId]).filter(Boolean);
   }, [data.type, normalizedDomain]);
   
   // Ref to store cleanup functions - MUST be declared before sync effect

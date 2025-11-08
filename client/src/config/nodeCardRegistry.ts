@@ -312,3 +312,19 @@ export const NODE_CARD_MATRIX: NodeCardMapping[] = [
     recommendedCards: ["operationsRunbook", "monitoringChecklist"],
   },
 ];
+
+export function getRecommendedCardTemplates(params: {
+  nodeType?: NodeType;
+  domain?: DomainType;
+}): NodeCardTemplate[] {
+  const { nodeType, domain } = params;
+  const matches = NODE_CARD_MATRIX.filter((entry) => {
+    const nodeMatch = entry.nodeTypes ? (!!nodeType && entry.nodeTypes.includes(nodeType)) : true;
+    const domainMatch = entry.domains ? (!!domain && entry.domains.includes(domain)) : true;
+    return nodeMatch && domainMatch;
+  });
+  const uniqueIds = Array.from(new Set(matches.flatMap((entry) => entry.recommendedCards)));
+  return uniqueIds
+    .map((templateId) => CARD_TEMPLATES[templateId])
+    .filter((template): template is NodeCardTemplate => Boolean(template));
+}

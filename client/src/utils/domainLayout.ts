@@ -1125,7 +1125,8 @@ export function applyRelativePolarLayout(
       data: {
         ...data,
         ring: hasExplicit ? data.ring : (data.hierId != null ? (data.ring ?? computedDist) : (computedDist ?? data.ring)),
-        hierId: data.hierId ?? hierIdMap[node.id],
+        // Always recalculate hierId based on layout, unless node has explicit ring (scaffolding)
+        hierId: hasExplicit ? data.hierId : hierIdMap[node.id],
       }
     };
   });
@@ -1175,6 +1176,8 @@ function normalizeHierarchicalIdsPostLayout(nodes: Node[], centerNodeId: string)
   const ringGroups: Record<number, Node[]> = {};
   nodes.forEach(n => {
     if (n.id === centerNodeId) return;
+    // Skip nodes with explicit ring - they keep their manually-assigned hierId
+    if ((n as any)?.data?.explicitRing) return;
     const ring = typeof (n as any)?.data?.ring === 'number' ? (n as any).data.ring : undefined;
     if (ring == null || ring <= 0) return;
     (ringGroups[ring] ||= []).push(n);
