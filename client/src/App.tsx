@@ -464,6 +464,9 @@ type SerializableWorkspaceNode = {
     summary?: string;
     tags?: string[];
     stackHint?: string;
+    domain?: string;
+    ring?: number;
+    hierId?: string;
     preferredHeight?: number;
     preferredWidth?: number;
     maxNodeHeight?: number;
@@ -545,10 +548,22 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         ? nodeData.maxNodeWidth
         : undefined;
 
+    const rawDomain =
+      typeof nodeData.domain === "string" && nodeData.domain.trim().length > 0
+        ? nodeData.domain
+        : getDomainForNodeType(workspaceNode.type);
     const sanitizedCards = sanitizeCards(nodeData.cards) ?? [];
     const hydratedCards = sanitizedCards.map((card) =>
-      ensureTemplateMetadata(card, workspaceNode.type, nodeData.domain as string | undefined)
+      ensureTemplateMetadata(card, workspaceNode.type, rawDomain)
     );
+    const ring =
+      typeof (nodeData as any).ring === "number" && Number.isFinite((nodeData as any).ring)
+        ? (nodeData as any).ring
+        : undefined;
+    const hierId =
+      typeof (nodeData as any).hierId === "string" && (nodeData as any).hierId.trim().length > 0
+        ? (nodeData as any).hierId
+        : undefined;
 
     const base: Node = {
       id: workspaceNode.id,
@@ -560,6 +575,9 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         tags: Array.isArray(nodeData.tags) ? nodeData.tags : [],
         stackHint: nodeData.stackHint,
         type: workspaceNode.type,
+        domain: rawDomain,
+        ring,
+        hierId,
         cards: hydratedCards,
         ...(preferredHeight ? { preferredHeight } : {}),
         ...(preferredWidth ? { preferredWidth } : {}),
@@ -659,6 +677,9 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       summary,
       tags,
       stackHint: typeof data.stackHint === "string" ? data.stackHint : undefined,
+      domain: typeof data.domain === "string" ? data.domain : undefined,
+      ring: typeof data.ring === "number" && Number.isFinite(data.ring) ? data.ring : undefined,
+      hierId: typeof data.hierId === "string" ? data.hierId : undefined,
       preferredHeight,
       preferredWidth,
       maxNodeHeight,
