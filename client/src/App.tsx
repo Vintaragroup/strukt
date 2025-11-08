@@ -131,6 +131,7 @@ import { Template } from "./utils/templates";
 import { calculateAnalytics, getInsights } from "./utils/analytics";
 import { createAutoSnapshot, getSnapshots } from "./utils/snapshots";
 import { RelationshipType, setRelationshipType, getRelationshipLabel, isValidConnectionPreview } from "./utils/relationships";
+import { detectCycle } from "./utils/graphValidation";
 import type { DocumentationBundle, DocumentationFlag } from "./utils/documentationBundle";
 import { documentationFlagId } from "./utils/documentationBundle";
 import { FOUNDATION_CATEGORIES, type FoundationNodeTemplate } from "./config/foundationNodes";
@@ -147,6 +148,17 @@ const VALID_CARD_TYPES: CardType[] = ["text", "todo", "markdown", "checklist", "
 
 const createAutoNodeId = () => `auto-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
 const createAutoCardId = () => `card-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
+
+const describeCyclePath = (
+  cycle: string[] | undefined,
+  getLabel: (id: string) => string | undefined
+): string => {
+  if (!cycle || cycle.length === 0) {
+    return "A connection loops back to an earlier node.";
+  }
+  const readable = cycle.map((id) => getLabel(id) ?? id);
+  return readable.join(" → ");
+};
 
 // =============================
 // Lineage Hierarchical ID Helpers (Option A)
@@ -1434,6 +1446,22 @@ const handleSwitchToWizard = useCallback(
       isPersistingWorkspaceRef.current = true;
       const previousName =
         lastPersistedWorkspaceNameRef.current || workspaceName;
+
+      const cycleCheck = detectCycle(
+        payload.nodes.map((node) => ({ id: node.id })),
+        payload.edges.map((edge) => ({ source: edge.source, target: edge.target }))
+      );
+      if (cycleCheck.hasCycle) {
+        const labelLookup = (id: string) => {
+          const node = payload.nodes.find((entry) => entry.id === id);
+          return node?.data?.title ?? id;
+        };
+        toast.error("Failed to save workspace", {
+          description: describeCyclePath(cycleCheck.cycle, labelLookup),
+        });
+        isPersistingWorkspaceRef.current = false;
+        return;
+      }
 
       try {
         let updated: Workspace
@@ -3176,7 +3204,27 @@ const handleSwitchToWizard = useCallback(
         sourceHandle: normalizeHandle((params as any).sourceHandle, 'source'),
         targetHandle: normalizeHandle((params as any).targetHandle, 'target'),
       } as Edge | Connection;
+      if (!normalized.source || !normalized.target) {
+        return;
+      }
       const newEdge = { ...normalized, type: "custom" };
+      const cycleCheck = detectCycle(
+        nodes.map((node) => ({ id: node.id })),
+        edges.map((edge) => ({ source: edge.source, target: edge.target })),
+        { source: normalized.source, target: normalized.target }
+      );
+      if (cycleCheck.hasCycle) {
+        const labelLookup = (id: string) => {
+          const found = nodes.find((node) => node.id === id);
+          return found?.data?.label ?? (found?.data as any)?.title ?? id;
+        };
+        toast.error("Connection blocked", {
+          description: describeCyclePath(cycleCheck.cycle, labelLookup),
+        });
+        setIsConnecting(false);
+        didConnectRef.current = false;
+        return;
+      }
       const centerId = centerNodeIdRef.current || "center";
       setEdges((eds) => {
         const updatedEdges = addEdge(newEdge, eds);
@@ -3186,7 +3234,7 @@ const handleSwitchToWizard = useCallback(
       didConnectRef.current = true;
       setIsConnecting(false);
     },
-    [setEdges, nodes]
+    [setEdges, nodes, edges]
   );
 
   const onConnectStart = useCallback((event: any, params: any) => {
@@ -5505,16 +5553,49 @@ const handleSwitchToWizard = useCallback(
   if (findIdByLabel(pwdPolicyLabel) && targetId) newEdges.push(mkEdge(targetId, findIdByLabel(pwdPolicyLabel)!, 'implements'));
       if (findIdByLabel(auditLabel) && targetId) {
         newEdges.push(mkEdge(findIdByLabel(auditLabel)!, targetId, 'documents'));
-        // Add reverse association to ensure BFS depth includes audit logging from auth node perspective
-        newEdges.push(mkEdge(targetId, findIdByLabel(auditLabel)!, 'related-to'));
       }
       if (findIdByLabel(authReqLabel) && findIdByLabel(rateLimitLabel)) newEdges.push(mkEdge(findIdByLabel(rateLimitLabel)!, findIdByLabel(authReqLabel)!, 'implements'));
       if (findIdByLabel(rateLimitLabel) && targetId) {
-        newEdges.push(mkEdge(targetId, findIdByLabel(rateLimitLabel)!, 'related-to'));
+        newEdges.push(mkEdge(targetId, findIdByLabel(rateLimitLabel)!, 'depends-on'));
       }
 
       const centerId = centerNodeIdRef.current || 'center';
-      const nextEdges = updateEdgesWithOptimalHandles(nextNodes as any, [...edges, ...newEdges], centerId);
+      const prospectiveNodes = [...nodes, ...toCreate];
+      const acceptedNewEdges: Edge[] = [];
+      const skippedEdges: Edge[] = [];
+      newEdges.forEach((edgeCandidate) => {
+        const cycleCheck = detectCycle(
+          prospectiveNodes.map((node) => ({ id: node.id })),
+          [...edges, ...acceptedNewEdges].map((edge) => ({ source: edge.source, target: edge.target })),
+          { source: edgeCandidate.source, target: edgeCandidate.target }
+        );
+        if (cycleCheck.hasCycle) {
+          skippedEdges.push(edgeCandidate);
+          return;
+        }
+        acceptedNewEdges.push(edgeCandidate);
+      });
+
+      if (skippedEdges.length) {
+        const labelLookup = (id: string) => {
+          const n = prospectiveNodes.find((node) => node.id === id);
+          return n?.data?.label ?? (n?.data as any)?.title ?? id;
+        };
+        skippedEdges.forEach((edge) => {
+          const cycleCheck = detectCycle(
+            prospectiveNodes.map((node) => ({ id: node.id })),
+            [...edges, ...acceptedNewEdges].map((existingEdge) => ({ source: existingEdge.source, target: existingEdge.target })),
+            { source: edge.source, target: edge.target }
+          );
+          if (cycleCheck.hasCycle) {
+            toast.warning("Skipped connection", {
+              description: describeCyclePath(cycleCheck.cycle, labelLookup),
+            });
+          }
+        });
+      }
+
+      const nextEdges = updateEdgesWithOptimalHandles(nextNodes as any, [...edges, ...acceptedNewEdges], centerId);
 
       setNodes(nextNodes);
       setEdges(nextEdges);
@@ -6067,6 +6148,23 @@ const handleSwitchToWizard = useCallback(
       type: "custom",
       data: { relationshipType: type },
     };
+
+    const cycleCheck = detectCycle(
+      nodes.map((node) => ({ id: node.id })),
+      edges.map((edge) => ({ source: edge.source, target: edge.target })),
+      { source, target }
+    );
+
+    if (cycleCheck.hasCycle) {
+      const labelLookup = (id: string) => {
+        const node = nodes.find((entry) => entry.id === id);
+        return node?.data?.label ?? (node?.data as any)?.title ?? id;
+      };
+      toast.error("Connection blocked", {
+        description: describeCyclePath(cycleCheck.cycle, labelLookup),
+      });
+      return;
+    }
     
     const centerId = centerNodeIdRef.current || "center";
     setEdges((eds) => {
@@ -6078,7 +6176,7 @@ const handleSwitchToWizard = useCallback(
     toast.success("Relationship created", {
       description: `Added ${type} relationship`,
     });
-  }, [setEdges, nodes]);
+  }, [setEdges, nodes, edges]);
 
   // Keyboard shortcuts
   useEffect(() => {
