@@ -130,6 +130,25 @@ export const CLASSIFICATION_DEFINITIONS: ClassificationDefinition[] = [
 
 const definitionMap = new Map(CLASSIFICATION_DEFINITIONS.map((def) => [def.key, def]));
 
+/**
+ * Maps Ring 2 classification keys to their Ring 1 parent classification keys
+ * Determines the hierarchy for domain classifications (Ring 2) under foundation pillars (Ring 1)
+ */
+export const RING2_TO_RING1_PARENT_MAP: Record<ClassificationKey, ClassificationKey> = {
+  businessModel: "businessModel", // R1, maps to itself (not a R2)
+  businessOperations: "businessOperations", // R1, maps to itself
+  marketingGTM: "marketingGTM", // R1, maps to itself
+  appFrontend: "appFrontend", // R1, maps to itself
+  appBackend: "appBackend", // R1, maps to itself
+  
+  // Ring 2 classifications and their Ring 1 parents:
+  dataAI: "appBackend", // Data & AI → Backend (data pipelines, ML models are backend services)
+  infrastructure: "appBackend", // Infrastructure → Backend (CI/CD, platform ops support backend)
+  observability: "appBackend", // Observability → Backend (monitoring, logging, tracing)
+  security: "appBackend", // Security → Backend (auth, secrets, access control)
+  customerExperience: "marketingGTM", // Customer experience → Marketing/GTM (support, onboarding, success)
+};
+
 export const ensureClassificationBackbone = (
   nodes: Node[],
   edges: Edge[],
@@ -142,10 +161,25 @@ export const ensureClassificationBackbone = (
     const existing = nextNodes.find(
       (node) => node.id === def.id || (node.data as CustomNodeData)?.classificationKey === def.key
     );
+    
+    // Determine what the parent should be for this classification
+    let expectedParentId: string | null = null;
+    if (def.ring === 1) {
+      expectedParentId = centerId;
+    } else if (def.ring === 2) {
+      const parentClassificationKey = RING2_TO_RING1_PARENT_MAP[def.key];
+      if (parentClassificationKey) {
+        const parentClassificationNode = nextNodes.find(
+          (n) => (n.data as CustomNodeData)?.classificationKey === parentClassificationKey
+        );
+        if (parentClassificationNode) {
+          expectedParentId = parentClassificationNode.id;
+        }
+      }
+    }
+
     if (existing) {
-      // If the node already exists but its ring is out of date with the current definition,
-      // update the ring (and lock it) so downstream logic (picker filtering, radial layout)
-      // reflects the authoritative classification structure. We do NOT touch position.
+      // Node exists - update its ring if needed
       const data = existing.data as CustomNodeData;
       const currentRing = typeof data.ring === "number" ? data.ring : undefined;
       if (currentRing !== def.ring) {
@@ -154,13 +188,11 @@ export const ensureClassificationBackbone = (
           ring: def.ring,
           explicitRing: true,
           classificationKey: data.classificationKey || def.key,
-          // Ensure classification tag present for future migrations
           tags: Array.isArray(data.tags)
             ? Array.from(new Set(["classification", def.key, ...(data.tags || [])]))
             : ["classification", def.key],
         } as CustomNodeData;
       } else if (!data.explicitRing) {
-        // Lock ring if it matches but wasn't explicit yet
         existing.data = {
           ...data,
           explicitRing: true,
@@ -170,9 +202,33 @@ export const ensureClassificationBackbone = (
             : ["classification", def.key],
         } as CustomNodeData;
       }
-      return; // Do not create a duplicate classification node
+      
+      // ALWAYS ensure the edge is correct, even for existing nodes
+      if (expectedParentId) {
+        const edgeId = `edge-${expectedParentId}-${existing.id}`;
+        const hasCorrectEdge = nextEdges.some((edge) => edge.source === expectedParentId && edge.target === existing.id);
+        
+        if (!hasCorrectEdge) {
+          // Remove any existing edges TO this node that aren't from the correct parent
+          nextEdges = nextEdges.filter(
+            (edge) => !(edge.target === existing.id && edge.source !== expectedParentId)
+          );
+          // Add the correct edge
+          nextEdges = [
+            ...nextEdges,
+            {
+              id: edgeId,
+              source: expectedParentId,
+              target: existing.id,
+              type: "custom",
+            },
+          ];
+        }
+      }
+      return;
     }
 
+    // Node doesn't exist, create it
     const newNode: Node<CustomNodeData> = {
       id: def.id,
       type: "custom",
@@ -191,18 +247,21 @@ export const ensureClassificationBackbone = (
     };
     nextNodes = [...nextNodes, newNode];
 
-    const edgeId = `edge-${centerId}-${newNode.id}`;
-    const edgeExists = nextEdges.some((edge) => edge.source === centerId && edge.target === newNode.id);
-    if (!edgeExists) {
-      nextEdges = [
-        ...nextEdges,
-        {
-          id: edgeId,
-          source: centerId,
-          target: newNode.id,
-          type: "custom",
-        },
-      ];
+    // Create edge if parent exists
+    if (expectedParentId) {
+      const edgeId = `edge-${expectedParentId}-${newNode.id}`;
+      const edgeExists = nextEdges.some((edge) => edge.source === expectedParentId && edge.target === newNode.id);
+      if (!edgeExists) {
+        nextEdges = [
+          ...nextEdges,
+          {
+            id: edgeId,
+            source: expectedParentId,
+            target: newNode.id,
+            type: "custom",
+          },
+        ];
+      }
     }
   });
 

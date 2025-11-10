@@ -137,7 +137,7 @@ import { Template } from "./utils/templates";
 import { calculateAnalytics, getInsights } from "./utils/analytics";
 import { createAutoSnapshot, getSnapshots } from "./utils/snapshots";
 import { RelationshipType, setRelationshipType, getRelationshipLabel, isValidConnectionPreview } from "./utils/relationships";
-import { ensureClassificationBackbone, getClassificationParentId } from "./config/classifications";
+import { ensureClassificationBackbone, getClassificationParentId, RING2_TO_RING1_PARENT_MAP } from "./config/classifications";
 import { migrateNodesToClassifications } from "./utils/migrations/classificationMigrate";
 import { migrateFoundationTemplates } from "./utils/migrations/foundationTemplatesMigrate";
 import { detectCycle } from "./utils/graphValidation";
@@ -276,8 +276,20 @@ function enforceRingHierarchyEdges(
     if (ring === 1) {
       // Ring 1 nodes connect to center
       parentId = centerId;
-    } else if (ring >= 2) {
-      // Ring 2+ nodes connect to their classification parent
+    } else if (ring === 2) {
+      // Ring 2 nodes (classifications) connect to their R1 parent classification
+      const classificationKey = (node as any)?.data?.classificationKey;
+      if (classificationKey && RING2_TO_RING1_PARENT_MAP[classificationKey]) {
+        const parentClassificationKey = RING2_TO_RING1_PARENT_MAP[classificationKey];
+        const parentClassificationNode = nodes.find(
+          (n) => (n.data as any)?.classificationKey === parentClassificationKey
+        );
+        if (parentClassificationNode) {
+          parentId = parentClassificationNode.id;
+        }
+      }
+    } else if (ring >= 3) {
+      // Ring 3+ nodes connect to their classification parent
       parentId = getClassificationParentId(
         nodes,
         (node as any)?.data?.type,
