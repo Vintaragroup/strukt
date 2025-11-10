@@ -1951,7 +1951,7 @@ const handleSwitchToWizard = useCallback(
   // Removed unused maybeD3Relax helper
 
   // --- Layout + Relaxation Orchestrator ---
-  const [relaxPadding, setRelaxPadding] = useState(12);
+  const [relaxPadding, setRelaxPadding] = useState(18);
   // Pinned nodes that should not be moved by radial base layout or relaxor
   const pinnedRef = useRef<Set<string>>(new Set());
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -1977,8 +1977,8 @@ const handleSwitchToWizard = useCallback(
   const applyLayoutAndRelax = useCallback(async (
     baseNodes: Node[],
     {
-      padding = 12,
-      maxPasses = 10,
+      padding = 18,
+      maxPasses = 15,
       fit = true,
       fixedIds = [],
     }: { padding?: number; maxPasses?: number; fit?: boolean; fixedIds?: string[] }
@@ -2973,7 +2973,7 @@ const handleSwitchToWizard = useCallback(
           }
           applyLayoutAndRelax(layoutedNodes, {
             padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
-            maxPasses: viewMode === 'process' ? 18 : 10,
+            maxPasses: viewMode === 'process' ? 25 : 15,
             fit: true,
             fixedIds: [centerId, ...Array.from(pinnedRef.current)],
           }).then(() => {
@@ -3053,7 +3053,7 @@ const handleSwitchToWizard = useCallback(
       }
       applyLayoutAndRelax(layoutedNodes, {
         padding: relaxPadding,
-        maxPasses: 10,
+        maxPasses: 15,
         fit: false,
         fixedIds: [centerId, ...Array.from(pinnedRef.current)],
       }).finally(() => {
