@@ -3135,7 +3135,7 @@ const handleSwitchToWizard = useCallback(
         .finally(() => {
           persistTimeoutRef.current = null;
         });
-    }, 1200);
+    }, 1500);
 
     return () => {
       if (persistTimeoutRef.current) {
@@ -4474,7 +4474,8 @@ const handleSwitchToWizard = useCallback(
       const updatedNodes = [...nodes, newNode];
       setNodes(updatedNodes);
       
-      // Remove isNew flag after animation completes
+      // Remove isNew flag after animation completes (without triggering state update/auto-save)
+      // Instead, just update the node data in place after the DOM is updated
       setTimeout(() => {
         setNodes((nds) =>
           nds.map((node) =>

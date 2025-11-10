@@ -103,7 +103,7 @@ router.put('/:name', async (req: AuthRequest, res: Response) => {
     const payload = UpdateWorkspaceSchema.parse(req.body)
 
     const filter = { name, ...getOwnerFilter(req.user) }
-    const workspace = await Workspace.findOne(filter)
+    let workspace = await Workspace.findOne(filter)
 
     if (!workspace) {
       return res.status(404).json({ message: 'Workspace not found' })
@@ -130,8 +130,48 @@ router.put('/:name', async (req: AuthRequest, res: Response) => {
     if (payload.edges) workspace.edges = payload.edges
     workspace.updatedAt = new Date()
 
-    await workspace.save()
-    res.json(workspace)
+    let retries = 0
+    const maxRetries = 3
+
+    while (retries < maxRetries) {
+      try {
+        await workspace.save()
+        res.json(workspace)
+        return
+      } catch (error: any) {
+        // Handle Mongoose VersionError (optimistic locking conflict)
+        if (error.name === 'VersionError') {
+          retries++
+          if (retries >= maxRetries) {
+            console.error(`Version conflict after ${maxRetries} retries:`, error.message)
+            return res.status(409).json({ 
+              message: 'Workspace conflict after multiple retries',
+              detail: 'Please reload and try again'
+            })
+          }
+          console.warn(`Version conflict detected (attempt ${retries}/${maxRetries}), retrying:`, error.message)
+          
+          // Reload the document and reapply updates
+          workspace = await Workspace.findOne(filter)
+          if (!workspace) {
+            return res.status(404).json({ message: 'Workspace no longer exists' })
+          }
+          
+          // Reapply updates to fresh version
+          if (payload.name) workspace.name = payload.name
+          if (payload.nodes) workspace.nodes = payload.nodes
+          if (payload.edges) workspace.edges = payload.edges
+          workspace.updatedAt = new Date()
+          
+          // Small delay before retry to avoid tight loop
+          await new Promise(resolve => setTimeout(resolve, 50 * retries))
+          continue
+        }
+        
+        // If not a version error, rethrow
+        throw error
+      }
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ message: 'Invalid workspace data', errors: error.errors })
