@@ -1,43 +1,9 @@
 // @ts-nocheck
-import React, { useMemo } from 'react';
-
-type NodeChange = any; // Keep loose to avoid version-specific type friction
-type OnNodesChange = (changes: NodeChange[]) => void;
-
-/**
- * wrapOnNodesChange: Returns a handler that logs each change then calls the original.
- */
-export function wrapOnNodesChange(original: OnNodesChange, opts?: { label?: string }): OnNodesChange {
-  const label = opts?.label ?? 'ChangeLogger';
-  return (changes: NodeChange[]) => {
-    try {
-      if (Array.isArray(changes) && changes.length > 0) {
-        // Group by type for quicker reading
-        const counts: Record<string, number> = {};
-        changes.forEach((c: any) => {
-          counts[c?.type || 'unknown'] = (counts[c?.type || 'unknown'] || 0) + 1;
-          // Detailed line log
-          // eslint-disable-next-line no-console
-          console.log(`[${label}]`, c);
-        });
-        // eslint-disable-next-line no-console
-        console.info(`[${label}] batch`, counts);
-      } else {
-        // eslint-disable-next-line no-console
-        console.info(`[${label}] no changes`);
-      }
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn(`[${label}] log error`, e);
-    } finally {
-      try { original(changes); } catch {}
-    }
-  };
-}
+import React from 'react';
 
 /**
  * ChangeLogger panel: simple indicator that the logger is active.
- * Use wrapOnNodesChange(...) in App to actually wrap the handler.
+ * The noisy logging is implemented in changeLoggerUtils.ts and gated from App.
  */
 export function ChangeLoggerPanel() {
   return (

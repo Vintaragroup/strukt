@@ -21,7 +21,12 @@ import { Toaster } from "./components/ui/sonner";
 import { AnimatePresence } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { updateEdgesWithOptimalHandles } from "./utils/edgeRouting";
-import { applyDomainRadialLayout, calculateNewNodePosition, getDomainForNodeType } from "./utils/domainLayout";
+import {
+  applyDomainRadialLayout,
+  calculateNewNodePosition,
+  getDomainForNodeType,
+  type DomainType,
+} from "./utils/domainLayout";
 import { devOutlineCollisions, resolveCollisions } from "./utils/collision";
 import { captureNodeDimensions as measureNodes } from "@/utils/measure";
 import seed from "./fixtures/collision_seed.json";
@@ -60,7 +65,7 @@ import { SuggestionPanel } from "./components/SuggestionPanel";
 import type { SuggestedNode } from "./types/ai";
 import { EditableCardData, CardType, CardSection, TodoItem } from "./components/EditableCard";
 import { CARD_TEMPLATES, getRecommendedCardTemplates, type NodeCardTemplateId } from "./config/nodeCardRegistry";
-import type { DomainType, NodeType } from "@/types";
+import type { NodeType } from "@/types";
 import { CustomEdge } from "./components/CustomEdge";
 import { DragPreviewOverlay } from "./components/DragPreviewOverlay";
 import { AddNodeModal } from "./components/AddNodeModal";
@@ -94,7 +99,8 @@ import { RelationshipsPanel } from "./components/RelationshipsPanel";
 import { DocumentationPreview } from "./components/DocumentationPreview";
 import { ViewportLogger } from "./components/devtools/ViewportLogger";
 import { NodeInspector } from "./components/devtools/NodeInspector";
-import { ChangeLoggerPanel, wrapOnNodesChange } from "./components/devtools/ChangeLogger";
+import { ChangeLoggerPanel } from "./components/devtools/ChangeLogger";
+import { wrapOnNodesChange } from "./components/devtools/changeLoggerUtils";
 import { FoundationSetupDialog, type FoundationConfig } from "./components/FoundationSetupDialog";
 import { NodeFoundationDialog, type NodeFoundationKind } from "./components/NodeFoundationDialog";
 import { FoundationNodePicker } from "./components/FoundationNodePicker";
@@ -131,6 +137,9 @@ import { Template } from "./utils/templates";
 import { calculateAnalytics, getInsights } from "./utils/analytics";
 import { createAutoSnapshot, getSnapshots } from "./utils/snapshots";
 import { RelationshipType, setRelationshipType, getRelationshipLabel, isValidConnectionPreview } from "./utils/relationships";
+import { ensureClassificationBackbone, getClassificationParentId } from "./config/classifications";
+import { migrateNodesToClassifications } from "./utils/migrations/classificationMigrate";
+import { migrateFoundationTemplates } from "./utils/migrations/foundationTemplatesMigrate";
 import { detectCycle } from "./utils/graphValidation";
 import type { DocumentationBundle, DocumentationFlag } from "./utils/documentationBundle";
 import { documentationFlagId } from "./utils/documentationBundle";
@@ -138,6 +147,14 @@ import { FOUNDATION_CATEGORIES, type FoundationNodeTemplate } from "./config/fou
 import { WhiteboardToolbox } from "./components/whiteboard/WhiteboardToolbox";
 import { WhiteboardToolsLayer } from "./components/whiteboard/WhiteboardToolsLayer";
 import type { WhiteboardShapePayload } from "./types/whiteboard";
+
+// Build metadata injected via Vite define for runtime diagnostics & UI display
+const BUILD_INFO = {
+  sha: (import.meta as any).env.VITE_GIT_SHA,
+  branch: (import.meta as any).env.VITE_GIT_BRANCH,
+  time: (import.meta as any).env.VITE_BUILD_TIME,
+  version: (import.meta as any).env.VITE_APP_VERSION,
+};
 
 const DEFAULT_WORKSPACE_ID = import.meta.env.VITE_DEFAULT_WORKSPACE_ID || "";
 const USE_MOCK_SUGGESTIONS = import.meta.env.VITE_MOCK_AI_SUGGESTIONS !== "false";
@@ -163,9 +180,6 @@ const describeCyclePath = (
 // =============================
 // Lineage Hierarchical ID Helpers (Option A)
 // =============================
-// Rules:
-//  - Center hierId = "0"
-//  - First child at a ring depth under a parent gets plain ring number (e.g. 1, 2, 3)
 //  - Subsequent siblings under same parent+ring get ring.suffix (2.2, 2.3 ...)
 //  - Sibling numbering resets per parent per ring.
 //  - We never renumber existing hierIds on deletion; gaps are allowed.
@@ -436,16 +450,16 @@ const DEFAULT_WORKSPACE_NODE = {
 };
 
 const DOMAIN_SLUG_TO_ENUM: Record<string, DomainType> = {
-  business: "Business",
-  product: "Product",
-  tech: "Tech",
-  "data-ai": "DataAI",
-  operations: "Ops",
+  business: "business",
+  product: "product",
+  tech: "tech",
+  "data-ai": "data-ai",
+  operations: "operations",
 };
 
 const SUPPORTED_NODE_TYPES: NodeType[] = ["root", "frontend", "backend", "requirement", "doc"];
 const TEMPLATE_ELIGIBLE_TYPES: CardType[] = ["markdown", "brief", "spec"];
-const DOMAIN_ENUM_VALUES: DomainType[] = ["Business", "Product", "Tech", "DataAI", "Ops"];
+const DOMAIN_ENUM_VALUES: DomainType[] = ["business", "product", "tech", "data-ai", "operations"];
 
 // function generateWorkspaceName(existingNames: Set<string>): string {
 //   const base = "FlowForge Workspace";
@@ -479,6 +493,9 @@ type SerializableWorkspaceNode = {
     domain?: string;
     ring?: number;
     hierId?: string;
+    parentId?: string;
+    classificationKey?: string;
+    explicitRing?: boolean;
     preferredHeight?: number;
     preferredWidth?: number;
     maxNodeHeight?: number;
@@ -487,7 +504,6 @@ type SerializableWorkspaceNode = {
     whiteboardShape?: WhiteboardShapePayload;
   };
 };
-
 type SerializableWorkspaceEdge = {
   id: string;
   source: string;
@@ -576,6 +592,15 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
       typeof (nodeData as any).hierId === "string" && (nodeData as any).hierId.trim().length > 0
         ? (nodeData as any).hierId
         : undefined;
+    const parentId =
+      typeof (nodeData as any).parentId === "string" && (nodeData as any).parentId.trim().length > 0
+        ? (nodeData as any).parentId
+        : undefined;
+    const classificationKey =
+      typeof (nodeData as any).classificationKey === "string" && (nodeData as any).classificationKey.trim().length > 0
+        ? (nodeData as any).classificationKey
+        : undefined;
+    const explicitRing = Boolean((nodeData as any).explicitRing);
 
     const base: Node = {
       id: workspaceNode.id,
@@ -590,6 +615,9 @@ function toFlowNodes(nodes: SerializableWorkspaceNode[]): Node[] {
         domain: rawDomain,
         ring,
         hierId,
+  ...(parentId ? { parentId } : {}),
+  ...(classificationKey ? { classificationKey } : {}),
+  ...(explicitRing ? { explicitRing: true } : {}),
         cards: hydratedCards,
         ...(preferredHeight ? { preferredHeight } : {}),
         ...(preferredWidth ? { preferredWidth } : {}),
@@ -692,6 +720,9 @@ function serializeNode(node: Node): SerializableWorkspaceNode | null {
       domain: typeof data.domain === "string" ? data.domain : undefined,
       ring: typeof data.ring === "number" && Number.isFinite(data.ring) ? data.ring : undefined,
       hierId: typeof data.hierId === "string" ? data.hierId : undefined,
+      parentId: typeof data.parentId === "string" ? data.parentId : undefined,
+      classificationKey: typeof data.classificationKey === "string" ? data.classificationKey : undefined,
+      ...(data.explicitRing ? { explicitRing: true } : {}),
       preferredHeight,
       preferredWidth,
       maxNodeHeight,
@@ -991,6 +1022,18 @@ const migrateEdgeHandles = (edges: Edge[]): Edge[] => {
 function FlowCanvas() {
   const [nodes, setNodesInternal, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(migrateEdgeHandles(initialEdges));
+  // Log build metadata once per session (dev only) for quick verification
+  useEffect(() => {
+    try {
+      if (process.env.NODE_ENV !== 'production') {
+        const key = 'strukt-build-info-logged';
+        if (typeof window !== 'undefined' && !window.sessionStorage.getItem(key)) {
+          console.info('[strukt-build]', BUILD_INFO);
+          window.sessionStorage.setItem(key, '1');
+        }
+      }
+    } catch {/* ignore */}
+  }, []);
   
   // Safe wrapper for setNodes that validates node structure
   const setNodes = useCallback((updater: any) => {
@@ -1105,6 +1148,9 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   const [showDomainRings] = useState(true); // setter unused
   const [suggestionPanelRefresh, setSuggestionPanelRefresh] = useState(0);
   const [isSuggestionPanelOpen, setIsSuggestionPanelOpen] = useState(false);
+  const classificationMigrationPendingRef = useRef(false);
+  // Skip classification seeding once (used for creating a truly blank workspace)
+  const skipClassificationSeedRef = useRef(false);
   const historyManager = useRef(new HistoryManager(50));
   const { whiteboardTool, lassoMode } = useUIPreferences((state) => ({
     whiteboardTool: state.whiteboardTool,
@@ -1205,6 +1251,92 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
       nodeIdSet = new Set(flowNodes.map((node) => node.id));
       flowEdges = toFlowEdges((workspace.edges as unknown as SerializableWorkspaceEdge[]) || [], nodeIdSet);
+      
+      // Preserve truly blank workspaces (center-only): mark them so they don't get auto-seeded on reload
+      const isBlankWorkspace = flowNodes.length === 1 && flowNodes[0]?.type === "center" && flowEdges.length === 0;
+      const blankWorkspaceFlagKey = `flowforge-blank-workspace-${resolvedId}`;
+      const isKnownBlank = typeof window !== 'undefined' ? window.localStorage.getItem(blankWorkspaceFlagKey) === 'true' : false;
+      if (isBlankWorkspace && typeof window !== 'undefined') {
+        window.localStorage.setItem(blankWorkspaceFlagKey, 'true');
+      }
+      
+      // Conditionally seed classification backbone:
+      // 1. Skip if explicit blank creation flag set (one-time)
+      // 2. Skip if workspace is blank (center-only) or was previously saved blank
+      const hasNonCenterNodes = flowNodes.some((n) => n.id !== centerNodeIdRef.current && n.type !== "center");
+      if (!skipClassificationSeedRef.current && !isKnownBlank && hasNonCenterNodes) {
+        const seeded = ensureClassificationBackbone(flowNodes as any, flowEdges, centerNodeIdRef.current || "center");
+        flowNodes = seeded.nodes as any;
+        flowEdges = seeded.edges;
+      }
+      // Reset one-time skip flag (whether used or not) so subsequent new blank creations must set it again
+      if (skipClassificationSeedRef.current) {
+        skipClassificationSeedRef.current = false;
+      }
+      // Clear blank flag if workspace now has nodes (user added content)
+      if (!isBlankWorkspace && hasNonCenterNodes && typeof window !== 'undefined') {
+        window.localStorage.removeItem(blankWorkspaceFlagKey);
+      }
+      
+      // Classification upgrade guard: skip migration if flag set or structure already upgraded
+      const upgradeFlagKey = `flowforge-classification-upgraded-${resolvedId}`;
+      const upgradeFlag = typeof window !== 'undefined' ? window.localStorage.getItem(upgradeFlagKey) === 'true' : false;
+      const needsUpgradeScan = !upgradeFlag && !isKnownBlank;
+      let migrated: ReturnType<typeof migrateNodesToClassifications> | null = null;
+      if (needsUpgradeScan) {
+        migrated = migrateNodesToClassifications(flowNodes as any, flowEdges);
+        flowNodes = migrated.nodes as any;
+        flowEdges = migrated.edges;
+        classificationMigrationPendingRef.current = migrated.applied;
+        if (migrated.applied && typeof window !== 'undefined') {
+          window.localStorage.setItem(upgradeFlagKey, 'true');
+        }
+      } else {
+        classificationMigrationPendingRef.current = false;
+      }
+      if (process.env.NODE_ENV !== "production") {
+        if (migrated?.applied) {
+          console.groupCollapsed("[classification-migrate] applied");
+          console.table(
+            migrated.debug?.reparented?.map((entry) => ({
+              label: entry.label,
+              from: entry.from ?? "center",
+              to: entry.to,
+              ring: entry.ring,
+            })) ?? []
+          );
+          if (migrated.debug?.unmatched?.length) {
+            console.warn("[classification-migrate] unmatched nodes", migrated.debug.unmatched);
+          }
+          console.groupEnd();
+        } else {
+          console.debug("[classification-migrate] no-op");
+        }
+      }
+
+      // Foundation template migration: assign parentId to foundation nodes
+      const foundationMigrated = migrateFoundationTemplates(flowNodes as any);
+      if (foundationMigrated.applied) {
+        flowNodes = foundationMigrated.nodes as any;
+        if (process.env.NODE_ENV !== "production") {
+          console.groupCollapsed("[foundation-migrate] applied");
+          console.table(
+            foundationMigrated.debug?.updated?.map((entry) => ({
+              label: entry.label,
+              newParentId: entry.newParentId,
+              newRing: entry.newRing,
+            })) ?? []
+          );
+          if (foundationMigrated.debug?.skipped?.length) {
+            console.warn("[foundation-migrate] skipped", foundationMigrated.debug.skipped);
+          }
+          console.groupEnd();
+        }
+      } else {
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[foundation-migrate] no-op");
+        }
+      }
 
       setEdges(flowEdges);
       setNodes(flowNodes as any);
@@ -1307,11 +1439,12 @@ const launchNodeCreator = useCallback(
       return;
     }
 
-    // 2) If creating from a foundation node, open Associated node picker
+    // 2) If creating from a foundation or classification node, open Associated node picker
     if (sourceId) {
       const parent = nodes.find((n) => n.id === sourceId);
       const isFoundation = Boolean((parent?.data as any)?.tags?.includes?.("foundation"));
-      if (isFoundation) {
+      const isClassification = Boolean((parent?.data as any)?.classificationKey || (parent?.data as any)?.tags?.includes?.("classification"));
+      if (isFoundation || isClassification) {
         setAssociatedPickerOptions(options ?? null);
         setAssociatedParentId(sourceId);
         setIsAssociatedPickerOpen(true);
@@ -1532,6 +1665,13 @@ const handleSwitchToWizard = useCallback(
     },
     [edges, isWorkspaceReady, nodes, setAvailableWorkspaces, workspaceId, workspaceName]
   );
+
+  useEffect(() => {
+    if (!isWorkspaceReady) return;
+    if (!classificationMigrationPendingRef.current) return;
+    classificationMigrationPendingRef.current = false;
+    persistWorkspace({ force: true });
+  }, [isWorkspaceReady, persistWorkspace]);
 
   const handleGenerateCardContent = useCallback(
     async (nodeId: string, cardId: string) => {
@@ -2024,6 +2164,19 @@ const handleSwitchToWizard = useCallback(
   const onNodesChangeLogged = useMemo(() => {
     return wrapOnNodesChange(onNodesChange, { label: 'NodesChange' });
   }, [onNodesChange]);
+
+  // Gate noisy change logging behind a flag (query ?changeLogs=1 or VITE_CHANGE_LOGGER=on)
+  const enableChangeLogs = useMemo(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('changeLogs') === '1';
+      const env = (import.meta as any)?.env?.VITE_CHANGE_LOGGER === 'on';
+      return q || env;
+    } catch {
+      return false;
+    }
+  }, []);
+  const onNodesChangeHandler = useMemo(() => (enableChangeLogs ? onNodesChangeLogged : onNodesChange), [enableChangeLogs, onNodesChangeLogged, onNodesChange]);
 
   // Ensure center node is always non-draggable and non-selectable, even when nodes are loaded/restored
   useEffect(() => {
@@ -4221,19 +4374,34 @@ const handleSwitchToWizard = useCallback(
       const centerId = centerNodeIdRef.current || "center";
       const normalizedDomain = nodeData.domain ?? getDomainForNodeType(nodeData.type);
       const placementSource = placementOverrides?.sourceNodeId ?? dragSourceNodeId;
-      const parentNode = placementSource ? nodes.find(n => n.id === placementSource) : null;
+      const parentNode = placementSource ? nodes.find((n) => n.id === placementSource) : null;
+      const classificationParentId = placementSource
+        ? null
+        : getClassificationParentId(
+            nodes,
+            nodeData.type,
+            normalizedDomain as DomainType,
+            nodeData.tags,
+            nodeData.label
+          );
+      const resolvedParent =
+        parentNode ?? (classificationParentId ? nodes.find((n) => n.id === classificationParentId) : null);
       // Direct children of center should start at ring 2; children of non-center nodes increment parent's ring
-      const defaultRing = parentNode ? (Number((parentNode as any)?.data?.ring) + 1 || 2) : 2;
+      const parentRing = resolvedParent ? Number(((resolvedParent as any)?.data?.ring ?? 0)) : 0;
+      const defaultRing = resolvedParent ? (Number.isFinite(parentRing) ? parentRing + 1 : 2) : 2;
       const normalizedRing = Math.max(1, nodeData.ring ?? defaultRing);
+      // Enforce lineage rule: child ring >= parentRing + 1 and at least 2
+      const enforcedRing = Math.max(normalizedRing, (Number.isFinite(parentRing) ? parentRing + 1 : 2), 2);
       const placementPosition = placementOverrides?.position ?? edgePosition;
       const placementEdge = placementOverrides?.edgeToReplace ?? edgeToReplace;
       const calculatedPosition = calculateNewNodePosition(nodes, centerId, {
         domain: normalizedDomain,
         type: nodeData.type,
-        ring: normalizedRing,
+        ring: enforcedRing,
       });
-      const parentIdForLineage = placementSource || centerId;
-      const hierId = computeNextHierId(nodes, parentIdForLineage === centerId ? null : parentIdForLineage, normalizedRing);
+      const connectionSourceId = placementSource ?? classificationParentId ?? null;
+      const parentIdForLineage = connectionSourceId ?? centerId;
+      const hierId = computeNextHierId(nodes, parentIdForLineage === centerId ? null : parentIdForLineage, enforcedRing);
       const newNode = {
         id: newNodeId,
         type: "custom",
@@ -4244,7 +4412,9 @@ const handleSwitchToWizard = useCallback(
           summary: nodeData.summary,
           tags: nodeData.tags,
           domain: normalizedDomain,
-          ring: normalizedRing,
+          ring: enforcedRing,
+          // Lock ring to parent-child lineage so layout keeps it consistent
+          explicitRing: true,
           department: nodeData.department,
           cards: [],
           isNew: true,
@@ -4268,42 +4438,41 @@ const handleSwitchToWizard = useCallback(
         );
       }, 2000);
       
-      // If this was dragged from a source node or added from an edge, create connections
-      if (placementSource) {
-        const newEdge = {
-          id: `e${placementSource}-${newNodeId}`,
-          source: placementSource,
-          target: newNodeId,
-          type: "custom",
-        };
-        
+      // If this was dragged from a source node or attached to a classification parent, create connections
+      if (connectionSourceId) {
         setEdges((eds) => {
           let updatedEdges = [...eds];
-          
-          // If this was added from an edge button (we have edgeToReplace info)
-          if (placementEdge) {
-            // Option 1: Insert node into the edge (source -> new node -> original target)
-            // Remove the original edge
-            updatedEdges = updatedEdges.filter(e => e.id !== placementEdge.id);
-            
-            // Add edge from source to new node
-            updatedEdges.push(newEdge);
-            
-            // Add edge from new node to original target (if target exists)
+
+          if (placementEdge && placementSource) {
+            updatedEdges = updatedEdges.filter((e) => e.id !== placementEdge.id);
+            updatedEdges.push({
+              id: `e${connectionSourceId}-${newNodeId}-${Date.now().toString(36)}`,
+              source: connectionSourceId,
+              target: newNodeId,
+              type: "custom",
+            });
             if (placementEdge.targetNodeId) {
               updatedEdges.push({
-                id: `e${newNodeId}-${placementEdge.targetNodeId}`,
+                id: `e${newNodeId}-${placementEdge.targetNodeId}-${Date.now().toString(36)}`,
                 source: newNodeId,
                 target: placementEdge.targetNodeId,
                 type: "custom",
               });
             }
           } else {
-            // Regular node creation from drag handle
-          updatedEdges.push(newEdge);
+            const exists = updatedEdges.some(
+              (edge) => edge.source === connectionSourceId && edge.target === newNodeId
+            );
+            if (!exists) {
+              updatedEdges.push({
+                id: `e${connectionSourceId}-${newNodeId}-${Date.now().toString(36)}`,
+                source: connectionSourceId,
+                target: newNodeId,
+                type: "custom",
+              });
+            }
           }
-          
-          // Use the updated nodes array that includes the new node
+
           return updateEdgesWithOptimalHandles(updatedNodes, updatedEdges, centerId);
         });
       }
@@ -4386,9 +4555,11 @@ const handleSwitchToWizard = useCallback(
       ? FOUNDATION_CATEGORIES.find((c) => c.id === categoryId)?.templates ?? []
       : FOUNDATION_CATEGORIES.flatMap((c) => c.templates);
 
-    // Filter out same label and prefer ring >= parent.ring when available
+    // Filter out same label and only show DIRECT children (ring === parent.ring + 1)
+    // This ensures proper ring-level hierarchy: Center → Ring 1 → Ring 2 → Ring 3 → Ring 4
     const parentRing = Number(data?.ring) || 1;
-    return candidates.filter((t) => t.label !== data?.label && (t.ring >= parentRing));
+    const expectedChildRing = parentRing + 1;
+    return candidates.filter((t) => t.label !== data?.label && (t.ring === expectedChildRing));
   }, [associatedParentId, nodes]);
 
   const handleAssociatedTemplateSelect = useCallback(
@@ -4527,6 +4698,36 @@ const handleSwitchToWizard = useCallback(
     },
     [persistWorkspace]
   );
+
+  // Create a brand new blank workspace (center only, no classification seeding until user adds nodes)
+  const handleCreateNewWorkspace = useCallback(() => {
+    skipClassificationSeedRef.current = true;
+    const centerNode: Node<CustomNodeData> = {
+      id: "center",
+      type: "center",
+      position: { x: 0, y: 0 },
+      draggable: false,
+      selectable: false,
+      data: {
+        label: "New Workspace Root",
+        description: "Blank workspace. Start adding your organizational pillars or templates.",
+        icon: "🧭",
+      } as CenterNodeData,
+      positionAbsolute: { x: 0, y: 0 },
+    };
+    setNodes([centerNode]);
+    setEdges([]);
+    setWorkspaceId("");
+    setWorkspaceName("Untitled Workspace");
+    lastPersistedWorkspaceNameRef.current = "Untitled Workspace";
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(WORKSPACE_ID_STORAGE_KEY);
+      localStorage.removeItem(WORKSPACE_NAME_STORAGE_KEY);
+    }
+    setIsSaved(false);
+    setIsWorkspaceReady(true);
+    toast.success("Blank workspace created", { description: "Center node only. Save when ready." });
+  }, [setNodes, setEdges, setWorkspaceId, setWorkspaceName, setIsSaved, setIsWorkspaceReady]);
 
   const handleLoad = useCallback(
     async (workspace: Workspace) => {
@@ -6465,7 +6666,7 @@ const handleSwitchToWizard = useCallback(
         <ReactFlow
           nodes={nodesWithCallbacks}
           edges={edgesWithCallbacks}
-          onNodesChange={onNodesChangeLogged}
+          onNodesChange={onNodesChangeHandler}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
       onConnectStart={onConnectStart}
@@ -6705,6 +6906,7 @@ const handleSwitchToWizard = useCallback(
         onViewModeChange={handleViewModeChange}
         onSpecContext={() => setIsSpecContextDialogOpen(true)}
         onDocumentationPreview={handleOpenDocumentationPreview}
+        onNewWorkspace={handleCreateNewWorkspace}
       />
 
       <FloatingFormatToolbar isVisible={isEditingText} />
@@ -6724,6 +6926,7 @@ const handleSwitchToWizard = useCallback(
         canRedo={canRedo}
         nodes={nodes}
         viewMode={viewMode}
+        buildInfo={BUILD_INFO}
       />
 
       <ZoomControls
@@ -6853,6 +7056,20 @@ const handleSwitchToWizard = useCallback(
         onClose={() => setIsSaveLoadDialogOpen(false)}
         onSave={handleSave}
         onLoad={handleLoad}
+        onDelete={async (workspace) => {
+          try {
+            if (!workspace?.name) return;
+            await workspacesAPI.delete(workspace.name);
+            setAvailableWorkspaces((prev) => prev.filter((w) => w.name !== workspace.name));
+            // If deleting currently active workspace, fall back to blank workspace
+            if (workspaceId && workspace._id === workspaceId) {
+              handleCreateNewWorkspace();
+            }
+            toast.success("Workspace deleted", { description: `Removed "${workspace.name}"` });
+          } catch (error) {
+            toast.error("Delete failed", { description: getErrorMessage(error) });
+          }
+        }}
         workspaces={availableWorkspaces}
         activeWorkspaceId={workspaceId}
         initialName={workspaceName}
@@ -6902,7 +7119,6 @@ const handleSwitchToWizard = useCallback(
         isOpen={isKeyboardShortcutsOpen}
         onClose={() => setIsKeyboardShortcutsOpen(false)}
       />
-
       {/* Command Palette */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}

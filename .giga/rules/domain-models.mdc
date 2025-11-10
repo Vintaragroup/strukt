@@ -1,78 +1,54 @@
 ---
-description: Technical specification for domain data models, relationships, validation rules and workspaces in a graph-based architecture system
+description: Documents node types, relationships, workspaces and templates data models including validation rules and entity relationships
 ---
 
 
 # domain-models
 
-## Core Node Types
+### Node Types
+- **Core Entities**: System, Service, Component, Integration
+- **Validation Rules**: Prevents cycles in dependency graphs, enforces required fields
+- **Type-specific Metadata**: Custom fields for auth nodes, API nodes, database nodes
+- **Importance Score**: 85
 
-### Business Domain Nodes
-- Product requirements
-- Architecture components 
-- Technical specifications
-- Domain documentation
+### Relationships
+- **Core Types**: depends-on, implements, tests, connects-to, part-of
+- **Bidirectional Rules**: Certain relationships enforce reciprocal connections
+- **Domain Boundaries**: Special validation for cross-domain relationships
+- **Importance Score**: 90
 
-### Validation Rules
-- Nodes must have unique IDs within workspace
-- Required fields: title, type, domain, created date
-- Optional fields: description, tags, relationships
-Importance Score: 85
+### Workspaces
+- **Structure**: Contains nodes, edges, metadata, permissions
+- **Versioning**: Tracks changes with snapshots system
+- **Templates**: Reusable workspace patterns with placeholders
+- **Importance Score**: 85
 
-## Relationships
+### Templates
+- **Categories**: Architecture, Integration, Documentation
+- **Variables**: Configurable placeholders for customization
+- **Validation**: Schema enforcement for required sections
+- **Importance Score**: 75
 
-### Connection Types
-- depends-on: Directional dependency between nodes
-- implements: Implementation relationship 
-- documents: Documentation linkage
-- tests: Test coverage relationship
+### Knowledge Models
+- **Vector Storage**: Embeddings for semantic template matching
+- **Domain Classification**: Technical vs Business domain separation
+- **Template Matching**: Progressive relaxation for finding relevant content
+- **Importance Score**: 80
 
-### Rules
-- No circular dependencies allowed
-- Cross-domain relationships require explicit approval
-- Max relationship depth of 5 levels
-Importance Score: 90
+### AI Enhancement
+- **Node Enrichment**: Content generation rules per node type
+- **Relationship Suggestions**: Context-aware connection proposals
+- **Template Selection**: Smart matching based on workspace context
+- **Importance Score**: 85
 
-## Workspaces
-
-### Structure
-- Root workspace contains multiple projects
-- Projects contain domain-specific node graphs
-- Templates define starter workspace structures
-
-### Validation
-- Single root node per workspace
-- Max 1000 nodes per workspace
-- Required metadata: name, created date, owner
-Importance Score: 80
-
-## Templates
-
-### Types
-- Architecture patterns
-- System designs
-- Documentation structures 
-- Process workflows
-
-### Components
-- Predefined node sets
-- Default relationships
-- Validation rules
-- Domain categorization
-Importance Score: 75
-
-## Version Control
-
-### Snapshots
-- Full workspace state capture
-- Relationship preservation
-- Metadata versioning
-
-### Rules
-- Max 100 versions per workspace
-- Required commit message
-- Automatic daily snapshots
-Importance Score: 85
+File Paths:
+```
+server/src/models/PRDTemplate.ts
+server/src/models/Workspace.ts
+server/src/models/WorkspaceVersion.ts
+server/src/services/KBService.ts
+server/src/services/GenerationService.ts
+```
 
 $END$
 

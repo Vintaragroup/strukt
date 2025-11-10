@@ -1,65 +1,59 @@
 ---
-description: Handles core AI content generation workflows, context injection, template matching, and generation queue management
+description: Defines core AI content generation pipeline including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
 ## Core Generation Service
-Path: `server/src/services/GenerationService.ts`
-- Multi-stage content generation pipeline with domain-specific validations
-- Context-aware template matching for architecture nodes
-- Custom fallback chains for handling API failures while maintaining domain consistency
-- Generation history tracking with metadata for improvement feedback loops
-Importance Score: 90
+Importance Score: 95
 
-## Context Injection System
-Path: `server/src/services/ContextInjector.ts`
-- Workspace-aware context building for AI prompts
-- Knowledge graph traversal for relevant context extraction
-- Domain boundary detection and context scoping
-- Template-specific context optimization
-Importance Score: 85
+The generation pipeline implements a sophisticated multi-stage content generation system:
 
-## Generation Queue Management
-Path: `server/src/services/GenerationQueue.ts`
-- Priority-based generation request handling
-- Batching logic for related generation tasks
-- Request deduplication with context merging
-- Failure recovery with automatic retries
-Importance Score: 80
+1. Context Collection & Injection
+- Workspace context analysis to identify relevant domains and themes
+- Template matching using canonical forms and progressive relaxation
+- Dynamic prompt construction based on node types and relationships
+- Knowledge base alignment with domain-specific rules
 
-## Template Matching Algorithm 
-Path: `server/src/services/cards/templatePlanner.ts`
-- Semantic similarity scoring for template selection
-- Domain-specific template filtering and ranking
-- Multi-factor template scoring based on node context
-- Dynamic template composition from fragments
-Importance Score: 85
+File: `server/src/services/ContextInjector.ts`
 
-## AI Provider Integration
-Path: `server/src/services/ai/provider.ts`
-- Model-specific prompt formatting
-- Response parsing and validation rules
-- Token budget management per request type
-- Custom error handling with fallback chains
-Importance Score: 75
+2. Generation Queue Management
+- Priority-based generation queue with smart batching
+- Circuit breaker pattern for AI service health monitoring
+- Fallback generation strategies using knowledge base templates
+- Resource quota management across workspaces
 
-## Knowledge Base Integration
-Path: `server/src/services/KBService.ts`
-- Domain-specific pattern matching
-- Fragment prioritization for architectural guidance
-- Multi-stage template matching logic
-- PRD integration for context enhancement
-Importance Score: 80
+File: `server/src/services/GenerationQueue.ts`
 
-## Feedback Processing
-Path: `server/src/services/ai/feedback.ts`
-- Generation quality scoring system
-- Context effectiveness evaluation
-- Template improvement suggestions tracking
-- User feedback aggregation for model tuning
-Importance Score: 70
+3. Content Generation Orchestration
+- Multi-stage generation with intermediate validation
+- Domain-specific prompt engineering for different node types
+- Business rule enforcement during generation
+- Content enhancement through template hybridization
+
+File: `server/src/services/GenerationService.ts`
+
+4. Template Matching System
+- Progressive template relaxation algorithm:
+  - Exact domain/type match
+  - Parent domain match
+  - Similar domain match
+  - Generic template match
+- Custom scoring system for template relevance
+- Context-aware template selection
+
+File: `server/src/services/ai/normalize.ts`
+
+5. Generation History & Feedback
+- Structured feedback collection for generation quality
+- Template effectiveness scoring
+- Domain-specific accuracy metrics
+- Generation pattern analysis
+
+File: `server/src/services/ai/feedback.ts`
+
+The pipeline ensures consistent, domain-aware content generation while maintaining quality through feedback loops and template optimization.
 
 $END$
 

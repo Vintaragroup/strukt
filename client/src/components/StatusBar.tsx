@@ -1,4 +1,5 @@
 import { CheckCircle2, MousePointerClick, History, LayoutGrid, Brackets, Activity, AlertTriangle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { useUIPreferences } from "@/store/useUIPreferences";
 import { detectRecipe } from "@/config/layoutRecipes";
 import type { Node } from "@xyflow/react";
@@ -14,9 +15,10 @@ interface StatusBarProps {
   // Nodes + viewMode for live layout status
   nodes?: Node[];
   viewMode?: "radial" | "process";
+  buildInfo?: { sha?: string; branch?: string; time?: string; version?: string };
 }
 
-export function StatusBar({ workspaceName, nodeCount, isSaved, selectedCount = 0, canUndo = false, canRedo = false, nodes = [], viewMode = "radial" }: StatusBarProps) {
+export function StatusBar({ workspaceName, nodeCount, isSaved, selectedCount = 0, canUndo = false, canRedo = false, nodes = [], viewMode = "radial", buildInfo }: StatusBarProps) {
   const { recipeEnabled, setRecipeEnabled } = useUIPreferences();
   const activeRecipe = viewMode === "process" && recipeEnabled ? detectRecipe(nodes.filter(n => n.id !== 'center')) : null;
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -66,7 +68,7 @@ export function StatusBar({ workspaceName, nodeCount, isSaved, selectedCount = 0
   const historyAvailable = canUndo || canRedo;
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
-      <div className="backdrop-blur-md bg-white/90 border border-gray-200/80 rounded-xl shadow-lg px-5 py-2 flex items-center gap-4 text-sm transition-all duration-300 hover:shadow-xl">
+  <div className="backdrop-blur-md bg-white/90 border border-gray-200/80 rounded-xl shadow-lg px-5 py-2 flex items-center gap-4 text-sm transition-all duration-300 hover:shadow-xl">
         <div className="flex items-center gap-2">
           <span className="text-gray-500">Workspace:</span>
           <span className="text-gray-800">{workspaceName}</span>
@@ -156,6 +158,28 @@ export function StatusBar({ workspaceName, nodeCount, isSaved, selectedCount = 0
             <span className="text-gray-400">Unsaved changes</span>
           )}
         </div>
+
+        {buildInfo && (
+          <>
+            <div className="w-px h-4 bg-gray-200" />
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500 cursor-help">
+                    <span>{buildInfo.version || '0.0.0'}</span>
+                    {buildInfo.sha && (<span className="font-mono">{buildInfo.sha}</span>)}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-xs space-y-0.5">
+                    <div><span className="text-slate-500">Branch:</span> <span className="font-mono">{buildInfo.branch || 'unknown'}</span></div>
+                    <div><span className="text-slate-500">Built:</span> <span>{buildInfo.time || 'unknown'}</span></div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
       </div>
       {diagnosticsOpen && viewMode === 'process' && (
         <div className="mt-2 mx-auto w-[380px] backdrop-blur bg-white/90 border border-gray-200 rounded-lg shadow p-3 text-xs space-y-2">

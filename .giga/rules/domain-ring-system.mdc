@@ -1,56 +1,56 @@
 ---
-description: Technical documentation for the unique domain ring visualization system used for organizing and managing hierarchical node relationships
+description: Technical specification for the domain-ring visualization system that manages sector calculations and node hierarchies
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements a specialized visualization and organization model for managing hierarchical node relationships across different business domains.
+The domain ring system implements a specialized visualization approach for organizing and displaying hierarchical domain relationships.
 
 ## Core Components
 
-### Domain Ring Calculator (Importance Score: 95)
-File: `client/src/components/DomainRings.tsx`
-- Ring-based hierarchical organization system separating nodes into distinct business domains
-- Dynamic sector calculation with animated gradient boundaries 
-- Business domain classification:
-  - Business Strategy & Goals
-  - Product Management 
-  - Technical Architecture
-  - Data & AI Infrastructure
-  - Operations & Infrastructure
-- Sector size allocation based on node density and relationships
+### Domain Ring Calculator
+**Importance Score**: 90
+- Calculates optimal sector angles for each domain category
+- Implements dynamic resizing based on node density
+- Maintains visual hierarchy through nested ring segments
+- Handles collision detection between adjacent sectors
 
-### Node Positioning Engine (Importance Score: 90)
-File: `client/src/components/CenterNode.tsx`
-- Specialized node visualization for multi-level concept hierarchies
-- Gradient-based domain indicators showing node domain alignment
-- Multi-directional connection routing with domain boundary awareness
-- Dynamic expansion/collapse with size management for concept hierarchies
+### Node Positioning Engine
+**Importance Score**: 85
+- Places nodes within appropriate ring sectors based on domain classification
+- Implements radial distribution algorithm for even node spacing
+- Maintains parent-child relationships through ring nesting
+- Calculates optimal node distances based on hierarchy depth
 
-### Layout Recipe System (Importance Score: 85)
-File: `client/src/config/layoutRecipes.ts`
-- Domain-specific layout patterns for different business contexts
-- Pre-configured arrangements for common architectures:
-  - Authentication systems
-  - Payment processing flows
-  - Analytics pipelines
-  - Data warehousing
-- Business rule mappings between node types and recommended layouts
+### Hierarchy Manager 
+**Importance Score**: 80
+- Tracks domain relationships and inheritance
+- Manages domain-specific node types and their valid positions
+- Implements rules for allowed cross-domain relationships
+- Handles domain boundary constraints and validation
 
-### Domain Relationship Manager (Importance Score: 80)
-File: `client/src/components/CustomNode.tsx`
-- Domain-aware node type system with specific behaviors
-- Documentation accuracy scoring and staleness detection
-- Domain-specific card template recommendations
-- Hierarchical node grouping and relationship validation
+### Ring Sector Logic
+**Importance Score**: 75
+- Divides ring space based on domain classification weights
+- Implements dynamic sector expansion/contraction
+- Manages sector highlighting and selection states
+- Handles sector-based node grouping and ungrouping
 
-### Domain Collision Detection (Importance Score: 75)
-File: `client/src/utils/geometry.ts`
-- Custom collision detection for nodes crossing domain boundaries
-- Sector boundary calculations for node placement
-- Domain overlap resolution with hierarchical priorities
-- Ring radius optimization based on node density
+Relevant Files:
+```
+client/src/components/DomainRings.tsx
+client/src/components/CustomNode.tsx 
+client/src/config/classifications.ts
+client/src/services/domain-rings/calculator.ts
+```
+
+The system uses a specialized ring-based visualization approach where:
+- Outer rings represent high-level domains
+- Inner rings show nested sub-domains
+- Node placement reflects domain hierarchy
+- Sector sizes adjust based on content
+- Cross-domain relationships maintain visual clarity
 
 $END$
 

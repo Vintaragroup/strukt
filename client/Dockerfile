@@ -18,7 +18,7 @@ COPY docker-entry.sh ./docker-entry.sh
 RUN chmod +x ./docker-entry.sh
 
 # Expose dev server port
-EXPOSE 5173
+EXPOSE 5174
 
 # Start dev server with a lightweight dependency preflight.
 # If node_modules is missing or lockfile hash changed, run npm ci then start Vite.

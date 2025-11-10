@@ -1248,12 +1248,19 @@ function buildHierarchyTree(
   nodes.forEach((node) => {
     const data: any = node.data || {};
     const parentId: string | null | undefined = data.parentId;
-  const explicitRing: number | undefined = (data.explicitRing && typeof data.ring === 'number') ? data.ring : undefined;
+    const explicitRing: number | undefined = (data.explicitRing && typeof data.ring === 'number') ? data.ring : undefined;
     if (parentId) {
       if (hierarchy[node.id]) {
         hierarchy[node.id].parent = parentId;
+        // For explicit ring with parent: derive distanceFromCenter from parent's distance + 1
         if (typeof explicitRing === 'number' && Number.isFinite(explicitRing)) {
-          hierarchy[node.id].distanceFromCenter = Math.max(1, explicitRing);
+          const parentDist = hierarchy[parentId]?.distanceFromCenter ?? 0;
+          // If parent distance is known, set child to parentDist + 1; otherwise use explicit ring
+          if (Number.isFinite(parentDist) && parentDist > 0) {
+            hierarchy[node.id].distanceFromCenter = parentDist + 1;
+          } else {
+            hierarchy[node.id].distanceFromCenter = Math.max(1, explicitRing);
+          }
         }
       }
       if (hierarchy[parentId]) {

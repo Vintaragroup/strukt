@@ -43,6 +43,7 @@ import {
   FileCode,
   FileText,
   HeartPulse,
+  FilePlus,
 } from "lucide-react";
 import { AlignmentType } from "../utils/alignment";
 import { ExportMenu } from "./ExportMenu";
@@ -78,6 +79,7 @@ interface ToolbarProps {
   onSpecContext?: () => void;
   onDocumentationPreview?: () => void;
   onWorkspaceHealth?: () => void;
+  onNewWorkspace?: () => void;
 }
 
 export function Toolbar({
@@ -111,6 +113,7 @@ export function Toolbar({
   onSpecContext,
   onDocumentationPreview,
   onWorkspaceHealth,
+  onNewWorkspace,
 }: ToolbarProps) {
   const showAlignmentTools = selectedNodeCount >= 2;
   
@@ -507,6 +510,24 @@ export function Toolbar({
               <p>Save</p>
             </TooltipContent>
           </Tooltip>
+
+          {onNewWorkspace && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNewWorkspace}
+                  className="h-8 w-8 hover:bg-gray-100 text-indigo-600"
+                >
+                  <FilePlus className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>New Workspace</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           
           <Tooltip>
             <TooltipTrigger asChild>

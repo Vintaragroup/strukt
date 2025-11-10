@@ -80,6 +80,7 @@ export interface CustomNodeData extends Record<string, unknown> {
   isAggregateGroup?: boolean;
   onExpandChildrenGroup?: () => void;
   whiteboardShape?: WhiteboardShapePayload;
+  classificationKey?: string;
 }
 
 const BASE_NODE_WIDTH = 280;

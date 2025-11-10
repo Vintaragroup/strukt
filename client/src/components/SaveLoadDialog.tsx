@@ -20,6 +20,7 @@ interface SaveLoadDialogProps {
   onClose: () => void;
   onSave: (name: string) => Promise<void> | void;
   onLoad: (workspace: Workspace) => Promise<void> | void;
+  onDelete?: (workspace: Workspace) => Promise<void> | void;
   workspaces: Workspace[];
   activeWorkspaceId?: string;
   initialName?: string;
@@ -29,6 +30,7 @@ export function SaveLoadDialog({
   onClose,
   onSave,
   onLoad,
+  onDelete,
   workspaces,
   activeWorkspaceId,
   initialName,
@@ -81,6 +83,19 @@ export function SaveLoadDialog({
       // Error handling delegated to parent callback; swallow to keep dialog open
     } finally {
       setIsLoadingId(null);
+    }
+  };
+
+  const handleDelete = async (workspace: Workspace) => {
+    if (!onDelete) return;
+    const name = workspace.name;
+    if (!name) return;
+    const confirmed = window.confirm(`Delete workspace "${name}"? This cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      await onDelete(workspace);
+    } catch (e) {
+      // Parent will toast errors
     }
   };
 
@@ -173,15 +188,25 @@ export function SaveLoadDialog({
                             </div>
                           </div>
                         </div>
-                        <Button
-                          variant={isActive ? "outline" : "secondary"}
-                          size="sm"
-                          onClick={() => handleLoad(workspace)}
-                          disabled={isLoading}
-                          className="shrink-0"
-                        >
-                          {isLoading ? "Loading…" : isActive ? "Reload" : "Load"}
-                        </Button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            variant={isActive ? "outline" : "secondary"}
+                            size="sm"
+                            onClick={() => handleLoad(workspace)}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? "Loading…" : isActive ? "Reload" : "Load"}
+                          </Button>
+                          {onDelete && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(workspace)}
+                            >
+                              Delete
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
