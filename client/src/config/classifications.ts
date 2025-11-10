@@ -281,6 +281,13 @@ const resolveClassificationKey = (
   label?: string
 ): ClassificationKey | null => {
   const lowerTags = tags.map((tag) => tag.toLowerCase());
+  
+  // HIGH PRIORITY: Check node type first - if it's a tech-layer node, classify as such
+  // This handles cases where domain might be wrong but type is correct
+  if (nodeType === "frontend") return "appFrontend";
+  if (nodeType === "backend") return "appBackend";
+  
+  // Check tags
   if (lowerTags.some((tag) => tag.includes("customer") || tag.includes("support"))) {
     return "customerExperience";
   }
@@ -294,14 +301,14 @@ const resolveClassificationKey = (
     case "operations":
       return "businessOperations";
     case "product":
+      // Product domain should check the node type first (handled above)
+      // If we get here, it's a product-domain node that isn't frontend/backend
       return "marketingGTM";
     case "tech":
       return nodeType === "frontend" ? "appFrontend" : "appBackend";
     case "data-ai":
       return "dataAI";
     default:
-      if (nodeType === "frontend") return "appFrontend";
-      if (nodeType === "backend") return "appBackend";
       if (nodeType === "doc" || nodeType === "requirement") {
         if (labelMatches(label, [/marketing/, /campaign/, /brand/, /gtm/, /growth/])) return "marketingGTM";
         if (labelMatches(label, [/customer/, /support/, /success/, /cx/, /onboarding/])) return "customerExperience";
