@@ -4370,20 +4370,45 @@ const handleSwitchToWizard = useCallback(
       },
       placementOverrides?: PlacementOverrides
     ) => {
-      const newNodeId = `${nodes.length + 1}`;
       const centerId = centerNodeIdRef.current || "center";
       const normalizedDomain = nodeData.domain ?? getDomainForNodeType(nodeData.type);
       const placementSource = placementOverrides?.sourceNodeId ?? dragSourceNodeId;
       const parentNode = placementSource ? nodes.find((n) => n.id === placementSource) : null;
-      const classificationParentId = placementSource
-        ? null
-        : getClassificationParentId(
-            nodes,
-            nodeData.type,
-            normalizedDomain as DomainType,
-            nodeData.tags,
-            nodeData.label
+
+      // FIX 1: Always resolve classification parent (don't skip for edge drags)
+      // This ensures all nodes get proper classification parent assignment
+      const classificationParentId = getClassificationParentId(
+        nodes,
+        nodeData.type,
+        normalizedDomain as DomainType,
+        nodeData.tags,
+        nodeData.label
+      );
+
+      // FIX 2: Use canonical template ID if available, otherwise fall back to numeric
+      // This enables template tracking and future migrations
+      let newNodeId: string = "";
+      let matchingTemplate: FoundationNodeTemplate | undefined;
+
+      // Search for matching template by label
+      if (nodeData.label) {
+        for (const category of FOUNDATION_CATEGORIES) {
+          const template = category.templates.find(
+            (t) => t.label.toLowerCase() === nodeData.label.toLowerCase()
           );
+          if (template) {
+            matchingTemplate = template;
+            newNodeId = template.id;
+            break;
+          }
+        }
+      }
+
+      // Fallback to numeric ID if no template match
+      if (!newNodeId) {
+        newNodeId = `${nodes.length + 1}`;
+      }
+
       const resolvedParent =
         parentNode ?? (classificationParentId ? nodes.find((n) => n.id === classificationParentId) : null);
       // Direct children of center should start at ring 2; children of non-center nodes increment parent's ring
@@ -4399,9 +4424,28 @@ const handleSwitchToWizard = useCallback(
         type: nodeData.type,
         ring: enforcedRing,
       });
+
+      // Priority for parent connection:
+      // 1. If dragged from a node, connect to that node
+      // 2. If node has classification parent, connect to that
+      // 3. Otherwise, connect to center
       const connectionSourceId = placementSource ?? classificationParentId ?? null;
-      const parentIdForLineage = connectionSourceId ?? centerId;
-      const hierId = computeNextHierId(nodes, parentIdForLineage === centerId ? null : parentIdForLineage, enforcedRing);
+
+      // For lineage tracking, prioritize classification parent (proper hierarchy)
+      // but maintain drag source connection if it exists
+      const parentIdForLineage = classificationParentId ?? centerId;
+
+      const hierId = computeNextHierId(
+        nodes,
+        parentIdForLineage === centerId ? null : parentIdForLineage,
+        enforcedRing
+      );
+
+      // Store template metadata for future identification and migrations
+      const classificationKey = matchingTemplate
+        ? (matchingTemplate.id.split('-').slice(1).join('-') as any)
+        : null;
+
       const newNode = {
         id: newNodeId,
         type: "custom",
@@ -4420,6 +4464,9 @@ const handleSwitchToWizard = useCallback(
           isNew: true,
           hierId,
           parentId: parentIdForLineage === centerId ? null : parentIdForLineage,
+          // FIX 3: Store template metadata for classifications and migrations
+          classificationKey,
+          isTemplated: !!matchingTemplate,
         } as CustomNodeData,
       };
 

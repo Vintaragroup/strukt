@@ -81,6 +81,7 @@ export interface CustomNodeData extends Record<string, unknown> {
   onExpandChildrenGroup?: () => void;
   whiteboardShape?: WhiteboardShapePayload;
   classificationKey?: string;
+  isTemplated?: boolean; // Track if node was created from a foundation template
 }
 
 const BASE_NODE_WIDTH = 280;
