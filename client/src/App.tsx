@@ -4425,14 +4425,36 @@ const handleSwitchToWizard = useCallback(
         ring: enforcedRing,
       });
 
-      // Priority for parent connection:
-      // 1. If dragged from a node, connect to that node
-      // 2. If node has classification parent, connect to that
-      // 3. Otherwise, connect to center
-      const connectionSourceId = placementSource ?? classificationParentId ?? null;
+      // FIX: Validate placement source respects ring hierarchy
+      // Ring hierarchy constraints:
+      // - Ring 1 nodes MUST connect to center (R0)
+      // - Ring 2+ nodes MUST connect to their classification parent (one ring lower)
+      // - Users can drag to reposition but visual placement doesn't override this
+      // IMPORTANT: Ring hierarchy constraints:
+      // - Ring 1 nodes MUST connect to center (R0)
+      // - Ring 2+ nodes MUST connect to their classification parent (not center)
+      // - Users can drag to reposition but still respect these rules
+      
+      let connectionSourceId: string | null = null;
+      if (enforcedRing === 1) {
+        // Ring 1 nodes (classifications) always connect to center
+        connectionSourceId = centerId;
+      } else if (enforcedRing >= 2) {
+        // Ring 2+ nodes must connect to their classification parent (one ring lower)
+        connectionSourceId = classificationParentId ?? null;
+        // If no classification parent found, this is an error - should not happen
+        if (!connectionSourceId) {
+          console.warn(`[handleAddNode] Ring ${enforcedRing} node has no classification parent`, {
+            label: nodeData.label,
+            domain: normalizedDomain,
+            classificationParentId,
+          });
+          connectionSourceId = centerId; // Fallback (should not occur)
+        }
+      }
 
-      // For lineage tracking, prioritize classification parent (proper hierarchy)
-      // but maintain drag source connection if it exists
+      // For lineage tracking, always use the proper classification parent
+      // This ensures the node data.parentId reflects its true hierarchical parent
       const parentIdForLineage = classificationParentId ?? centerId;
 
       const hierId = computeNextHierId(
