@@ -250,6 +250,59 @@ function computeNextHierId(
   return `${ring}.${next}`;
 }
 
+/**
+ * Enforce ring hierarchy on edges: ensures nodes connect to proper parents by ring
+ * - Ring 0: Center (no incoming edges)
+ * - Ring 1: Must connect to Center only
+ * - Ring 2+: Must connect to classification parent (one ring lower)
+ */
+function enforceRingHierarchyEdges(
+  nodes: Node[],
+  edges: Edge[],
+  centerId: string = "center"
+): Edge[] {
+  const reconstructed: Edge[] = [];
+  const processed = new Set<string>();
+
+  // For each node, determine its proper parent based on ring
+  nodes.forEach((node) => {
+    if (node.id === centerId) return; // Center has no incoming edges
+
+    const ring = Number((node as any)?.data?.ring ?? 0);
+    if (ring <= 0) return; // Skip non-ring nodes
+
+    let parentId: string | null = null;
+
+    if (ring === 1) {
+      // Ring 1 nodes connect to center
+      parentId = centerId;
+    } else if (ring >= 2) {
+      // Ring 2+ nodes connect to their classification parent
+      parentId = getClassificationParentId(
+        nodes,
+        (node as any)?.data?.type,
+        (node as any)?.data?.domain,
+        (node as any)?.data?.tags,
+        (node as any)?.data?.label
+      );
+    }
+
+    if (parentId) {
+      const edgeId = `e${parentId}-${node.id}`;
+      if (!processed.has(edgeId)) {
+        reconstructed.push({
+          id: edgeId,
+          source: parentId,
+          target: node.id,
+          type: "custom",
+        });
+        processed.add(edgeId);
+      }
+    }
+  });
+
+  return reconstructed;
+}
 
 const sanitizeCardSections = (sections: any): CardSection[] | undefined => {
   if (!Array.isArray(sections)) return undefined;
@@ -1251,6 +1304,13 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
 
       nodeIdSet = new Set(flowNodes.map((node) => node.id));
       flowEdges = toFlowEdges((workspace.edges as unknown as SerializableWorkspaceEdge[]) || [], nodeIdSet);
+      
+      // ENFORCE: Ring hierarchy on edges - ensures proper parent connections
+      // This reconstructs edges to match ring hierarchy rules:
+      // - Ring 1 nodes only connect to center
+      // - Ring 2+ nodes only connect to their classification parent
+      const centerId = centerNodeIdRef.current || "center";
+      flowEdges = enforceRingHierarchyEdges(flowNodes as any, flowEdges, centerId);
       
       // Preserve truly blank workspaces (center-only): mark them so they don't get auto-seeded on reload
       const isBlankWorkspace = flowNodes.length === 1 && flowNodes[0]?.type === "center" && flowEdges.length === 0;
