@@ -23,7 +23,7 @@ export default defineConfig({
   // @ts-expect-error Vitest-specific field is ignored by Vite during dev; present for test runs
   test: {
     environment: 'jsdom',
-    include: ['src/tests/**/*.spec.ts'],
+    include: ['src/tests/**/*.spec.ts', 'src/utils/__tests__/**/*.test.ts'],
   },
   resolve: {
     alias: {

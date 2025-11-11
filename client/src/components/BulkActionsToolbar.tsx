@@ -4,8 +4,8 @@
  * Provides quick access to bulk operations
  */
 
-import React, { useState } from 'react';
-import { Node, Edge } from '@xyflow/react';
+import React from 'react';
+import { Node } from '@xyflow/react';
 import {
   CheckSquare,
   Square,
@@ -64,7 +64,7 @@ export function BulkActionsToolbar({
   onExportBatch,
   onGroupSelected,
 }: BulkActionsToolbarProps) {
-  const [showStats, setShowStats] = useState(false);
+  // showStats state kept for future UI enhancements
 
   if (selectedCount === 0) {
     return null;
@@ -264,25 +264,23 @@ export function BulkActionsToolbar({
             </div>
           </div>
 
-          {/* Stats Panel (expandable) */}
-          {showStats && (
-            <div className="mt-3 pt-3 border-t border-white/20">
-              <div className="grid grid-cols-3 gap-4 text-xs text-white/80">
-                <div>
-                  <div className="text-white/50 mb-1">With Todos</div>
-                  <div className="text-white">{stats.withTodos}</div>
-                </div>
-                <div>
-                  <div className="text-white/50 mb-1">With Content</div>
-                  <div className="text-white">{stats.withContent}</div>
-                </div>
-                <div>
-                  <div className="text-white/50 mb-1">AI Enriched</div>
-                  <div className="text-white">{stats.withAIEnrichment}</div>
-                </div>
+          {/* Stats Panel */}
+          <div className="mt-3 pt-3 border-t border-white/20">
+            <div className="grid grid-cols-3 gap-4 text-xs text-white/80">
+              <div>
+                <div className="text-white/50 mb-1">With Todos</div>
+                <div className="text-white">{stats.withTodos}</div>
+              </div>
+              <div>
+                <div className="text-white/50 mb-1">With Content</div>
+                <div className="text-white">{stats.withContent}</div>
+              </div>
+              <div>
+                <div className="text-white/50 mb-1">AI Enriched</div>
+                <div className="text-white">{stats.withAIEnrichment}</div>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Hint Text */}

@@ -22,7 +22,7 @@ RESULT=$(curl -s http://localhost:5050/api/workspaces | jq '.[] | {
 }')
 
 echo "$RESULT" | jq '
-  if .nodeCount == 14 and .edgeCount == 13 and 
+  if .nodeCount == 14 and .edgeCount == 13 and
      .r1_count == 5 and .r2_count == 5 and .r3_count == 3 and
      .r1_to_center == 5 and .r2_to_r1 == 5 and .r3_to_r2 == 3
   then "✅ HIERARCHY INTACT"
@@ -69,13 +69,13 @@ curl -s http://localhost:5050/api/workspaces | jq '.[] | [
 
 ## What's Protected
 
-| Item | Current | Protected | Reason |
-|------|---------|-----------|--------|
-| Ring 1 nodes | 5 | ✅ YES | Foundation pillars |
-| Ring 2 nodes | 5 | ✅ YES | Domain classifications |
-| R1→Center edges | 5 | ✅ YES | All R1 must go to center |
-| R2→R1 parent map | Fixed | ✅ YES | Immutable mapping |
-| Node type resolution | Priority-based | ✅ YES | Type > Domain fallback |
+| Item                 | Current        | Protected | Reason                   |
+| -------------------- | -------------- | --------- | ------------------------ |
+| Ring 1 nodes         | 5              | ✅ YES    | Foundation pillars       |
+| Ring 2 nodes         | 5              | ✅ YES    | Domain classifications   |
+| R1→Center edges      | 5              | ✅ YES    | All R1 must go to center |
+| R2→R1 parent map     | Fixed          | ✅ YES    | Immutable mapping        |
+| Node type resolution | Priority-based | ✅ YES    | Type > Domain fallback   |
 
 ## What to Watch
 
@@ -133,7 +133,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Verify hierarchy code exists
         run: |
           grep -q "RING2_TO_RING1_PARENT_MAP" client/src/config/classifications.ts

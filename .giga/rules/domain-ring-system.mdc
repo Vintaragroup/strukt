@@ -1,56 +1,63 @@
 ---
-description: Technical specification for the domain-ring visualization system that manages sector calculations and node hierarchies
+description: Technical specification for domain ring system implementation including calculations, node management and hierarchy validation
 ---
 
 
 # domain-ring-system
 
-The domain ring system implements a specialized visualization approach for organizing and displaying hierarchical domain relationships.
+The domain ring system implements specialized business logic for organizing and validating hierarchical node relationships across different technical domains.
 
-## Core Components
+## Core Domain Ring Components
 
-### Domain Ring Calculator
-**Importance Score**: 90
-- Calculates optimal sector angles for each domain category
-- Implements dynamic resizing based on node density
-- Maintains visual hierarchy through nested ring segments
-- Handles collision detection between adjacent sectors
+### Ring Classification Engine
+File: `client/src/components/DomainRings.tsx`
+Importance Score: 95
 
-### Node Positioning Engine
-**Importance Score**: 85
-- Places nodes within appropriate ring sectors based on domain classification
-- Implements radial distribution algorithm for even node spacing
-- Maintains parent-child relationships through ring nesting
-- Calculates optimal node distances based on hierarchy depth
+- Enforces strict domain ring hierarchy:
+  - Business (Ring 0)
+  - Product (Ring 1) 
+  - Technical (Ring 2)
+  - Implementation (Ring 3)
+  - Operations (Ring 4)
 
-### Hierarchy Manager 
-**Importance Score**: 80
-- Tracks domain relationships and inheritance
-- Manages domain-specific node types and their valid positions
-- Implements rules for allowed cross-domain relationships
-- Handles domain boundary constraints and validation
+- Ring calculation rules:
+  - Child nodes must be in ring (parent.ring + 1)
+  - Nodes cannot skip rings in hierarchy
+  - Cross-ring relationships require validation
+  - Orphan nodes default to outer ring
 
-### Ring Sector Logic
-**Importance Score**: 75
-- Divides ring space based on domain classification weights
-- Implements dynamic sector expansion/contraction
-- Manages sector highlighting and selection states
-- Handles sector-based node grouping and ungrouping
+### Domain Position Calculator
+File: `client/src/utils/relationships.ts`
+Importance Score: 85
 
-Relevant Files:
-```
-client/src/components/DomainRings.tsx
-client/src/components/CustomNode.tsx 
-client/src/config/classifications.ts
-client/src/services/domain-rings/calculator.ts
-```
+- Angular sector allocation per domain
+- Node positioning within sectors
+- Collision detection and spacing
+- Parent-child relationship visualization
+- Ring radius calculations based on node density
 
-The system uses a specialized ring-based visualization approach where:
-- Outer rings represent high-level domains
-- Inner rings show nested sub-domains
-- Node placement reflects domain hierarchy
-- Sector sizes adjust based on content
-- Cross-domain relationships maintain visual clarity
+### Classification Validator
+File: `client/src/config/classifications.ts` 
+Importance Score: 90
+
+- Domain-specific validation rules:
+  - Frontend components require UI parent
+  - Database nodes must connect to service
+  - API endpoints require service parent
+  - Infrastructure spans multiple rings
+  - Cross-domain relationships require approval
+
+### Circuit Breaking Logic
+File: `server/src/services/CircuitBreaker.ts`
+Importance Score: 80
+
+- Prevents invalid ring transitions
+- Enforces maximum depth rules
+- Handles circular dependencies
+- Manages relationship constraints
+- Validates domain boundaries
+
+The domain ring system represents core business logic for maintaining architectural hierarchy and domain relationships in software systems. It enforces strict rules about component placement while allowing flexibility within defined constraints.
 
 $END$
 

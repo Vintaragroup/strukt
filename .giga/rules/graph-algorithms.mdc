@@ -1,59 +1,55 @@
 ---
-description: Core graph algorithms and implementation details for domain layout, relationships, cycle detection, and auto-layout system.
+description: Graph algorithms for domain-driven node layout, relationship management, and architecture visualization systems
 ---
 
 
 # graph-algorithms
 
-## Domain Layout System
-- Implements concentric ring-based layout for domain organization
-- Inner ring contains foundational/core nodes
-- Outer rings arranged by domain classification
-- Dynamic radius calculation based on node density
-- Force-directed node positioning within rings
-
+## Domain Ring Layout System
 File: `client/src/components/DomainRings.tsx`
+Importance Score: 95
+
+Implements specialized ring-based layout system for software architecture visualization:
+- Domain-driven concentric ring calculation based on node type
+- Smart node placement within domain sectors (Business, Product, Tech, Data/AI, Operations)
+- Radial force-directed layout with domain constraints
+- Domain boundary enforcement during node movement
+- Auto-spacing logic to prevent node overlap while maintaining domain integrity
+
+## Edge Routing Engine
+File: `client/src/utils/edgeRouting.ts`
 Importance Score: 85
 
-## Relationship Management 
-- Bi-directional edge validation to prevent cycles
-- Custom edge routing with obstacle avoidance
-- Domain-aware connection rules between node types
-- Automatic edge bundling for parallel connections
-- Relationship type constraints based on domain rules
+Custom edge routing system for architectural relationships:
+- Domain-aware path finding that respects ring boundaries
+- Smart bendpoint insertion based on source/target domain positions
+- Specialized routing for cross-domain relationships
+- Edge bundling for parallel connections between domains
+- Collision avoidance with intermediate nodes
 
-File: `client/src/utils/edgeRouting.ts`
+## Graph Operations
+File: `client/src/utils/graphOps.ts`
 Importance Score: 90
 
-## Cycle Detection
-- Domain-specific cycle detection for dependency relationships
-- Validates both direct and indirect cycles
-- Special handling for "implements" and "contains" relationships
-- Prevention of invalid cross-domain circular dependencies
-- Real-time validation during edge creation
+Domain-specific graph manipulation:
+- Cycle detection specialized for architectural dependencies
+- Node promotion/demotion between domain rings
+- Domain integrity validation during node operations
+- Relationship type enforcement based on domain rules
+- Automated domain assignment based on node characteristics
 
-File: `client/src/utils/graphOps.ts`
+## Auto Layout Engine
+File: `client/src/utils/autoLayout.ts`
 Importance Score: 85
 
-## Auto-layout Implementation
-- Force-directed layout with domain constraints
-- Node clustering by business domain
-- Minimizes edge crossings while preserving domain boundaries
-- Handles dynamic node insertion/removal
-- Maintains relative positions during canvas operations
+Architecture-aware layout algorithms:
+- Domain-specific force calculations
+- Ring-based positioning constraints
+- Smart initial placement based on node type
+- Domain cluster detection and spacing
+- Relationship-aware node positioning
 
-File: `client/src/utils/autoLayout.ts`
-Importance Score: 80
-
-## Collision Detection
-- Domain-aware node spacing rules
-- Dynamic collision boundaries based on node type
-- Special handling for overlapping domain rings
-- Performance-optimized spatial indexing
-- Maintains minimum spacing between connected nodes
-
-File: `client/src/utils/collision.ts`
-Importance Score: 75
+The graph algorithms focus heavily on domain-driven layout and relationship management, with specialized handling of software architecture concepts like domain rings, component dependencies, and architectural boundaries.
 
 $END$
 

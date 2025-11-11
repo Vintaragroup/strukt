@@ -1,59 +1,78 @@
 ---
-description: Defines core AI content generation pipeline including context injection, template matching, and generation queue management
+description: Specification for the core AI content generation pipeline, including context injection, template matching, and generation queue management
 ---
 
 
 # ai-generation-pipeline
 
-## Core Generation Service
-Importance Score: 95
+Core business logic components:
 
-The generation pipeline implements a sophisticated multi-stage content generation system:
+1. Template Matching System
+- **Path**: server/src/services/cards/cardComposer.ts
+- Implements domain-aware PRD content generation using hierarchical template matching:
+  - Domain tag validation against KB fragments
+  - Weighted scoring for template relevance
+  - Contextual override rules based on project type
+- Importance Score: 90
 
-1. Context Collection & Injection
-- Workspace context analysis to identify relevant domains and themes
-- Template matching using canonical forms and progressive relaxation
-- Dynamic prompt construction based on node types and relationships
-- Knowledge base alignment with domain-specific rules
+2. Generation Queue Manager 
+- **Path**: server/src/services/GenerationQueue.ts
+- Manages parallel content generation with domain-specific prioritization:
+  - Dynamic token budget allocation per request
+  - Intelligent queue reordering based on dependencies
+  - Request bundling for related components
+- Importance Score: 85
 
-File: `server/src/services/ContextInjector.ts`
+3. Context Injection Engine
+- **Path**: server/src/services/ContextInjector.ts
+- Injects workspace-aware context into generation prompts:
+  - Component relationship analysis
+  - Technical stack inference
+  - Architectural pattern detection
+  - Project complexity scoring
+- Importance Score: 95
 
-2. Generation Queue Management
-- Priority-based generation queue with smart batching
-- Circuit breaker pattern for AI service health monitoring
-- Fallback generation strategies using knowledge base templates
-- Resource quota management across workspaces
+4. Card Type Classifier
+- **Path**: server/src/services/ai/normalize.ts
+- Normalizes and classifies generated content:
+  - Technical domain detection
+  - Component role assignment
+  - Integration point identification
+  - Dependency analysis
+- Importance Score: 80
 
-File: `server/src/services/GenerationQueue.ts`
+5. Knowledge Base Integration
+- **Path**: server/src/services/KBService.ts
+- Manages domain-specific knowledge fragments:
+  - Template fragment scoring
+  - Context-aware fragment selection
+  - Dynamic knowledge updating
+- Importance Score: 85
 
-3. Content Generation Orchestration
-- Multi-stage generation with intermediate validation
-- Domain-specific prompt engineering for different node types
-- Business rule enforcement during generation
-- Content enhancement through template hybridization
+6. Feedback Analysis System
+- **Path**: server/src/services/ai/feedback.ts
+- Processes user feedback to improve generation quality:
+  - Pattern recognition in rejected content
+  - Success rate tracking by template
+  - Adaptive prompt refinement
+- Importance Score: 75
 
-File: `server/src/services/GenerationService.ts`
+Key Business Workflows:
 
-4. Template Matching System
-- Progressive template relaxation algorithm:
-  - Exact domain/type match
-  - Parent domain match
-  - Similar domain match
-  - Generic template match
-- Custom scoring system for template relevance
-- Context-aware template selection
+1. Generation Pipeline
+```
+Context Injection -> Template Selection -> Content Generation -> Normalization -> Quality Check
+```
 
-File: `server/src/services/ai/normalize.ts`
+2. Knowledge Update Flow
+```
+Feedback Collection -> Pattern Analysis -> Template Refinement -> KB Update
+```
 
-5. Generation History & Feedback
-- Structured feedback collection for generation quality
-- Template effectiveness scoring
-- Domain-specific accuracy metrics
-- Generation pattern analysis
-
-File: `server/src/services/ai/feedback.ts`
-
-The pipeline ensures consistent, domain-aware content generation while maintaining quality through feedback loops and template optimization.
+3. Queue Management
+```
+Request Receipt -> Priority Assignment -> Token Budgeting -> Batch Processing
+```
 
 $END$
 

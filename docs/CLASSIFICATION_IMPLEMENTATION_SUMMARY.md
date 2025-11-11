@@ -28,6 +28,7 @@ Nodes were being created with **correct Ring values** but **broken parent-child 
 ### The Root Cause
 
 **Two conflicting ID systems:**
+
 1. Template system used canonical IDs: `backend-server`, `identity-provider`, `mobile-app`
 2. Runtime system used numeric IDs: `1`, `2`, `3`, `4`, `5`
 
@@ -42,11 +43,13 @@ Nodes were being created with **correct Ring values** but **broken parent-child 
 **Where:** `client/src/App.tsx` lines 4380-4410
 
 **What it does:**
+
 - Searches `FOUNDATION_CATEGORIES` for template matching by label
 - Uses template's canonical `id` if found
 - Falls back to numeric `${nodes.length + 1}` only if no match
 
 **Example:**
+
 ```
 Before: Node 2 created with id="2"
 After:  Node 2 created with id="backend-server"
@@ -61,12 +64,14 @@ After:  Node 2 created with id="backend-server"
 **Where:** `client/src/App.tsx` lines 4378-4436
 
 **What it does:**
+
 - Removed bypass: `placementSource ? null : getClassificationParentId()`
 - Now: ALWAYS call `getClassificationParentId()` for every node
 - Maintains classification hierarchy via `parentId`
 - Preserves visual drag connections via `connectionSourceId`
 
 **Example Flow:**
+
 ```
 Node: "Backend Server" (Ring 3)
   ↓
@@ -88,11 +93,13 @@ Node created with:
 **Where:** `client/src/App.tsx` lines 4598-4610 (VERIFIED - already working)
 
 **What it does:**
+
 - When user drags from a parent node → AssociatedNodePicker opens
 - Filters templates: `template.ring === parentRing + 1`
 - Only shows ring-appropriate children
 
 **Example:**
+
 ```
 User drags from "Application Backend & Services" (Ring 1)
   ↓
@@ -116,15 +123,17 @@ Modal shows only Ring 2 templates:
 **File:** `client/src/components/CustomNode.tsx`
 
 Added field:
+
 ```typescript
 interface CustomNodeData {
   // ... existing fields ...
-  classificationKey?: string;   // e.g., "app-backend", "authentication"
-  isTemplated?: boolean;        // NEW: true if created from template
+  classificationKey?: string; // e.g., "app-backend", "authentication"
+  isTemplated?: boolean; // NEW: true if created from template
 }
 ```
 
 Now populated when creating templated nodes:
+
 ```typescript
 data: {
   classificationKey: "app-backend",
@@ -197,29 +206,34 @@ data: {
 ## Verification & Testing
 
 ### Test 1: Template IDs ✅
+
 - Create node with label "Backend Server"
 - Verify: `node.id === "backend-server"` (not numeric)
 - Verify: `node.data.isTemplated === true`
 - Verify: `node.data.classificationKey === "app-backend"`
 
 ### Test 2: Classification Parents ✅
+
 - Create "Backend Server" via AddNodeModal
 - Verify: `node.data.parentId === "classification-app-backend"`
 - Verify: `node.ring === 3` and parent Ring 1 + 1 = 3 ✅
 
 ### Test 3: Ring-Level Filtering ✅
+
 - Workspace with classification backbone
 - Drag from Ring 1 → Modal shows only Ring 2 templates
 - Drag from Ring 2 → Modal shows only Ring 3 templates
 - Drag from Ring 3 → Modal shows only Ring 4 templates
 
 ### Test 4: Deep Hierarchy ✅
+
 - Create Ring 1 → Ring 2 → Ring 3 → Ring 4 chain
 - Each child has `ring === parent.ring + 1`
 - Each child has proper `parentId`
 - Verify nodes persist correctly to MongoDB
 
 ### Test 5: Persistence ✅
+
 - Create templated nodes
 - Reload workspace
 - Verify all nodes appear in correct rings
@@ -273,19 +287,21 @@ client/src/App.tsx lines 4598-4610
    - Label: Backend Server
    - Summary: (any)
 3. **Verify in browser DevTools Console:**
+
    ```javascript
    // Find the Backend Server node
-   const node = nodes.find(n => n.data.label === "Backend Server");
-   
+   const node = nodes.find((n) => n.data.label === "Backend Server");
+
    // Should see:
-   console.log(node.id);                        // "backend-server" ✅
-   console.log(node.data.parentId);             // "classification-app-backend" ✅
-   console.log(node.data.ring);                 // 3 ✅
-   console.log(node.data.isTemplated);          // true ✅
-   console.log(node.data.classificationKey);    // "app-backend" ✅
+   console.log(node.id); // "backend-server" ✅
+   console.log(node.data.parentId); // "classification-app-backend" ✅
+   console.log(node.data.ring); // 3 ✅
+   console.log(node.data.isTemplated); // true ✅
+   console.log(node.data.classificationKey); // "app-backend" ✅
    ```
 
 4. **Test ring filtering:**
+
    - Drag from "Application Backend & Services" node
    - Modal should show only Ring 2 options
    - User cannot accidentally select Ring 3 or Ring 4 templates
@@ -301,6 +317,7 @@ client/src/App.tsx lines 4598-4610
 ## What Gets Fixed for Your Original Problem
 
 Your nodes were:
+
 ```
 center:    (0) r0 [0, 0]              "New Workspace Root"
 2:         (3) r3 [560, 0]            "Backend Server"
@@ -326,7 +343,7 @@ App Frontend         App Backend      Other classifications...
          │
       Identity Provider (Ring 4) ✅
       id: backend-identity-provider
-         
+
 Hierarchy FIXED:
 ✅ All nodes have canonical IDs (not numeric)
 ✅ All Ring 3+ nodes have Ring 1-2 parents
@@ -346,6 +363,7 @@ Hierarchy FIXED:
 **Message:** "fix: implement ring hierarchy classification system for proper node parent-child relationships"
 
 **Files Changed:**
+
 - 2 modified
 - 3 new
 - 976 insertions
@@ -358,21 +376,25 @@ Hierarchy FIXED:
 ## Summary
 
 ✅ **All three fixes implemented and working:**
+
 1. Canonical template IDs instead of numeric placeholders
 2. Classification parents always assigned (no bypasses)
 3. Ring-level filtering verified working
 
 ✅ **Nodes now follow proper hierarchy:**
+
 - Every child has `ring === parent.ring + 1`
 - Every node has proper classification parent
 - Template metadata preserved for future use
 
 ✅ **Data persistence verified:**
+
 - Canonical IDs save to MongoDB
 - Parent-child relationships maintained
 - Existing workspaces continue to work
 
 ✅ **User experience improved:**
+
 - Ring-appropriate templates shown when dragging
 - Users cannot accidentally create wrong-ring children
 - Proper visual hierarchy displayed on canvas

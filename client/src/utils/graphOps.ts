@@ -1,6 +1,7 @@
 import type { Node, Edge } from "@xyflow/react";
 import { calculateNewNodePosition } from "./domainLayout";
 import { updateEdgesWithOptimalHandles } from "./edgeRouting";
+import { getClassificationParentId } from "@/config/classifications";
 import type { SuggestedNode } from "@/types/ai";
 
 interface ApplySuggestionsResult {
@@ -65,12 +66,25 @@ export function applySuggestions(
     const suggestedParent =
       (suggestion.metadata as Record<string, unknown> | undefined)?.parentId;
     const parentCandidate = typeof suggestedParent === "string" ? suggestedParent : undefined;
-    const parentId =
-      parentCandidate && nextNodes.some((n) => n.id === parentCandidate)
-        ? parentCandidate
-        : defaultParentId && nextNodes.some((n) => n.id === defaultParentId)
-        ? defaultParentId
-        : centerNodeId;
+    
+    // Determine parent: explicit > default > classification > center
+    let parentId: string;
+    if (parentCandidate && nextNodes.some((n) => n.id === parentCandidate)) {
+      parentId = parentCandidate;
+    } else if (defaultParentId && nextNodes.some((n) => n.id === defaultParentId)) {
+      parentId = defaultParentId;
+    } else {
+      // Try to resolve classification parent for feature nodes
+      const classificationParent = getClassificationParentId(
+        nextNodes,
+        suggestion.type,
+        suggestion.domain as any,
+        suggestion.tags,
+        suggestion.label
+      );
+      // Only use classification parent if it exists and isn't the center
+      parentId = (classificationParent && classificationParent !== centerNodeId) ? classificationParent : centerNodeId;
+    }
 
     const parentData = nextNodes.find((n) => n.id === parentId)?.data as any;
     const baseDomain = suggestion.domain ?? parentData?.domain;

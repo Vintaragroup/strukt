@@ -34,3 +34,32 @@ yarn-error.log*
 
 # Vite
 .vite/
+
+# Documentation Structure (TRACKED - part of repository)
+# docs/                    ← TRACKED: All project documentation (organized)
+# docs/rules/              ← TRACKED: Node system rules & validation
+# docs/validation-system/  ← TRACKED: Copilot validation system docs
+# docs/quick-reference/    ← TRACKED: Quick reference materials
+# docs/phases/             ← TRACKED: Phase completion reports
+# docs/archive/            ← TRACKED: Fix reports & historical analysis
+# docs/guides/             ← TRACKED: Implementation & testing guides
+# docs/architecture/       ← TRACKED: System design & architecture docs
+# docs/history/            ← TRACKED: Space for historical docs
+# scripts/                  ← TRACKED: Test scripts & automation
+# .giga/rules/             ← TRACKED: Meta-rules for Copilot
+# .github/copilot-instructions.md ← TRACKED: Copilot configuration
+
+# Root Documentation (CAN BE CLEANED UP - old location after copying to docs/)
+# These were moved from root to docs/ folders for better organization
+# Safe to delete once you verify everything works:
+# AUTO_CREATE_*.md (→ docs/architecture/)
+# CANVAS_*.md (→ docs/architecture/)
+# RADIAL_*.md (→ docs/archive/)
+# RING_*.md (→ docs/archive/)
+# ROOT_CAUSE_*.md (→ docs/archive/)
+# PHASE_*.md (→ docs/phases/)
+# TESTING_GUIDE.md (→ docs/guides/)
+# IMPLEMENTATION_*.md (→ docs/guides/)
+# VALIDATOR_IMPLEMENTATION.md (→ docs/guides/)
+# etc-*.sh, test-*.sh, test-*.js (→ scripts/)
+

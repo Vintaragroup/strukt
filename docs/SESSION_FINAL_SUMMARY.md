@@ -10,7 +10,9 @@
 ## Overview: What Was Fixed
 
 ### The Core Problem
+
 Nodes in the Strukt architecture canvas were not respecting ring hierarchy rules:
+
 - Nodes had correct rings but wrong parents
 - R2 nodes appeared as direct children of center (should only have 5 R1 nodes)
 - More than 5 nodes connecting directly to center project node
@@ -18,7 +20,9 @@ Nodes in the Strukt architecture canvas were not respecting ring hierarchy rules
 - Incorrect edges persisting even after code fixes
 
 ### Why It Mattered
+
 Ring hierarchy is fundamental to Strukt's architecture:
+
 ```
 R0 Center (1 node)
 └─ R1 Pillars (exactly 5 classification nodes)
@@ -34,26 +38,32 @@ Without enforcement, the entire system became unstructured and unusable.
 ## The Seven-Part Solution
 
 ### 1. ✅ Mongoose VersionError Fix
+
 **Commit**: d846bd1  
 **Problem**: 500 errors when saving workspaces (version conflict)  
 **Solution**:
+
 - Server: Catch VersionError with exponential backoff retry (up to 3 attempts)
 - Client: Increase auto-save debounce from 1200ms to 1500ms
 - Result: Graceful handling of concurrent saves, 409 Conflict instead of 500
 
 ### 2. ✅ Collision Resolution Improvements
+
 **Commit**: 9a637ba  
 **Problem**: 7 pairs of nodes still overlapping after layout  
 **Solution**:
+
 - Increase padding from 12px to 18px (more breathing room)
 - Increase max passes from 10 to 15 iterations
 - Dynamic increases for process mode (25 passes)
 - Result: Fewer visual overlaps, better node spacing
 
 ### 3. ✅ Ring Hierarchy Constraints (New Nodes)
+
 **Commit**: c074607  
 **Problem**: Users could drag nodes to violate hierarchy  
 **Solution**:
+
 - `handleAddNode()` validates ring before creating edges
 - Ring 1 nodes ALWAYS connect to center
 - Ring 2+ nodes ALWAYS connect to classification parent
@@ -61,17 +71,21 @@ Without enforcement, the entire system became unstructured and unusable.
 - Result: New nodes always follow rules automatically
 
 ### 4. ✅ Ring Hierarchy Enforcement Documentation
+
 **Commit**: 7609490  
 **Documentation**: Ring hierarchy rules, constraints, valid/invalid patterns
 
 ### 5. ✅ Session Documentation
+
 **Commit**: d4c0276  
 **Documentation**: Complete summary of all 3 initial fixes
 
 ### 6. ✅ Ring Hierarchy Edge Reconstruction (CRITICAL FIX)
+
 **Commit**: 76dff9e  
 **Problem**: Old edges from database bypassed all validation  
 **Solution**:
+
 - New function: `enforceRingHierarchyEdges()` reconstructs edges on load
 - When workspace loads: edges are recalculated based on current ring values
 - Automatically fixes nodes with wrong parents
@@ -80,6 +94,7 @@ Without enforcement, the entire system became unstructured and unusable.
 - Result: Existing workspaces self-repair on load
 
 ### 7. ✅ Edge Reconstruction Documentation
+
 **Commit**: b7c8137  
 **Documentation**: Why edge reconstruction was needed, how it works, testing
 
@@ -133,6 +148,7 @@ Without enforcement, the entire system became unstructured and unusable.
 ## Key Insights
 
 ### Why Edge Reconstruction Was The Missing Piece
+
 - Previous fixes worked for NEW nodes only
 - But existing workspaces loaded with OLD edges
 - Those old edges bypassed ALL validation
@@ -140,18 +156,22 @@ Without enforcement, the entire system became unstructured and unusable.
 - Result: Self-healing system that fixes even old data
 
 ### Why This Architecture Is Sound
+
 1. **Separates Concerns**:
+
    - Creation logic: `handleAddNode()`
    - Loading logic: `enforceRingHierarchyEdges()`
    - Saving logic: VersionError retry
 
 2. **Handles All Cases**:
+
    - New nodes: follow rules from creation
    - Loaded nodes: fixed immediately on load
    - Dragged nodes: visual position, correct parent
    - Saved nodes: persist with validated edges
 
 3. **Self-Healing**:
+
    - Every load automatically fixes structure
    - No manual intervention needed
    - No data loss
@@ -166,15 +186,17 @@ Without enforcement, the entire system became unstructured and unusable.
 ## What Changed
 
 ### Core Architecture Rules Enforced
+
 ✅ **Ring 1 nodes**: Only 5 classifications directly off center  
 ✅ **Ring 2 nodes**: Only classifications, properly parented to R1  
 ✅ **Ring 3+ nodes**: Templates and specializations, proper hierarchy  
 ✅ **Edge validation**: No violations possible during creation  
 ✅ **Edge reconstruction**: Fixes old invalid edges on load  
 ✅ **Collision resolution**: Improved spacing prevents overlaps  
-✅ **Concurrent saves**: No 500 errors, graceful conflict handling  
+✅ **Concurrent saves**: No 500 errors, graceful conflict handling
 
 ### Code Files Modified
+
 ```
 client/src/App.tsx
   ├─ handleAddNode() - enforce ring hierarchy on creation
@@ -198,23 +220,27 @@ client/src/components/CustomNode.tsx
 ## Testing Summary
 
 ✅ **Ring Classification**
+
 - New nodes assign canonical template IDs
 - Classification parents resolved correctly
 - Template metadata tracked (isTemplated flag)
 
 ✅ **Edge Connections**
+
 - Ring 1 nodes only connect to center
 - Ring 2+ nodes only connect to classification parent
 - Old incorrect edges fixed on load
 - Only 5 R1 nodes ever as direct children of center
 
 ✅ **Server Persistence**
+
 - Concurrent saves handled gracefully
 - VersionError retried 3 times with backoff
 - No more 500 errors
 - Debounce prevents rapid consecutive saves
 
 ✅ **Visual Layout**
+
 - Collision detection improved
 - More padding (18px) between nodes
 - More iterations (15-25 passes) to resolve conflicts
@@ -225,6 +251,7 @@ client/src/components/CustomNode.tsx
 ## Before/After Comparison
 
 ### BEFORE
+
 ```
 Center (R0)
 ├─ Business Model (R1)
@@ -243,6 +270,7 @@ Center (R0)
 ```
 
 ### AFTER
+
 ```
 Center (R0)
 ├─ Business Model (R1)           ✅ Classification
@@ -261,14 +289,14 @@ Center (R0)
 
 ## Performance Impact
 
-| Operation | Impact | Notes |
-|-----------|--------|-------|
-| Workspace Load | Negligible | Edge reconstruction O(n) |
-| New Node Creation | None | Same logic, now enforced |
-| Auto-save | +300ms | 1200ms → 1500ms debounce |
-| Collision Resolution | +5ms | More passes but still fast |
-| Version Conflict Retry | ~100ms | Only on conflicts (rare) |
-| Total Startup | ~1-2s | One-time edge reconstruction |
+| Operation              | Impact     | Notes                        |
+| ---------------------- | ---------- | ---------------------------- |
+| Workspace Load         | Negligible | Edge reconstruction O(n)     |
+| New Node Creation      | None       | Same logic, now enforced     |
+| Auto-save              | +300ms     | 1200ms → 1500ms debounce     |
+| Collision Resolution   | +5ms       | More passes but still fast   |
+| Version Conflict Retry | ~100ms     | Only on conflicts (rare)     |
+| Total Startup          | ~1-2s      | One-time edge reconstruction |
 
 ---
 
@@ -319,6 +347,7 @@ d846bd1 - Fix Mongoose VersionError with improved retry logic and increase debou
 **After today**: Proper ring hierarchy enforced, self-healing on load, no save errors
 
 **The system now guarantees**:
+
 - ✅ Exactly 5 R1 classification nodes under center
 - ✅ Proper parent-child relationships maintained
 - ✅ R2+ nodes only under classification parents
@@ -328,6 +357,7 @@ d846bd1 - Fix Mongoose VersionError with improved retry logic and increase debou
 - ✅ Visual layout with good spacing
 
 **The three-layer defense**:
+
 1. **On Creation**: `handleAddNode()` enforces rules
 2. **On Load**: `enforceRingHierarchyEdges()` fixes old data
 3. **On Persistence**: VersionError retry handles conflicts

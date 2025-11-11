@@ -13,71 +13,67 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-## Core Architecture Components
+## Core Business Logic Components
 
-### AI Content Generation Pipeline
-- AI-driven workspace content generation using GPT-4
-- Multi-stage template matching with progressive relaxation
-- Domain-specific prompt engineering for architecture suggestions
-- Custom template matching algorithm using canonical forms
-- Business-specific validation rules for workspace structures
-Importance Score: 90
-
-### Knowledge Base Management
-- Domain-specific PRD template processing 
-- Vector embedding generation for semantic search
+### Document Generation & Classification
+`server/src/services/GenerationService.ts`
+- PRD template composition engine with domain-specific classification
+- Automatic relationship mapping between components
 - Custom scoring system for template relevance
-- Fragment prioritization logic
-- Progressive relaxation strategy
-Importance Score: 85
+- Architecture-aware document assembly
 
-### Workspace Organization
-- Domain rings system for business/technical separation
-- Custom node type classification system
-- Relationship strength assessment
-- Documentation quality scoring
-- Health analysis algorithms
-Importance Score: 80
+### Knowledge Management 
+`server/src/services/KBService.ts`
+- Domain-specific knowledge base with fragment composition
+- Template matching with architectural context awareness
+- Custom scoring for template relevance and fit
+- Component relationship inference
 
-### Node Relationship Engine
-- Domain-specific relationship types
-- Custom validation rules for connections
-- Cycle detection in architectural dependencies
-- Impact analysis for changes
-- Critical path identification
-Importance Score: 85
+### Node Organization
+`client/src/config/classifications.ts`
+- Hierarchical domain classification system
+- Parent-child relationship validation
+- Node type constraints and validation rules
+- Domain-specific node templates
 
-## Key Integration Points
-
-### Template Processing
-File: server/src/services/cards/cardComposer.ts
-- Sophisticated content composition combining multiple knowledge sources
-- Domain-specific section matching
-- Custom accuracy scoring
-Importance Score: 75
-
-### Context Injection
-File: server/src/services/ContextInjector.ts
-- Workspace analysis for template matching
-- Custom prompt construction
-- Domain-specific context building
-Importance Score: 80
-
-### Domain Classification
-File: client/src/config/classifications.ts
-- 10 core business domains with metadata
-- Classification resolution algorithm
-- Domain hierarchy management
-Importance Score: 85
-
-### Health Scoring
-File: client/src/components/WorkspaceHealthPanel.tsx
-- Multi-factor workspace health analysis
+### Workspace Analysis
+`server/src/services/specs/SpecSummaryService.ts`
+- API specification analysis and categorization
+- Custom metrics for workspace health
 - Documentation freshness scoring
 - Relationship density calculations
-Importance Score: 75
 
-The system implements a sophisticated AI-assisted software architecture design tool with strong emphasis on domain organization, knowledge management, and relationship analysis between different architectural components.
+### AI Integration
+`client/src/services/aiSuggestions.ts`
+- Context-aware node suggestions
+- Domain-specific prompt generation
+- Template matching with architectural patterns
+- Knowledge injection system
+
+## Key Business Workflows
+
+### Document Assembly Pipeline
+1. Template Selection & Matching
+2. Context Analysis & Scoring
+3. Fragment Composition
+4. Relationship Mapping
+5. Validation & Health Checks
+
+### Node Classification Flow
+1. Domain Detection
+2. Parent Resolution
+3. Relationship Validation
+4. Template Application
+5. Context Injection
+
+### Workspace Health Analysis
+1. Documentation Freshness Check
+2. Relationship Density Calculation
+3. Orphan Node Detection
+4. Graph Connectivity Analysis
+5. Review Queue Prioritization
+
+This system implements a sophisticated architecture documentation platform with focus on intelligent template matching, domain-specific classification, and automated relationship management.
 
 $END$
 

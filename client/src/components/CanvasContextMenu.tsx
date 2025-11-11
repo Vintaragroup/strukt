@@ -1,12 +1,5 @@
 import { useEffect, useRef } from 'react';
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-} from './ui/context-menu';
-import {
   Copy,
   Trash2,
   MousePointerClick,

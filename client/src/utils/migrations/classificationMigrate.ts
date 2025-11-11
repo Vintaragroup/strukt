@@ -14,10 +14,25 @@ export interface ClassificationMigrationResult {
 }
 
 const needsMigration = (nodes: Node[]): boolean => {
+  // Migration is needed if ANY non-classification node is a direct child of center
+  // OR if any feature/backend/frontend node lacks a proper classification parent
   const centerChildren = nodes.filter((node) => {
     const data = node.data as CustomNodeData;
     const isClassification = data?.tags?.includes("classification") || Boolean(data?.classificationKey);
-    return !isClassification && (!data?.parentId || data.parentId === "center");
+    const isCenter = node.id === "center";
+    
+    if (isCenter || isClassification) {
+      return false; // Don't migrate centers or classifications themselves
+    }
+    
+    // Check if this node has no parent or has center as parent
+    const hasNoParent = !data?.parentId;
+    const hasCenterAsParent = data?.parentId === "center";
+    const isFeatureNode = data?.type && 
+      ["backend", "frontend", "requirement", "doc", "feature"].includes(data.type as string);
+    
+    // Needs migration if: feature/feature-like node with no proper parent
+    return (hasNoParent || hasCenterAsParent) && isFeatureNode;
   });
   return centerChildren.length > 0;
 };

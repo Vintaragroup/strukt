@@ -10,9 +10,6 @@ interface DomainRingsProps {
   opacity?: number;
 }
 
-// Animation state for rotating gradients
-let animationFrame = 0;
-
 export const DomainRings = memo(({
   centerX,
   centerY,

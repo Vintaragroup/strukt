@@ -147,6 +147,7 @@ import { FOUNDATION_CATEGORIES, type FoundationNodeTemplate } from "./config/fou
 import { WhiteboardToolbox } from "./components/whiteboard/WhiteboardToolbox";
 import { WhiteboardToolsLayer } from "./components/whiteboard/WhiteboardToolsLayer";
 import type { WhiteboardShapePayload } from "./types/whiteboard";
+import { useFoundationEdgesIntegration } from "./hooks/useFoundationEdgesIntegration";
 
 // Build metadata injected via Vite define for runtime diagnostics & UI display
 const BUILD_INFO = {
@@ -1217,6 +1218,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
   // Skip classification seeding once (used for creating a truly blank workspace)
   const skipClassificationSeedRef = useRef(false);
   const historyManager = useRef(new HistoryManager(50));
+  const { processNodes: processFoundationEdges } = useFoundationEdgesIntegration();
   const { whiteboardTool, lassoMode } = useUIPreferences((state) => ({
     whiteboardTool: state.whiteboardTool,
     lassoMode: state.lassoMode,
@@ -1350,19 +1352,14 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         window.localStorage.removeItem(blankWorkspaceFlagKey);
       }
       
-      // Classification upgrade guard: skip migration if flag set or structure already upgraded
-      const upgradeFlagKey = `flowforge-classification-upgraded-${resolvedId}`;
-      const upgradeFlag = typeof window !== 'undefined' ? window.localStorage.getItem(upgradeFlagKey) === 'true' : false;
-      const needsUpgradeScan = !upgradeFlag && !isKnownBlank;
+      // Classification migration: ALWAYS check and apply if needed
+      // The migration function itself will determine if nodes need reclassification
       let migrated: ReturnType<typeof migrateNodesToClassifications> | null = null;
-      if (needsUpgradeScan) {
+      if (!isKnownBlank) {
         migrated = migrateNodesToClassifications(flowNodes as any, flowEdges);
         flowNodes = migrated.nodes as any;
         flowEdges = migrated.edges;
         classificationMigrationPendingRef.current = migrated.applied;
-        if (migrated.applied && typeof window !== 'undefined') {
-          window.localStorage.setItem(upgradeFlagKey, 'true');
-        }
       } else {
         classificationMigrationPendingRef.current = false;
       }
@@ -1410,6 +1407,17 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
         }
       }
 
+      // Process foundation edges: auto-generate intermediate nodes and edges
+      // This ensures orphaned foundation nodes get proper parent connections
+      const foundationResult = processFoundationEdges(flowNodes as any, flowEdges);
+      if (foundationResult.report && process.env.NODE_ENV !== "production") {
+        console.groupCollapsed("[foundation-edges] Processing");
+        console.log(foundationResult.report);
+        console.groupEnd();
+      }
+      flowNodes = foundationResult.nodes as any;
+      flowEdges = foundationResult.edges;
+
       setEdges(flowEdges);
       setNodes(flowNodes as any);
       historyManager.current.initialize({ nodes: flowNodes, edges: flowEdges });
@@ -1428,7 +1436,7 @@ const [isAIEnrichmentModalOpen, setIsAIEnrichmentModalOpen] = useState(false);
       setWorkspaceLoadError(null);
       setIsWorkspaceReady(true);
     },
-    [setWorkspaceId, setWorkspaceName, setEdges, setNodes, setCanUndo, setCanRedo, setIsSaved, setWorkspaceLoadError, setIsWorkspaceReady]
+    [setWorkspaceId, setWorkspaceName, setEdges, setNodes, setCanUndo, setCanRedo, setIsSaved, setWorkspaceLoadError, setIsWorkspaceReady, processFoundationEdges]
   );
 
   const handleBlueprintEnrichment = useCallback(() => {
@@ -3043,23 +3051,40 @@ const handleSwitchToWizard = useCallback(
           } else {
             lastRadialBaseRef.current = null;
           }
-          applyLayoutAndRelax(layoutedNodes, {
-            padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
-            maxPasses: viewMode === 'process' ? 25 : 15,
-            fit: true,
-            fixedIds: [centerId, ...Array.from(pinnedRef.current)],
-          }).then(() => {
+          // CRITICAL: For radial mode, preserve ring hierarchy by skipping collision resolution
+          // The resolveCollisions algorithm moves nodes around to fix overlaps, which destroys
+          // the carefully positioned radial rings. In radial mode, we accept the positions
+          // from applyDomainRadialLayout and apply them directly without relaxation.
+          if (viewMode === 'radial') {
+            // Radial layout: apply positions directly, preserve ring hierarchy
+            setNodes(layoutedNodes);
             if (storageAvailable) {
               localStorage.setItem('flowforge-initial-layout-applied', 'true');
               localStorage.setItem(LAYOUT_VERSION_KEY, CURRENT_LAYOUT_VERSION);
-              // Persist default for future sessions
               if (prefRaw == null) {
                 localStorage.setItem('flowforge-auto-layout-on-load', 'true');
               }
             }
-          }).finally(() => {
-            setTimeout(() => setIsAutoLayouting(false), 600);
-          });
+            setTimeout(() => setIsAutoLayouting(false), 300);
+          } else {
+            // Non-radial mode: use full relaxation with collision resolution
+            applyLayoutAndRelax(layoutedNodes, {
+              padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
+              maxPasses: viewMode === 'process' ? 25 : 15,
+              fit: true,
+              fixedIds: [centerId, ...Array.from(pinnedRef.current)],
+            }).then(() => {
+              if (storageAvailable) {
+                localStorage.setItem('flowforge-initial-layout-applied', 'true');
+                localStorage.setItem(LAYOUT_VERSION_KEY, CURRENT_LAYOUT_VERSION);
+                if (prefRaw == null) {
+                  localStorage.setItem('flowforge-auto-layout-on-load', 'true');
+                }
+              }
+            }).finally(() => {
+              setTimeout(() => setIsAutoLayouting(false), 600);
+            });
+          }
         }
       } catch (e) {
         console.warn('Auto-layout on load failed:', e);
@@ -3123,14 +3148,9 @@ const handleSwitchToWizard = useCallback(
       if (process.env.NODE_ENV !== 'production') {
         console.debug('[layout] calling relax', { fit: false, padding: relaxPadding, pinned: Array.from(pinnedRef.current) });
       }
-      applyLayoutAndRelax(layoutedNodes, {
-        padding: relaxPadding,
-        maxPasses: 15,
-        fit: false,
-        fixedIds: [centerId, ...Array.from(pinnedRef.current)],
-      }).finally(() => {
-        setTimeout(() => setIsAutoLayouting(false), 480);
-      });
+      // CRITICAL: For radial mode, skip collision resolution to preserve ring hierarchy
+      setNodes(layoutedNodes);
+      setTimeout(() => setIsAutoLayouting(false), 480);
     });
     return () => cancelAnimationFrame(rafId);
   }, [dimensionVersion, viewMode, allNodesMeasured, nodes, applyLayoutAndRelax, relaxPadding, isUserDragging, isAutoLayouting, reactFlowInstance, relaxRespectingPins, hasRadialBaselineChanged, recordRadialBaseline]);
@@ -4447,10 +4467,27 @@ const handleSwitchToWizard = useCallback(
       const placementSource = placementOverrides?.sourceNodeId ?? dragSourceNodeId;
       const parentNode = placementSource ? nodes.find((n) => n.id === placementSource) : null;
 
+      // ENSURE: Classification backbone exists before resolving parents
+      // If classifications are missing, add them now
+      let workingNodes = nodes;
+      let workingEdges = edges;
+      const hasClassifications = nodes.some(
+        (n) => (n.data as CustomNodeData)?.classificationKey
+      );
+      if (!hasClassifications) {
+        // Ensure classifications are seeded if they're missing
+        const seeded = ensureClassificationBackbone(nodes, edges, centerId);
+        workingNodes = seeded.nodes as any;
+        workingEdges = seeded.edges as any;
+        // CRITICAL: Update state immediately so classifications exist in DOM
+        setNodes(workingNodes);
+        setEdges(workingEdges);
+      }
+
       // FIX 1: Always resolve classification parent (don't skip for edge drags)
       // This ensures all nodes get proper classification parent assignment
       const classificationParentId = getClassificationParentId(
-        nodes,
+        workingNodes,
         nodeData.type,
         normalizedDomain as DomainType,
         nodeData.tags,
@@ -4945,18 +4982,22 @@ const handleSwitchToWizard = useCallback(
     if (process.env.NODE_ENV !== 'production') {
       console.debug('[layout] calling relax', { fit: true, padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding, pinned: Array.from(pinnedRef.current) });
     }
-    await applyLayoutAndRelax(layoutedNodes, {
-      padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
-      maxPasses: viewMode === 'process' ? 18 : 10,
-      fit: true,
-      fixedIds: [centerId, ...Array.from(pinnedRef.current)],
-    });
-    setIsSaved(false);
     
-    // Disable transitions after animation completes
-    setTimeout(() => {
-      setIsAutoLayouting(false);
-    }, 600);
+    // CRITICAL: For radial mode, skip collision resolution to preserve ring hierarchy
+    if (viewMode === 'radial') {
+      setNodes(layoutedNodes);
+      setIsSaved(false);
+      setTimeout(() => setIsAutoLayouting(false), 300);
+    } else {
+      await applyLayoutAndRelax(layoutedNodes, {
+        padding: viewMode === 'process' ? Math.max(relaxPadding, 32) : relaxPadding,
+        maxPasses: viewMode === 'process' ? 18 : 10,
+        fit: true,
+        fixedIds: [centerId, ...Array.from(pinnedRef.current)],
+      });
+      setIsSaved(false);
+      setTimeout(() => setIsAutoLayouting(false), 600);
+    }
     
     toast.success("Layout applied", {
       description: viewMode === "radial" 
@@ -5274,7 +5315,8 @@ const handleSwitchToWizard = useCallback(
           });
         }
 
-        await applyLayoutAndRelax(layouted, { padding: 12, maxPasses: 10, fit: true });
+        // CRITICAL: For radial mode, skip collision resolution to preserve ring hierarchy
+        setNodes(layouted);
 
         if (createdNodeIds.length > 0) {
           setSelectedNodeId(createdNodeIds[createdNodeIds.length - 1]);
@@ -6698,13 +6740,9 @@ const handleSwitchToWizard = useCallback(
       }
       setIsAutoLayouting(true);
       recordRadialBaseline(layouted);
-      await applyLayoutAndRelax(layouted, {
-        padding: relaxPadding,
-        maxPasses: 10,
-        fit: true,
-        fixedIds: [centerId, ...Array.from(pinnedRef.current)],
-      });
-      setTimeout(() => setIsAutoLayouting(false), 600);
+      // CRITICAL: For radial mode, skip collision resolution to preserve ring hierarchy
+      setNodes(layouted);
+      setTimeout(() => setIsAutoLayouting(false), 300);
       setIsSaved(false);
       return;
     }
@@ -6785,13 +6823,9 @@ const handleSwitchToWizard = useCallback(
       }
       setIsAutoLayouting(true);
       recordRadialBaseline(layouted);
-      await applyLayoutAndRelax(layouted, {
-        padding: relaxPadding,
-        maxPasses: 10,
-        fit: true,
-        fixedIds: [centerId, ...Array.from(pinnedRef.current)],
-      });
-      setTimeout(() => setIsAutoLayouting(false), 600);
+      // CRITICAL: For radial mode, skip collision resolution to preserve ring hierarchy
+      setNodes(layouted);
+      setTimeout(() => setIsAutoLayouting(false), 300);
 
       toast.success('Loaded collision seed');
     } catch (err) {

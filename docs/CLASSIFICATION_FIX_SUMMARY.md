@@ -23,6 +23,7 @@ center:    (0)   r0 [0, 0]          "New Workspace Root"           ✅ CORRECT
 According to `docs/classification-structure.md`:
 
 ### Correct Hierarchy
+
 ```
 center (Ring 0)
 ├── Application Backend & Services (Ring 1)
@@ -37,6 +38,7 @@ center (Ring 0)
 ```
 
 ### The Parent-Child Rule
+
 **EVERY child must satisfy: `child.ring === parent.ring + 1`**
 
 ```
@@ -54,11 +56,13 @@ center (Ring 0)
 There are **TWO node ID systems** that are conflicting:
 
 **System 1: Template IDs (Canonical)**
+
 - `backend-server`, `user-authentication`, `identity-provider`, `mobile-app`
 - Defined in `client/src/config/foundationNodes.ts`
 - Semantic, predictable, connected to classification logic
 
 **System 2: Runtime IDs (Numeric Placeholders)**
+
 - `"2"`, `"3"`, `"4"`, `"5"` (just `nodes.length + 1`)
 - Generated in `handleAddNode()` in `App.tsx`
 - Disconnected from templates, breaks parent resolution
@@ -88,11 +92,11 @@ const newNode = {
 
 ### Three Broken Paths
 
-| Creation Path | ID | Parent Lookup | Result |
-|---------------|----|----|--------|
-| **AddNodeModal** | Numeric ❌ | Skipped if dragging ❌ | Orphaned, wrong ID |
-| **Edge Drag** | Numeric ❌ | Explicitly skipped ❌ | Direct connection, no classification |
-| **Associated Picker** | Numeric ❌ | Works but ignored ❌ | Template data lost, orphaned |
+| Creation Path         | ID         | Parent Lookup          | Result                               |
+| --------------------- | ---------- | ---------------------- | ------------------------------------ |
+| **AddNodeModal**      | Numeric ❌ | Skipped if dragging ❌ | Orphaned, wrong ID                   |
+| **Edge Drag**         | Numeric ❌ | Explicitly skipped ❌  | Direct connection, no classification |
+| **Associated Picker** | Numeric ❌ | Works but ignored ❌   | Template data lost, orphaned         |
 
 ---
 
@@ -102,16 +106,18 @@ The ring enforcement logic **DOES work**:
 
 ```typescript
 // Line 4386-4388
-const defaultRing = resolvedParent ? (parentRing + 1) : 2;
+const defaultRing = resolvedParent ? parentRing + 1 : 2;
 const normalizedRing = Math.max(1, nodeData.ring ?? defaultRing);
-const enforcedRing = Math.max(normalizedRing, (parentRing + 1), 2);
+const enforcedRing = Math.max(normalizedRing, parentRing + 1, 2);
 ```
 
 **BUT** it only applies when:
+
 1. Classification parent is found (`resolvedParent` exists), OR
 2. User explicitly specifies a ring value in AddNodeModal
 
 So nodes get the **right ring value** but the **wrong parent ID**, creating this contradiction:
+
 - ✅ Ring 3 node
 - ❌ Orphaned to center (no Ring 1 parent)
 - ❌ Numeric ID breaks template tracking
@@ -121,18 +127,20 @@ So nodes get the **right ring value** but the **wrong parent ID**, creating this
 ## How to Fix This
 
 ### Solution 1: Use Template IDs
+
 When a node's label matches a template, use the template's canonical `id`:
 
 ```typescript
 // In handleAddNode():
-const matchingTemplate = FOUNDATION_CATEGORIES
-  .flatMap(c => c.templates)
-  .find(t => t.label === nodeData.label);
+const matchingTemplate = FOUNDATION_CATEGORIES.flatMap((c) => c.templates).find(
+  (t) => t.label === nodeData.label
+);
 
 const newNodeId = matchingTemplate?.id ?? `${nodes.length + 1}`;
 ```
 
 ### Solution 2: Always Resolve Classification Parent
+
 Don't skip parent resolution for edge drags:
 
 ```typescript
@@ -143,7 +151,7 @@ const classificationParentId = getClassificationParentId(
   normalizedDomain as DomainType,
   nodeData.tags,
   nodeData.label
-);  // ✅ Always call this, regardless of placementSource
+); // ✅ Always call this, regardless of placementSource
 
 // Both edges can exist:
 // 1. Classification parent edge (for hierarchy)
@@ -151,6 +159,7 @@ const classificationParentId = getClassificationParentId(
 ```
 
 ### Solution 3: Store Template Metadata
+
 Mark nodes that come from templates:
 
 ```typescript
@@ -160,9 +169,9 @@ const newNode = {
     ...nodeData,
     ring: enforcedRing,
     parentId: classificationParentId ?? centerId,
-    classificationKey: matchingTemplate?.id?.split('-')[1],  // e.g., "authentication"
+    classificationKey: matchingTemplate?.id?.split("-")[1], // e.g., "authentication"
     isTemplated: !!matchingTemplate,
-  }
+  },
 };
 ```
 
@@ -171,6 +180,7 @@ const newNode = {
 ## Impact of This Fix
 
 ### Before (Current)
+
 ```
 Backend Server (Ring 3, ID: "2")
 ├── Numeric ID "2" can't be referenced in migrations
@@ -184,6 +194,7 @@ Identity Provider (Ring 4, ID: "3")
 ```
 
 ### After (With Fix)
+
 ```
 Backend Server (Ring 3, ID: "backend-server")
 ├── Canonical ID matches template
@@ -215,9 +226,11 @@ After implementing the fix:
 ## Files Affected
 
 **To Fix:**
+
 - `client/src/App.tsx` - Lines 4360-4470 (handleAddNode)
 
 **Working Correctly (No Changes):**
+
 - `client/src/config/classifications.ts` - Classification backbone ✅
 - `client/src/config/foundationNodes.ts` - Templates ✅
 - App.tsx lines 4558-4562 - Associated Picker filter ✅

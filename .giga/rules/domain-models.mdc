@@ -1,54 +1,66 @@
 ---
-description: Documents node types, relationships, workspaces and templates data models including validation rules and entity relationships
+description: Specification for domain modeling including node types, relationships, workspaces, templates and validation rules
 ---
 
 
 # domain-models
 
-### Node Types
-- **Core Entities**: System, Service, Component, Integration
-- **Validation Rules**: Prevents cycles in dependency graphs, enforces required fields
-- **Type-specific Metadata**: Custom fields for auth nodes, API nodes, database nodes
-- **Importance Score**: 85
+## Core Domain Models
 
-### Relationships
-- **Core Types**: depends-on, implements, tests, connects-to, part-of
-- **Bidirectional Rules**: Certain relationships enforce reciprocal connections
-- **Domain Boundaries**: Special validation for cross-domain relationships
-- **Importance Score**: 90
+### Node Classification System
+- Strict hierarchical model with ring-based inheritance
+- Node types mapped to 4 core domains: Infrastructure, Frontend, Backend, Data/AI
+- Parent-child relationships enforced through ring level (parent.ring + 1)
+- Domain-specific validation rules per node type
+Importance Score: 90
 
-### Workspaces
-- **Structure**: Contains nodes, edges, metadata, permissions
-- **Versioning**: Tracks changes with snapshots system
-- **Templates**: Reusable workspace patterns with placeholders
-- **Importance Score**: 85
+### Workspace Model
+File: server/src/models/Workspace.ts
+- Multi-tenant workspace structure supporting concurrent node graphs
+- Version control with snapshot preservation
+- Custom edge validation ensuring acyclic relationships
+- Domain-scoped permissions and access controls
+Importance Score: 85
 
-### Templates
-- **Categories**: Architecture, Integration, Documentation
-- **Variables**: Configurable placeholders for customization
-- **Validation**: Schema enforcement for required sections
-- **Importance Score**: 75
+### PRD Template Model 
+File: server/src/models/PRDTemplate.ts
+- Structured template system with domain-specific sections
+- Vector embeddings for semantic search capabilities
+- Custom validation schemas enforcing domain rules
+- Technology profile mapping and API guidance
+Importance Score: 80
 
-### Knowledge Models
-- **Vector Storage**: Embeddings for semantic template matching
-- **Domain Classification**: Technical vs Business domain separation
-- **Template Matching**: Progressive relaxation for finding relevant content
-- **Importance Score**: 80
+### Relationship Types
+File: server/src/services/relationships.ts
+- Complex relationship management with semantic types
+- Bidirectional validation rules
+- Cycle detection in dependencies
+- Domain-aware relationship scoring
+Importance Score: 85
 
-### AI Enhancement
-- **Node Enrichment**: Content generation rules per node type
-- **Relationship Suggestions**: Context-aware connection proposals
-- **Template Selection**: Smart matching based on workspace context
-- **Importance Score**: 85
+### Foundation Nodes
+File: server/src/config/foundationNodes.ts
+- Predefined templates for core architectural components
+- Domain-specific scaffolding rules
+- Smart association logic between components
+- Template inheritance system
+Importance Score: 75
 
-File Paths:
-```
-server/src/models/PRDTemplate.ts
-server/src/models/Workspace.ts
-server/src/models/WorkspaceVersion.ts
-server/src/services/KBService.ts
-server/src/services/GenerationService.ts
-```
+## Validation Rules
+
+### Graph Structure Validation
+- Enforces acyclic relationships between nodes
+- Validates ring hierarchy compliance
+- Ensures proper domain classification
+- Checks relationship type compatibility
+Importance Score: 80
+
+### Template Validation
+- Enforces required sections based on node type
+- Validates technology profile compatibility
+- Ensures proper inheritance of base templates
+- Checks completeness of documentation
+Importance Score: 75
 
 $END$
 

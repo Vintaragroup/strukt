@@ -250,7 +250,9 @@ export const RECIPES: LayoutRecipe[] = [AUTH_RECIPE, PAYMENTS_RECIPE, ANALYTICS_
 
 export function detectRecipe(nodes: Node[]): LayoutRecipe | null {
   for (const r of RECIPES) {
-    try { if (r.detect?.(nodes)) return r } catch {}
+    try { if (r.detect?.(nodes)) return r } catch {
+      // Silently skip recipes that fail detection
+    }
   }
   return null;
 }

@@ -44,22 +44,22 @@ Ring 3+ (Templates - ALWAYS under appropriate R2 classifications)
 
 ```typescript
 RING2_TO_RING1_PARENT_MAP = {
-  dataAI: "appBackend",           // Data pipelines → Backend
-  infrastructure: "appBackend",   // CI/CD, platform → Backend
-  observability: "appBackend",    // Monitoring, logging → Backend
-  security: "appBackend",         // Auth, secrets → Backend
+  dataAI: "appBackend", // Data pipelines → Backend
+  infrastructure: "appBackend", // CI/CD, platform → Backend
+  observability: "appBackend", // Monitoring, logging → Backend
+  security: "appBackend", // Auth, secrets → Backend
   customerExperience: "marketingGTM", // Support, success → Marketing
-}
+};
 ```
 
 ## Code Locations That Enforce This
 
-| File | Function | Purpose |
-|------|----------|---------|
-| `client/src/config/classifications.ts` | `RING2_TO_RING1_PARENT_MAP` | Defines immutable mapping |
+| File                                   | Function                         | Purpose                                 |
+| -------------------------------------- | -------------------------------- | --------------------------------------- |
+| `client/src/config/classifications.ts` | `RING2_TO_RING1_PARENT_MAP`      | Defines immutable mapping               |
 | `client/src/config/classifications.ts` | `ensureClassificationBackbone()` | Enforces R2→R1 edges for existing nodes |
-| `client/src/App.tsx` | `enforceRingHierarchyEdges()` | Reconstructs edges on load |
-| `client/src/App.tsx` | `handleAddNode()` | Validates ring and parent on creation |
+| `client/src/App.tsx`                   | `enforceRingHierarchyEdges()`    | Reconstructs edges on load              |
+| `client/src/App.tsx`                   | `handleAddNode()`                | Validates ring and parent on creation   |
 
 ## What CAN Change (Controlled)
 

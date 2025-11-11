@@ -340,13 +340,17 @@ export function DocumentationPreview({
           setResultByTarget((prev) => ({ ...prev, ...parsed }));
         }
       }
-    } catch {}
+    } catch {
+      // Silently ignore localStorage read errors
+    }
   }, []);
 
   useEffect(() => {
     try {
       localStorage.setItem("docs_result_store_v1", JSON.stringify(resultByTarget));
-    } catch {}
+    } catch {
+      // Silently ignore localStorage write errors
+    }
   }, [resultByTarget]);
 
   const quickFixLovable = () => {

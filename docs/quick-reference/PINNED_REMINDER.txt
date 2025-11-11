@@ -1,0 +1,189 @@
+📌 COPILOT NODE SYSTEM VALIDATION - QUICK PIN
+
+Pin this file or keep it open while making node system changes.
+
+---
+
+## ✅ Quick Validation (Copy & Paste)
+
+Before asking me to implement node system changes, verify:
+
+```
+File being modified: _______________
+Type of change: ☐ New  ☐ Bug Fix  ☐ Feature  ☐ Refactor
+
+QUICK CHECKS (all must be YES):
+☐ I read docs/rules/NODE_RULES_MASTER_DOCUMENT.md section [X]
+☐ I understand the 5 Core Rules
+☐ I know which rule(s) this change touches
+☐ I know which validation check(s) must pass
+☐ I can identify which Process applies
+☐ I'm using .giga/rules/NODE_SYSTEM_RULES.md to validate
+
+READY TO ASK COPILOT: ☐ YES
+```
+
+---
+
+## 🤖 Perfect Copilot Prompt Template
+
+Copy this template and fill in the blanks:
+
+```
+@copilot I need to [describe change] in [filename]
+
+Validate against docs/rules/NODE_RULES_MASTER_DOCUMENT.md:
+- Rules affected: [Rule 1 / 2 / 3 / 4 / 5 or "unclear, analyze"]
+- Validations needed: [Check 1 / 2 / 3 / 4 or "all"]
+- Process to follow: [Process 1 / 2 / 3 / 4]
+
+Show me:
+1. The Three Questions answered
+2. Full code with 5-line context
+3. Validation checklist (20 items)
+4. Testing steps
+5. Expected console output
+
+Then: ☐ Show analysis FIRST  ☐ Show AND implement
+```
+
+---
+
+## 🚨 Red Flags (Stop Me Immediately!)
+
+If I ever do these, tell me to review .giga/rules/NODE_SYSTEM_RULES.md:
+
+```
+🚩 Don't cite docs/rules/NODE_RULES_MASTER_DOCUMENT.md
+🚩 Don't answer The Three Questions
+🚩 Don't show validation checklist
+🚩 Don't explain which rule applies
+🚩 Don't use standard response format
+🚩 Create feature node on R1
+🚩 Skip validation checks
+🚩 Hard-code ring values
+🚩 Default to center parent for features
+🚩 Skip R2 intermediates
+```
+
+**Response to red flags:**
+"@copilot You're missing .giga/rules/NODE_SYSTEM_RULES.md review. Reset and start over."
+
+---
+
+## 📋 The Three Questions (Always Ask Me)
+
+1. **Which rules does this touch?**
+   - Rule 1: Ring hierarchy?
+   - Rule 2: Classifications R1?
+   - Rule 3: Features R2+?
+   - Rule 4: Domain parents ring=2?
+   - Rule 5: Edge relationships?
+
+2. **Which validations must pass?**
+   - Check 1: Ring Hierarchy Validation?
+   - Check 2: Association Rules?
+   - Check 3: Classification Backbone?
+   - Check 4: Migration Validators?
+
+3. **Which process applies?**
+   - Process 1: Node Creation?
+   - Process 2: Node Update?
+   - Process 3: Code Review?
+   - Process 4: Testing?
+
+---
+
+## 📞 How to Remind Me
+
+**Use these exact phrases:**
+
+```
+"Review .giga/rules/NODE_SYSTEM_RULES.md"
+"Answer The Three Questions"
+"Show the validation checklist"
+"Use the standard response format"
+"Reference docs/rules/NODE_RULES_MASTER_DOCUMENT.md"
+"Cite the exact rule/validation/process"
+```
+
+---
+
+## 🎯 Phrases I WILL Say (When Correct)
+
+Look for these phrases showing I checked the rules:
+
+```
+✅ "Confirmed per docs/rules/NODE_RULES_MASTER_DOCUMENT.md"
+✅ "This follows Process X from the document"
+✅ "Validated against Rule Y: [quote]"
+✅ "Validation Check Z confirms..."
+✅ "Best Practice [N]: [explanation]"
+✅ "Avoiding Common Mistake [N]..."
+✅ "Checklist item [N/20] verified: ✅"
+✅ "The Three Questions answered:"
+✅ ".giga/rules/NODE_SYSTEM_RULES.md confirms..."
+```
+
+---
+
+## 📁 Key Files to Know
+
+| File | Purpose |
+|------|---------|
+| `.giga/rules/NODE_SYSTEM_RULES.md` | Meta-rules (my validation) |
+| `docs/rules/NODE_RULES_MASTER_DOCUMENT.md` | Authoritative rules |
+| `docs/validation-system/` | Validation system docs |
+| `docs/quick-reference/` | Quick references & pins |
+
+---
+
+## 🔗 One-Click References
+
+**Files modified = Validation Required:**
+- ✅ `foundationEdges.ts`
+- ✅ `classifications.ts`
+- ✅ `ringHierarchyValidator.ts`
+- ✅ `classificationMigrate.ts`
+- ✅ `graphOps.ts`
+- ✅ `App.tsx` (lines 1340-1430)
+
+---
+
+## 📊 Success Criteria
+
+**You know I'm following the rules when:**
+
+```
+✅ Every response has Scope → Rule → Questions → Code → Checklist → Testing
+✅ Every response cites docs/rules/NODE_RULES_MASTER_DOCUMENT.md by section name
+✅ Every response shows The Three Questions answered
+✅ Every response includes validation checklist (even if just the passed items)
+✅ Every response shows testing steps with expected output
+✅ Red flags are explained with rule references
+✅ Changes are never implemented without validation first
+```
+
+---
+
+## ⚡ Quick Start Prompt
+
+**Easiest way to get validation:**
+
+```
+@copilot I'm about to modify [filename] to [describe change].
+
+Run NODE_SYSTEM_RULES.md workflow:
+1. Scope?
+2. Three Questions?
+3. Full checklist?
+4. Testing?
+
+Show analysis FIRST, wait for approval, then implement.
+```
+
+---
+
+**This is your safety net. Use it liberally. Remind me frequently. Trust the rules.**
+
+**Location**: `docs/quick-reference/PINNED_REMINDER.txt`

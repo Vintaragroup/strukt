@@ -1,11 +1,13 @@
 # CRITICAL FIX: Ring Hierarchy Edge Reconstruction on Workspace Load
 
 ## Problem Statement
+
 Nodes were showing correct rings but connecting to wrong parents, with R2 nodes incorrectly appearing as direct children of center. The root cause: edges were being loaded directly from the database without being reconstructed according to ring hierarchy rules.
 
 ## Root Cause Analysis
 
 ### What Was Happening
+
 1. Workspace loads from database
 2. Nodes are loaded with correct ring values
 3. **Edges are loaded as-is from database** (PROBLEM!)
@@ -13,6 +15,7 @@ Nodes were showing correct rings but connecting to wrong parents, with R2 nodes 
 5. Nodes appear in wrong hierarchical positions
 
 ### Why Previous Fixes Weren't Enough
+
 - `handleAddNode()` fixes worked for NEW nodes being created
 - But when loading existing workspaces, old edges bypassed all the validation
 - Existing incorrect edges from before the fixes were preserved
@@ -20,11 +23,13 @@ Nodes were showing correct rings but connecting to wrong parents, with R2 nodes 
 ## The Solution: Edge Reconstruction on Load
 
 ### New Function: `enforceRingHierarchyEdges()`
+
 Located in `client/src/App.tsx` (lines 259-300)
 
 **Purpose**: Reconstruct all edges according to ring hierarchy rules
 
 **Algorithm**:
+
 ```typescript
 For each node:
   - If ring = 0 (center): no incoming edges
@@ -36,19 +41,24 @@ For each node:
 **Result**: All edges recreated to match proper hierarchy
 
 ### Integration Point: Workspace Load Handler
+
 File: `client/src/App.tsx` (lines 1254-1260)
 
 **When it runs**: Immediately after loading edges from database
 
 ```typescript
 // Load edges from database
-flowEdges = toFlowEdges((workspace.edges as unknown as SerializableWorkspaceEdge[]) || [], nodeIdSet);
+flowEdges = toFlowEdges(
+  (workspace.edges as unknown as SerializableWorkspaceEdge[]) || [],
+  nodeIdSet
+);
 
 // IMMEDIATELY enforce ring hierarchy
 flowEdges = enforceRingHierarchyEdges(flowNodes as any, flowEdges, centerId);
 ```
 
 **Why this works**:
+
 - Happens BEFORE any visual rendering
 - Happens BEFORE collision resolution
 - Reconstructs edges to match current ring assignments
@@ -57,6 +67,7 @@ flowEdges = enforceRingHierarchyEdges(flowNodes as any, flowEdges, centerId);
 ## What This Fixes
 
 ### Before
+
 ```
 Center (R0)
 ├─ Business Model (R1)          ✓ Correct
@@ -70,6 +81,7 @@ Center (R0)
 ```
 
 ### After
+
 ```
 Center (R0)
 ├─ Business Model (R1)                    ✓ Only 5 R1 nodes
@@ -88,21 +100,25 @@ Center (R0)
 ## Key Behaviors
 
 ### 1. Automatic Repair
+
 - Users don't need to do anything
 - On every workspace load, edges are automatically fixed
 - Old incorrect edges are silently replaced
 
 ### 2. Preserves Node Data
+
 - Node positions preserved
 - Node data/cards preserved
 - Only edge connections are reconstructed
 
 ### 3. No Data Loss
+
 - Discarded edges are OLD/incorrect edges anyway
 - Users see the correct structure immediately
 - Improves data integrity
 
 ### 4. Idempotent
+
 - Running multiple times gives same result
 - Safe to reload workspaces
 - No side effects
@@ -110,6 +126,7 @@ Center (R0)
 ## Testing
 
 ### Test Case 1: Load old workspace with wrong edges
+
 ```
 Setup:
 - Open workspace that has R2 nodes attached to center (old data)
@@ -126,6 +143,7 @@ Expected:
 ```
 
 ### Test Case 2: Create new nodes after fix
+
 ```
 Setup:
 - After fix is deployed
@@ -142,6 +160,7 @@ Expected:
 ```
 
 ### Test Case 3: Mix old and new data
+
 ```
 Setup:
 - Workspace with old incorrect edges
@@ -161,17 +180,20 @@ Expected:
 ## Code Impact
 
 ### Modified Files
+
 - `client/src/App.tsx`:
   - Added `enforceRingHierarchyEdges()` function
   - Called in workspace load handler
 
 ### Dependencies Used
+
 - `getClassificationParentId()` - from classifications.ts
 - Already used in `handleAddNode()`
 - Consistent logic
 
 ### Performance
-- Edge reconstruction: O(n*m) where n=nodes, m=avg connections
+
+- Edge reconstruction: O(n\*m) where n=nodes, m=avg connections
 - Happens once per workspace load
 - Negligible impact (usually <100ms even for large workspaces)
 
@@ -185,15 +207,16 @@ Expected:
 
 ## Why This Must Be Combined With Previous Fixes
 
-| Issue | Fix | Timing |
-|-------|-----|--------|
-| New nodes connect wrong | handleAddNode() enforcement | On creation |
-| Loaded nodes connect wrong | enforceRingHierarchyEdges() | On load |
-| User drag bypasses rules | connectionSourceId validation | On drag |
-| Concurrent saves conflict | VersionError + retry logic | On persist |
-| Too many overlaps | Padding + iterations increase | On layout |
+| Issue                      | Fix                           | Timing      |
+| -------------------------- | ----------------------------- | ----------- |
+| New nodes connect wrong    | handleAddNode() enforcement   | On creation |
+| Loaded nodes connect wrong | enforceRingHierarchyEdges()   | On load     |
+| User drag bypasses rules   | connectionSourceId validation | On drag     |
+| Concurrent saves conflict  | VersionError + retry logic    | On persist  |
+| Too many overlaps          | Padding + iterations increase | On layout   |
 
 **All five fixes work together to ensure:**
+
 - ✅ New nodes follow rules
 - ✅ Loaded nodes follow rules
 - ✅ Dragged nodes follow rules
@@ -216,22 +239,25 @@ After deploying this fix:
 ## Debugging
 
 ### If R2 nodes still show under center:
+
 1. Check browser console for errors
 2. Verify `getClassificationParentId()` is finding correct parent
 3. Check node domain values match classification definitions
 4. Verify classifications were seeded (check seed in localStorage)
 
 ### If edges duplicate:
+
 1. Check for duplicate edge IDs
 2. `processed` Set prevents duplicates - should work
 3. May indicate classification parent lookup returning wrong results
 
 ### Logs to add if issues:
+
 ```typescript
 console.debug(`[enforceRingHierarchyEdges] Processing ring ${ring} node:`, {
   nodeId: node.id,
   label: (node as any)?.data?.label,
   domain: (node as any)?.data?.domain,
-  parentId: parentId
+  parentId: parentId,
 });
 ```
